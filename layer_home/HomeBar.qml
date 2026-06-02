@@ -10,7 +10,7 @@ ListView {
     id: homeLayout
     //anchors.fill: parent
     property int _index: 0
-    spacing: vpx(14)
+    spacing: vpx(24)
     orientation: ListView.Horizontal
     
     displayMarginBeginning: vpx(107)
@@ -52,27 +52,36 @@ ListView {
 
             anchors.verticalCenter: parent.verticalCenter
 
-            Rectangle{
+            scale: selected ? 1.08 : 1.0
+
+            Behavior on scale {
+                NumberAnimation {
+                    duration: 150
+                    easing.type: Easing.OutCubic
+                }
+            }
+
+            Rectangle {
                 id: background
-                width: isGame ? homeLayout.height : homeLayout.height*0.7
+
+                width: isGame ? homeLayout.height : homeLayout.height * 0.7
                 height: width
-                radius: isGame ? 0 : width
-                opacity: 1
+
+                radius: vpx(24)
                 color: theme.button
-                layer.enabled: enableDropShadows && !selected //TODO turn off when highlighted
+
+                layer.enabled: enableDropShadows && !selected
                 layer.effect: DropShadow {
                     transparentBorder: true
                     horizontalOffset: 0
-                    verticalOffset: 0
-                    color: "#4D000000"
-                    radius: 3.0
-                    samples: 6
-                    z: -2
-                }
-                
-                anchors.centerIn: parent
-                
+                    verticalOffset: vpx(4)
+                    radius: 16
+                    samples: 32
+                    color: "#30000000"
             }
+
+    anchors.centerIn: parent
+}
 
             // Preference order for Game Backgrounds
             property var gameBG: {
@@ -81,46 +90,68 @@ ListView {
 
             Image {
                 id: gameImage
-                width: isGame ? homeLayout.height : homeLayout.height*0.7//.width
+
+                width: isGame ? homeLayout.height : homeLayout.height * 0.7
                 height: width
+
                 smooth: true
-                fillMode: (gameBG == gameData.assets.boxFront) ? Image.PreserveAspectFit : Image.PreserveAspectCrop
-                source: gameBG // gameData.collections.get(0).shortName === "steam" ? gameData.assets.screenshot : gameBG
                 asynchronous: true
-                sourceSize { width: 256; height: 256 }
-                
+
+                fillMode: (gameBG == gameData.assets.boxFront)
+                    ? Image.PreserveAspectFit
+                    : Image.PreserveAspectCrop
+
+                source: gameBG
+
+                sourceSize {
+                    width: 256
+                    height: 256
+                }
+
                 anchors.centerIn: parent
 
-                Rectangle {
-                    id: favicon
-                    anchors { 
-                        right: parent.right; rightMargin: vpx(5); 
-                        top: parent.top; topMargin: vpx(5) 
-                    }
-                    width: vpx(32)
-                    height: width
-                    radius: width/2
-                    color: theme.accent
-                    visible: isGame ? gameData.favorite : false
-                    Image {
-                        id: faviconImage
-                        source: "../assets/images/heart_filled.png"
-                        asynchronous: true
-                        anchors.fill: parent
-                        anchors.margins: vpx(7)            
-                    }
-                    
-                    ColorOverlay {
-                        anchors.fill: faviconImage
-                        source: faviconImage
-                        color: "white" //theme.icon
-                        antialiasing: true
-                        smooth: true
-                        cached: true
+                layer.enabled: true
+                layer.effect: OpacityMask {
+                    maskSource: Rectangle {
+                        width: gameImage.width
+                        height: gameImage.height
+                        radius: vpx(24)
                     }
                 }
-                
-            }
+
+            Rectangle {
+                id: favicon
+                anchors {
+                    right: parent.right
+                    rightMargin: vpx(5)
+                    top: parent.top
+                    topMargin: vpx(5)
+                }
+
+                width: vpx(32)
+                height: width
+                radius: width / 2
+                color: theme.accent
+                visible: isGame ? gameData.favorite : false
+
+                Image {
+                    id: faviconImage
+                    source: "../assets/images/heart_filled.png"
+                    asynchronous: true
+                    anchors.fill: parent
+                    anchors.margins: vpx(7)
+                }
+
+            ColorOverlay {
+            anchors.fill: faviconImage
+            source: faviconImage
+            color: "white"
+            antialiasing: true
+            smooth: true
+            cached: true
+        }
+    }
+}
 
             //white overlay on screenshot for better logo visibility over screenshot
             Rectangle {
