@@ -281,97 +281,93 @@ FocusScope
         }
 
         // Button menu
-        RowLayout {
-            id: buttonMenu
-            spacing: vpx(22)
+        // Button menu
+Item {
+    id: buttonMenuContainer
+    anchors {
+        top: homeSwitcher.bottom
+        bottom: parent.bottom
+        horizontalCenter: parent.horizontalCenter
+    }
+    width: buttonMenu.width + vpx(48)
+    height: parent.bottom
 
-            anchors {
-                top: homeSwitcher.bottom;
-                bottom: parent.bottom
+    // *** BARRA DI SFONDO ***
+    Rectangle {
+        id: buttonBar
+        anchors.centerIn: parent
+        width: buttonMenu.width + vpx(48)
+        height: vpx(64)
+        radius: height / 2
+        color: theme.button
+
+        layer.enabled: enableDropShadows
+        layer.effect: DropShadow {
+            transparentBorder: true
+            horizontalOffset: 0
+            verticalOffset: vpx(4)
+            radius: 12
+            samples: 24
+            color: "#30000000"
+        }
+    }
+
+    RowLayout {
+        id: buttonMenu
+        spacing: vpx(8)
+        anchors.centerIn: parent
+
+        Keys.onUpPressed: {
+            navSound.play();
+            homeSwitcher.focus = true
+            homeSwitcher.currentIndex = homeSwitcher._index
+        }
+        Keys.onDownPressed: { borderSfx.play() }
+
+        MenuButton {
+            id: themeButton
+            width: vpx(56); height: vpx(56)
+            label: "Toggle Theme"
+            icon: "../assets/images/navigation/theme.svg"
+
+            Keys.onPressed: {
+                if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                    event.accepted = true;
+                    selectSfx.play();
+                    toggleDarkMode();
+                }
             }
-
-            Keys.onUpPressed: {
+            Keys.onLeftPressed: { borderSfx.play() }
+            Keys.onRightPressed: {
                 navSound.play();
-                homeSwitcher.focus = true
-                homeSwitcher.currentIndex = homeSwitcher._index
+                settingsButton.focus = true
             }
-
-            Keys.onDownPressed:{
-                borderSfx.play();
-            }
-
-            x: parent.width/2 - buttonMenu.width/2
-
-            MenuButton {
-                id: themeButton
-                width: vpx(86); height: vpx(86)
-                label: "Toggle Theme"
-                icon: "../assets/images/navigation/theme.svg"
-
-                Keys.onPressed: {
-                    if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-                        event.accepted = true;
-                        selectSfx.play();
-                        toggleDarkMode();
-                    }
-                }
-
-                Keys.onLeftPressed:{
-                    borderSfx.play();
-                }
-
-                Keys.onRightPressed:{
-                    navSound.play();
-                    settingsButton.focus = true
-                }
-
-                onClicked: {
-                    if (themeButton.focus)
-                    {
-                        selectSfx.play();
-                        toggleDarkMode();
-                    }
-                    else
-                        themeButton.focus = true;
-                        navSound.play();
-                        homeSwitcher.currentIndex = -1;
-                }
-            }
-
-            MenuButton {
-                id: settingsButton
-                width: vpx(86); height: vpx(86)
-                label: "Theme Settings"
-                icon: "../assets/images/navigation/Settings.png"
-
-                //Disabled until settings screen is built/implemented
-                Keys.onPressed: {
-                    if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-                        event.accepted = true;
-                        showSettingsScreen();
-                    }
-                }
-
-                Keys.onLeftPressed:{
-                    navSound.play();
-                    themeButton.focus = true
-                }
-
-                Keys.onRightPressed:{
-                    borderSfx.play();
-                }
-                onClicked: {
-                    if (settingsButton.focus)
-                    {
-                        showSettingsScreen();
-                    }
-                    else
-                        settingsButton.focus = true;
-                        navSound.play();
-                        homeSwitcher.currentIndex = -1;
-                }
-                visible: true
+            onClicked: {
+                if (themeButton.focus) { selectSfx.play(); toggleDarkMode(); }
+                else { themeButton.focus = true; navSound.play(); homeSwitcher.currentIndex = -1; }
             }
         }
+
+        MenuButton {
+            id: settingsButton
+            width: vpx(56); height: vpx(56)
+            label: "Theme Settings"
+            icon: "../assets/images/navigation/Settings.png"
+
+            Keys.onPressed: {
+                if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                    event.accepted = true;
+                    showSettingsScreen();
+                }
+            }
+            Keys.onLeftPressed: { navSound.play(); themeButton.focus = true }
+            Keys.onRightPressed: { borderSfx.play() }
+            onClicked: {
+                if (settingsButton.focus) { showSettingsScreen(); }
+                else { settingsButton.focus = true; navSound.play(); homeSwitcher.currentIndex = -1; }
+            }
+        }
+    }
+}
     }
 }

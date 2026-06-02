@@ -88,6 +88,15 @@ ListView {
                 return getGameBackground(gameData, settings.gameBackground);
             }
 
+            Rectangle {
+                id: imageMask
+                width: isGame ? homeLayout.height : homeLayout.height * 0.7
+                height: width
+                radius: vpx(24)
+                visible: false
+                anchors.centerIn: parent
+            }
+
             Image {
                 id: gameImage
 
@@ -112,11 +121,7 @@ ListView {
 
                 layer.enabled: true
                 layer.effect: OpacityMask {
-                    maskSource: Rectangle {
-                        width: gameImage.width
-                        height: gameImage.height
-                        radius: vpx(24)
-                    }
+                    maskSource: imageMask
                 }
 
             Rectangle {
