@@ -4,12 +4,13 @@ import QtGraphicalEffects 1.12
 Rectangle {
     property bool selected: false
     property int borderwidth: idx && idx == -3 ? vpx(7) : vpx(5)
+    property int borderRadius: vpx(3)
 
     id: hlBorder
     width: parent.width
     height: parent.height
     color: theme.accent
-    radius: idx && idx == -3 ? width : vpx(3)
+    radius: idx && idx == -3 ? width : borderRadius
     layer.enabled: enableDropShadows
     layer.effect: DropShadow {
         transparentBorder: true
@@ -42,7 +43,7 @@ Rectangle {
     Rectangle {
         width: parent.width - (borderwidth*2)
         height: parent.height - (borderwidth*2)
-        radius: idx && idx == -3 ? width : vpx(3)
+        radius: idx && idx == -3 ? width : borderRadius
         anchors.centerIn: parent
         
         color: idx && idx == -3 ? theme.button : theme.highlight

@@ -78,10 +78,10 @@ ListView {
                     radius: 16
                     samples: 32
                     color: "#30000000"
-            }
+                }
 
-    anchors.centerIn: parent
-}
+                anchors.centerIn: parent
+            }
 
             // Preference order for Game Backgrounds
             property var gameBG: {
@@ -286,6 +286,7 @@ ListView {
                 y: vpx(-9)
                 z: -1
 
+                borderRadius: vpx(30)
                 selected: wrapper.ListView.isCurrentItem
             }
 
