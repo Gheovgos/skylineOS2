@@ -83,11 +83,10 @@ ListView {
 
                 x: expanded ? (screenwidth - width) / 2 : wrapper.mapToItem(homeScreenContainer, 0, 0).x
                 y: expanded ? (screenheight - height) / 2 : wrapper.mapToItem(homeScreenContainer, 0, 0).y
+                z: 10
 
                 radius: vpx(24)
                 color: theme.button
-
-                // *** CORRETTO: visibile solo quando expanded ***
                 visible: expanded
                 opacity: expanded ? 1 : 0
 
@@ -121,6 +120,14 @@ ListView {
                     }
                 }
 
+                function formatPlayTime(seconds) {
+                    if (!seconds || seconds <= 0)
+                        return "0:00";
+                    var h = Math.floor(seconds / 3600);
+                    var m = Math.floor((seconds % 3600) / 60);
+                    return h + ":" + (m < 10 ? "0" + m : m);
+                }
+
                 Rectangle {
                     id: dimOverlay
                     parent: homeScreenContainer
@@ -128,7 +135,7 @@ ListView {
                     color: "black"
                     opacity: expanded ? 0.5 : 0
                     visible: expanded
-                    z: expandedPanel.z - 1
+                    z: 9
                     Behavior on opacity {
                         NumberAnimation {
                             duration: 250
@@ -141,18 +148,365 @@ ListView {
                     }
                 }
 
-                Text {
-                    anchors.centerIn: parent
-                    text: gameData ? gameData.title : ""
-                    color: theme.text
-                    font.family: titleFont.name
-                    font.pixelSize: Math.round(screenheight * 0.04)
-                    font.bold: true
+                // Padding interno
+                Item {
+                    anchors {
+                        fill: parent
+                        margins: vpx(32)
+                    }
                     opacity: expanded ? 1 : 0
                     Behavior on opacity {
                         NumberAnimation {
                             duration: 150
                         }
+                    }
+
+                    // TITOLO in alto a sinistra
+                    Text {
+                        id: panelTitle
+                        text: gameData ? gameData.title : ""
+                        color: theme.text
+                        font.family: titleFont.name
+                        font.pixelSize: Math.round(screenheight * 0.04)
+                        font.bold: true
+                        anchors {
+                            top: parent.top
+                            left: parent.left
+                        }
+                    }
+
+                    Column {
+                        id: leftColumn
+                        spacing: vpx(12)
+                        width: Math.round(parent.width * 0.28)
+                        anchors {
+                            top: panelTitle.bottom
+                            topMargin: vpx(20)
+                            left: parent.left
+                        }
+
+                        // Cover (boxFront)
+                        Rectangle {
+                            width: parent.width
+                            height: width
+                            radius: vpx(12)
+                            color: theme.main
+
+                            Image {
+                                id: coverImage
+                                anchors.fill: parent
+                                anchors.margins: vpx(2)
+                                source: gameData ? (gameData.assets.boxFront || "") : ""
+                                fillMode: Image.PreserveAspectFit
+                                asynchronous: true
+                                smooth: true
+
+                                layer.enabled: true
+                                layer.effect: OpacityMask {
+                                    maskSource: Rectangle {
+                                        width: coverImage.width
+                                        height: coverImage.height
+                                        radius: vpx(10)
+                                        visible: false
+                                    }
+                                }
+                            }
+
+                            // Placeholder if not cover
+                            Text {
+                                anchors.centerIn: parent
+                                text: "?"
+                                color: theme.icon
+                                font.pixelSize: Math.round(screenheight * 0.05)
+                                visible: !coverImage.source || coverImage.status !== Image.Ready
+                            }
+                        }
+
+                        // Date rilascio
+                        Text {
+                            text: {
+                                if (!gameData)
+                                    return "";
+                                var rd = gameData.releaseYear ? gameData.releaseYear : "";
+                                return rd ? rd : "";
+                            }
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.022)
+                            visible: text !== ""
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                        }
+
+                        // Generi
+                        Text {
+                            text: gameData ? gameData.genreList.join(", ") : ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.022)
+                            visible: text !== ""
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                        }
+
+                        // Ore totali giocate
+                        Row {
+                            spacing: vpx(8)
+                            visible: gameData && gameData.playTime > 0
+
+                            Image {
+                                id: clockIcon
+                                source: "../assets/images/navigation/clock.svg"
+                                width: vpx(20)
+                                height: vpx(20)
+                                fillMode: Image.PreserveAspectFit
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            ColorOverlay {
+                                anchors.fill: clockIcon
+                                source: clockIcon
+                                color: theme.icon
+                            }
+
+                            Text {
+                                text: "Ore totali: " + expandedPanel.formatPlayTime(gameData ? gameData.playTime : 0)
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.022)
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        // Progress (ultimo avvio)
+                        Row {
+                            spacing: vpx(8)
+                            visible: gameData && gameData.lastPlayed !== undefined
+
+                            Image {
+                                id: progressIcon
+                                source: "../assets/images/navigation/progress.svg"
+                                width: vpx(20)
+                                height: vpx(20)
+                                fillMode: Image.PreserveAspectFit
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            ColorOverlay {
+                                anchors.fill: progressIcon
+                                source: progressIcon
+                                color: theme.icon
+                            }
+
+                            Text {
+                                text: gameData && gameData.lastPlayed ? Qt.formatDate(gameData.lastPlayed, "dd/MM/yyyy") : ""
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.022)
+                                anchors.verticalCenter: parent.verticalCenter
+                                visible: text !== ""
+                            }
+                        }
+                    }
+
+                    Column {
+                        id: rightColumn
+                        spacing: vpx(16)
+                        anchors {
+                            top: panelTitle.bottom
+                            topMargin: vpx(20)
+                            left: leftColumn.right
+                            leftMargin: vpx(32)
+                            right: parent.right
+                        }
+
+                        // Descrizione
+                        Text {
+                            id: descTitle
+                            text: "Descrizione"
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.03)
+                            font.bold: true
+                        }
+
+                        Text {
+                            id: descText
+                            text: gameData ? (gameData.description || "") : ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.022)
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                            maximumLineCount: 6
+                            elide: Text.ElideRight
+                            visible: text !== ""
+                        }
+
+                        // Note aggiuntive (developer/publisher)
+                        Text {
+                            text: {
+                                if (!gameData)
+                                    return "";
+                                var parts = [];
+                                if (gameData.developer)
+                                    parts.push("Sviluppatore: " + gameData.developer);
+                                if (gameData.publisher)
+                                    parts.push("Publisher: " + gameData.publisher);
+                                return parts.join("\n");
+                            }
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.022)
+                            wrapMode: Text.WordWrap
+                            width: parent.width
+                            visible: text !== ""
+                        }
+
+                        // Giocatori
+                        Text {
+                            text: gameData && gameData.players > 0 ? "Giocatori: " + gameData.players : ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.022)
+                            visible: text !== ""
+                        }
+
+                        // Rating
+                        Text {
+                            text: gameData && gameData.rating > 0 ? "Rating: " + Math.round(gameData.rating * 100) + "%" : ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.022)
+                            visible: text !== ""
+                        }
+                    }
+
+                    // PULSANTE PLAY in basso a destra
+                    Rectangle {
+                        id: playButton
+                        width: vpx(120)
+                        height: vpx(48)
+                        radius: vpx(12)
+                        color: theme.accent
+                        anchors {
+                            bottom: parent.bottom
+                            right: parent.right
+                        }
+
+                        layer.enabled: enableDropShadows
+                        layer.effect: DropShadow {
+                            transparentBorder: true
+                            horizontalOffset: 0
+                            verticalOffset: vpx(3)
+                            radius: 8
+                            samples: 16
+                            color: "#40000000"
+                        }
+
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: vpx(8)
+
+                            Image {
+                                id: playIcon
+                                source: "../assets/images/navigation/play.svg"
+                                width: vpx(18)
+                                height: vpx(18)
+                                fillMode: Image.PreserveAspectFit
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                            ColorOverlay {
+                                anchors.fill: playIcon
+                                source: playIcon
+                                color: "white"
+                            }
+
+                            Text {
+                                text: "Play"
+                                color: "white"
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.025)
+                                font.bold: true
+                                anchors.verticalCenter: parent.verticalCenter
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                wrapper.expanded = false;
+                                anim.start();
+                                playGame();
+                            }
+                        }
+                    }
+
+                    // BADGE favorito in alto a destra
+                    Rectangle {
+                        width: vpx(36)
+                        height: vpx(36)
+                        radius: width / 2
+                        color: gameData && gameData.favorite ? theme.accent : theme.main
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                        }
+
+                        Image {
+                            id: favIcon
+                            source: "../assets/images/heart_filled.png"
+                            anchors.fill: parent
+                            anchors.margins: vpx(8)
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                        }
+                        ColorOverlay {
+                            anchors.fill: favIcon
+                            source: favIcon
+                            color: "white"
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (gameData) {
+                                    gameData.favorite = !gameData.favorite;
+                                    gameData.favorite ? turnOnSfx.play() : turnOffSfx.play();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Blocca navigazione lista quando espanso
+                Keys.onLeftPressed: {
+                    if (expanded)
+                        event.accepted = true;
+                }
+                Keys.onRightPressed: {
+                    if (expanded)
+                        event.accepted = true;
+                }
+                Keys.onUpPressed: {
+                    if (expanded)
+                        event.accepted = true;
+                }
+                Keys.onDownPressed: {
+                    if (expanded)
+                        event.accepted = true;
+                }
+                Keys.onPressed: {
+                    if (!expanded)
+                        return;
+                    event.accepted = true;
+                    // Filters/Back chiude
+                    if (api.keys.isFilters(event) || api.keys.isCancel(event)) {
+                        wrapper.expanded = false;
+                    }
+                    // Accept sul pannello = play
+                    if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                        wrapper.expanded = false;
+                        anim.start();
+                        playGame();
                     }
                 }
             }
@@ -271,11 +625,13 @@ ListView {
                     if (gameData != null) {
                         if (gameData.collections.get(0).shortName === "retropie")
                             return "";
-                            //gameData.assets.boxFront;
-                        else if (gameData.collections.get(0).shortName === "steam")
+                        else
+                        //gameData.assets.boxFront;
+                        if (gameData.collections.get(0).shortName === "steam")
                             return Utils.logo(gameData) ? Utils.logo(gameData) : "";
-                            //root.logo(gameData);
-                        else if (gameData.assets.tile != "")
+                        else
+                        //root.logo(gameData);
+                        if (gameData.assets.tile != "")
                             return "";
                         else if (gameBG == gameData.assets.boxFront)
                             return "";
