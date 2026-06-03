@@ -292,7 +292,6 @@ Item {
     width: buttonMenu.width + vpx(48)
     height: parent.bottom
 
-    // *** BARRA DI SFONDO ***
     Rectangle {
         id: buttonBar
         anchors.centerIn: parent
@@ -361,14 +360,14 @@ Item {
                 }
             }
             Keys.onLeftPressed: { navSound.play(); themeButton.focus = true }
-            Keys.onRightPressed: { borderSfx.play() }
+            Keys.onRightPressed: { borderSfx.play(); infoButton.focus = true }
             onClicked: {
                 if (settingsButton.focus) { showSettingsScreen(); }
                 else { settingsButton.focus = true; navSound.play(); homeSwitcher.currentIndex = -1; }
             }
         }
         
-            MenuButton {
+    MenuButton {
         id: infoButton
         width: vpx(56); height: vpx(56)
         label: "Info"

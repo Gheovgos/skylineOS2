@@ -5,14 +5,13 @@ import "../Lists"
 import "../utils.js" as Utils
 import "qrc:/qmlutils" as PegasusUtils
 
-
 ListView {
     id: homeLayout
     //anchors.fill: parent
     property int _index: 0
     spacing: vpx(24)
     orientation: ListView.Horizontal
-    
+
     displayMarginBeginning: vpx(107)
     displayMarginEnd: vpx(107)
 
@@ -23,8 +22,13 @@ ListView {
     highlightMoveDuration: 100
     highlightMoveVelocity: -1
     keyNavigationWraps: true
-    
-    NumberAnimation { id: anim; property: "scale"; to: 0.7; duration: 100 }
+
+    NumberAnimation {
+        id: anim
+        property: "scale"
+        to: 0.7
+        duration: 100
+    }
 
     model: gamesListModel
     delegate: homeBarDelegate
@@ -37,9 +41,18 @@ ListView {
             property bool selected: ListView.isCurrentItem
             property var gameData: searchtext ? modelData : listRecent.currentGame(idx)
             property bool isGame: idx >= 0
+            property bool expanded: false
 
-            onGameDataChanged: { if (selected) updateData() }
-            onSelectedChanged: { if (selected) updateData() }
+            onGameDataChanged: {
+                if (selected)
+                    updateData();
+            }
+            onSelectedChanged: {
+                if (!selected)
+                    expanded = false;
+                if (selected)
+                    updateData();
+            }
 
             function updateData() {
                 currentGame = gameData;
@@ -52,12 +65,95 @@ ListView {
 
             anchors.verticalCenter: parent.verticalCenter
 
-            scale: selected ? 1.08 : 1.0
-
+            scale: selected && !expanded ? 1.08 : expanded ? 0 : 1.0
             Behavior on scale {
                 NumberAnimation {
                     duration: 150
                     easing.type: Easing.OutCubic
+                }
+            }
+
+            Rectangle {
+                id: expandedPanel
+
+                parent: homeScreenContainer
+
+                width: expanded ? Math.round(screenwidth * 0.75) : wrapper.width
+                height: expanded ? Math.round(screenheight * 0.75) : wrapper.height
+
+                x: expanded ? (screenwidth - width) / 2 : wrapper.mapToItem(homeScreenContainer, 0, 0).x
+                y: expanded ? (screenheight - height) / 2 : wrapper.mapToItem(homeScreenContainer, 0, 0).y
+
+                radius: vpx(24)
+                color: theme.button
+
+                // *** CORRETTO: visibile solo quando expanded ***
+                visible: expanded
+                opacity: expanded ? 1 : 0
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on x {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on y {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 200
+                    }
+                }
+
+                Rectangle {
+                    id: dimOverlay
+                    parent: homeScreenContainer
+                    anchors.fill: parent
+                    color: "black"
+                    opacity: expanded ? 0.5 : 0
+                    visible: expanded
+                    z: expandedPanel.z - 1
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 250
+                        }
+                    }
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: expanded
+                        onClicked: wrapper.expanded = false
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: gameData ? gameData.title : ""
+                    color: theme.text
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.04)
+                    font.bold: true
+                    opacity: expanded ? 1 : 0
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 150
+                        }
+                    }
                 }
             }
 
@@ -106,9 +202,7 @@ ListView {
                 smooth: true
                 asynchronous: true
 
-                fillMode: (gameBG == gameData.assets.boxFront)
-                    ? Image.PreserveAspectFit
-                    : Image.PreserveAspectCrop
+                fillMode: (gameBG == gameData.assets.boxFront) ? Image.PreserveAspectFit : Image.PreserveAspectCrop
 
                 source: gameBG
 
@@ -124,39 +218,39 @@ ListView {
                     maskSource: imageMask
                 }
 
-            Rectangle {
-                id: favicon
-                anchors {
-                    right: parent.right
-                    rightMargin: vpx(5)
-                    top: parent.top
-                    topMargin: vpx(5)
+                Rectangle {
+                    id: favicon
+                    anchors {
+                        right: parent.right
+                        rightMargin: vpx(5)
+                        top: parent.top
+                        topMargin: vpx(5)
+                    }
+
+                    width: vpx(32)
+                    height: width
+                    radius: width / 2
+                    color: theme.accent
+                    visible: isGame ? gameData.favorite : false
+
+                    Image {
+                        id: faviconImage
+                        source: "../assets/images/heart_filled.png"
+                        asynchronous: true
+                        anchors.fill: parent
+                        anchors.margins: vpx(7)
+                    }
+
+                    ColorOverlay {
+                        anchors.fill: faviconImage
+                        source: faviconImage
+                        color: "white"
+                        antialiasing: true
+                        smooth: true
+                        cached: true
+                    }
                 }
-
-                width: vpx(32)
-                height: width
-                radius: width / 2
-                color: theme.accent
-                visible: isGame ? gameData.favorite : false
-
-                Image {
-                    id: faviconImage
-                    source: "../assets/images/heart_filled.png"
-                    asynchronous: true
-                    anchors.fill: parent
-                    anchors.margins: vpx(7)
-                }
-
-            ColorOverlay {
-            anchors.fill: faviconImage
-            source: faviconImage
-            color: "white"
-            antialiasing: true
-            smooth: true
-            cached: true
-        }
-    }
-}
+            }
 
             //white overlay on screenshot for better logo visibility over screenshot
             Rectangle {
@@ -176,9 +270,11 @@ ListView {
                 property var logoImage: {
                     if (gameData != null) {
                         if (gameData.collections.get(0).shortName === "retropie")
-                            return "";//gameData.assets.boxFront;
+                            return "";
+                            //gameData.assets.boxFront;
                         else if (gameData.collections.get(0).shortName === "steam")
-                            return Utils.logo(gameData) ? Utils.logo(gameData) : "" //root.logo(gameData);
+                            return Utils.logo(gameData) ? Utils.logo(gameData) : "";
+                            //root.logo(gameData);
                         else if (gameData.assets.tile != "")
                             return "";
                         else if (gameBG == gameData.assets.boxFront)
@@ -186,7 +282,7 @@ ListView {
                         else
                             return gameData.assets.logo;
                     } else {
-                        return ""
+                        return "";
                     }
                 }
 
@@ -208,15 +304,13 @@ ListView {
                 visible: !isGame
             }
 
-
-            Text
-            {
+            Text {
                 text: idx > -1 ? gameData.title : name
                 width: gameImage.width
-                horizontalAlignment : Text.AlignHCenter
+                horizontalAlignment: Text.AlignHCenter
                 font.family: titleFont.name
                 color: theme.text
-                font.pixelSize: Math.round(screenheight*0.025)
+                font.pixelSize: Math.round(screenheight * 0.025)
                 font.bold: true
 
                 anchors.centerIn: gameImage
@@ -231,21 +325,18 @@ ListView {
                 onEntered: {}
                 onExited: {}
                 onClicked: {
-                    if (selected)
-                    {
+                    if (selected) {
                         if (currentIndex == softCount) {
                             gotoSoftware();
                         } else {
                             anim.start();
                             playGame();//launchGame(currentGame);
                         }
-                    }
-                    else
+                    } else
                         navSound.play();
-                        homeSwitcher.currentIndex = index
-                        homeSwitcher.focus = true
-                        buttonMenu.focus = false
-
+                    homeSwitcher.currentIndex = index;
+                    homeSwitcher.focus = true;
+                    buttonMenu.focus = false;
                 }
             }
 
@@ -254,7 +345,7 @@ ListView {
                 text: idx > -1 ? gameData.title : name
                 color: theme.accent
                 font.family: titleFont.name
-                font.pixelSize: Math.round(screenheight*0.035)
+                font.pixelSize: Math.round(screenheight * 0.035)
                 font.weight: Font.DemiBold
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
@@ -263,29 +354,32 @@ ListView {
 
                 anchors {
                     horizontalCenter: gameImage.horizontalCenter
-                    bottom: gameImage.top; bottomMargin: Math.round(screenheight*0.025)
+                    bottom: gameImage.top
+                    bottomMargin: Math.round(screenheight * 0.025)
                 }
 
                 opacity: wrapper.ListView.isCurrentItem ? 1 : 0
-                Behavior on opacity { NumberAnimation { duration: 75 } }
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: 75
+                    }
+                }
             }
 
             Component.onCompleted: {
                 if (wordWrap) {
                     if (topTitle.paintedWidth > gameImage.width * 1.70) {
-                        topTitle.width = gameImage.width * 1.5
+                        topTitle.width = gameImage.width * 1.5;
                     }
                 }
             }
 
-            HighlightBorder
-            {
+            HighlightBorder {
                 id: highlightBorder
                 width: gameImage.width + vpx(18)//vpx(274)
                 height: width//vpx(274)
-                
+
                 anchors.centerIn: parent
-                
 
                 x: vpx(-9)
                 y: vpx(-9)
@@ -294,7 +388,6 @@ ListView {
                 borderRadius: vpx(30)
                 selected: wrapper.ListView.isCurrentItem
             }
-
         }
     }
 
@@ -307,22 +400,20 @@ ListView {
         incrementCurrentIndex();
     }
 
-    Keys.onUpPressed:{
+    Keys.onUpPressed: {
         borderSfx.play();
     }
 
     Keys.onDownPressed: {
         _index = currentIndex;
         navSound.play();
-        themeButton.focus = true
-        homeSwitcher.currentIndex = -1
+        themeButton.focus = true;
+        homeSwitcher.currentIndex = -1;
     }
 
-    function gotoSoftware()
-    {
-            showSoftwareScreen();
+    function gotoSoftware() {
+        showSoftwareScreen();
     }
-
 
     //TODO Software screen is always at index 12, but would hopefully not exist/be visible if there are less than 12 titles
     Keys.onPressed: {
@@ -338,17 +429,21 @@ ListView {
 
         if (api.keys.isDetails(event)) {
             event.accepted = true;
-            if (currentGame.favorite){
+            if (currentGame.favorite) {
                 turnOffSfx.play();
-            }
-            else {
+            } else {
                 turnOnSfx.play();
             }
-            currentGame.favorite = !currentGame.favorite
+            currentGame.favorite = !currentGame.favorite;
+            return;
+        }
+
+        if (api.keys.isFilters(event) && !event.isAutoRepeat) {
+            event.accepted = true;
+            var item = homeLayout.currentItem;
+            if (item)
+                item.expanded = !item.expanded;
             return;
         }
     }
-
-    
 }
-
