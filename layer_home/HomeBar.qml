@@ -43,6 +43,17 @@ ListView {
             property bool isGame: idx >= 0
             property bool expanded: false
 
+            property real savedX: 0
+            property real savedY: 0
+
+            onExpandedChanged: {
+                if (expanded) {
+                    var pos = wrapper.mapToItem(homeScreenContainer, 0, 0);
+                    savedX = pos.x;
+                    savedY = pos.y;
+                }
+            }
+
             onGameDataChanged: {
                 if (selected)
                     updateData();
@@ -81,14 +92,44 @@ ListView {
                 width: expanded ? Math.round(screenwidth * 0.75) : wrapper.width
                 height: expanded ? Math.round(screenheight * 0.75) : wrapper.height
 
-                x: expanded ? (screenwidth - width) / 2 : wrapper.mapToItem(homeScreenContainer, 0, 0).x
-                y: expanded ? (screenheight - height) / 2 : wrapper.mapToItem(homeScreenContainer, 0, 0).y
+                x: expanded ? (screenwidth - width) / 2 : wrapper.savedX
+                y: expanded ? (screenheight - height) / 2 : wrapper.savedY
                 z: 10
 
                 radius: vpx(24)
                 color: theme.button
                 visible: expanded
                 opacity: expanded ? 1 : 0
+
+                // *** PUNTO 2: bordo accent quando favorito ***
+                border.width: expanded && gameData && gameData.favorite ? vpx(3) : 0
+                border.color: theme.accent
+                Behavior on border.width {
+                    NumberAnimation {
+                        duration: 200
+                    }
+                }
+
+                // *** PUNTO 2: glow accent quando favorito ***
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: 0
+                    verticalOffset: 0
+                    radius: expanded && gameData && gameData.favorite ? 24 : 8
+                    samples: 32
+                    color: expanded && gameData && gameData.favorite ? theme.accent : "#50000000"
+                    Behavior on radius {
+                        NumberAnimation {
+                            duration: 200
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 200
+                        }
+                    }
+                }
 
                 Behavior on width {
                     NumberAnimation {
@@ -148,6 +189,24 @@ ListView {
                     }
                 }
 
+                // Background screenshot sfumato
+                Image {
+                    parent: homeScreenContainer
+                    anchors.fill: parent
+                    source: gameData ? (gameData.assets.background || gameData.assets.screenshots[0] || "") : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    smooth: true
+                    visible: source !== "" && expanded
+                    opacity: 0.15
+                    z: 8  // sotto dimOverlay (z:9) e expandedPanel (z:10)
+
+                    layer.enabled: true
+                    layer.effect: FastBlur {
+                        radius: 32
+                    }
+                }
+
                 Item {
                     id: panelContent
                     anchors {
@@ -161,30 +220,95 @@ ListView {
                         }
                     }
 
+                    // TITOLO
                     Text {
                         id: panelTitle
                         text: gameData ? gameData.title : ""
                         color: theme.text
                         font.family: titleFont.name
-                        font.pixelSize: Math.round(screenheight * 0.04)
+                        font.pixelSize: Math.round(screenheight * 0.045)
                         font.bold: true
                         anchors {
                             top: parent.top
                             left: parent.left
-                            right: favBadge.left
-                            rightMargin: vpx(8)
+                            right: parent.right
+                            rightMargin: vpx(48)
                         }
                     }
 
+                    // SOTTOTITOLO: genere + anno
+                    Row {
+                        id: panelSubtitle
+                        spacing: vpx(6)
+                        anchors {
+                            top: panelTitle.bottom
+                            topMargin: vpx(8)
+                            left: parent.left
+                        }
+                        visible: gameData && gameData.genreList && gameData.genreList.length > 0
+
+                        property var pillColors: ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"]
+
+                        Repeater {
+                            model: gameData ? gameData.genreList : []
+                            Rectangle {
+                                height: vpx(22)
+                                width: genreText.width + vpx(12)
+                                radius: height / 2
+                                color: panelSubtitle.pillColors[index % panelSubtitle.pillColors.length]
+                                opacity: 0.85
+
+                                Text {
+                                    id: genreText
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: "white"
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.017)
+                                    font.bold: true
+                                }
+                            }
+                        }
+                    }
+
+                    // SEPARATORE ORIZZONTALE
+                    Rectangle {
+                        id: divider
+                        anchors {
+                            top: panelSubtitle.bottom
+                            topMargin: vpx(16)
+                            left: parent.left
+                            right: parent.right
+                        }
+                        height: 1
+                        color: theme.text
+                        opacity: 0.12
+                    }
+
+                    // BADGE FAVORITO — cerchio accent in alto a destra
                     Rectangle {
                         id: favBadge
-                        width: vpx(36)
-                        height: vpx(36)
+                        width: vpx(32)
+                        height: vpx(32)
                         radius: width / 2
-                        color: gameData && gameData.favorite ? theme.accent : theme.main
+                        color: gameData && gameData.favorite ? theme.accent : "transparent"
+                        border.color: gameData && gameData.favorite ? theme.accent : theme.text
+                        border.width: vpx(2)
+                        opacity: gameData && gameData.favorite ? 1 : 0.35
                         anchors {
                             top: parent.top
                             right: parent.right
+                        }
+
+                        Behavior on color {
+                            ColorAnimation {
+                                duration: 150
+                            }
+                        }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 150
+                            }
                         }
 
                         Image {
@@ -192,7 +316,7 @@ ListView {
                             source: "../assets/images/heart_filled.png"
                             anchors {
                                 fill: parent
-                                margins: vpx(8)
+                                margins: vpx(7)
                             }
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
@@ -200,7 +324,12 @@ ListView {
                         ColorOverlay {
                             anchors.fill: favIcon
                             source: favIcon
-                            color: "white"
+                            color: gameData && gameData.favorite ? "white" : theme.text
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 150
+                                }
+                            }
                         }
                         MouseArea {
                             anchors.fill: parent
@@ -213,20 +342,22 @@ ListView {
                         }
                     }
 
+                    // AREA CONTENUTO
                     Item {
                         id: contentArea
                         anchors {
-                            top: panelTitle.bottom
+                            top: divider.bottom
                             topMargin: vpx(20)
                             left: parent.left
                             right: parent.right
                             bottom: playButton.top
-                            bottomMargin: vpx(16)
+                            bottomMargin: vpx(20)
                         }
 
+                        // COLONNA SINISTRA: cover + stats
                         Item {
                             id: leftCol
-                            width: Math.round(parent.width * 0.28)
+                            width: Math.round(parent.width * 0.26)
                             anchors {
                                 top: parent.top
                                 left: parent.left
@@ -236,19 +367,30 @@ ListView {
 
                             Column {
                                 width: parent.width
-                                spacing: vpx(12)
+                                spacing: vpx(14)
 
+                                // Cover con ombra
                                 Rectangle {
                                     width: parent.width
                                     height: width
-                                    radius: vpx(12)
+                                    radius: vpx(16)
                                     color: theme.main
+
+                                    layer.enabled: enableDropShadows
+                                    layer.effect: DropShadow {
+                                        transparentBorder: true
+                                        horizontalOffset: 0
+                                        verticalOffset: vpx(6)
+                                        radius: 16
+                                        samples: 32
+                                        color: "#50000000"
+                                    }
 
                                     Image {
                                         id: coverImage
                                         anchors {
                                             fill: parent
-                                            margins: vpx(2)
+                                            margins: vpx(0)
                                         }
                                         source: gameData ? (gameData.assets.boxFront || "") : ""
                                         fillMode: Image.PreserveAspectFit
@@ -259,48 +401,67 @@ ListView {
                                             maskSource: Rectangle {
                                                 width: coverImage.width
                                                 height: coverImage.height
-                                                radius: vpx(10)
+                                                radius: vpx(16)
                                                 visible: false
                                             }
                                         }
                                     }
+                                    // Placeholder
                                     Text {
                                         anchors.centerIn: parent
-                                        text: "?"
+                                        text: gameData ? (gameData.title.charAt(0)) : "?"
                                         color: theme.icon
-                                        font.pixelSize: Math.round(screenheight * 0.05)
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.06)
+                                        font.bold: true
                                         visible: coverImage.status !== Image.Ready
                                     }
                                 }
 
-                                Text {
-                                    text: gameData && gameData.releaseYear > 0 ? gameData.releaseYear : ""
-                                    color: theme.icon
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.022)
-                                    visible: gameData && gameData.releaseYear > 0
-                                    wrapMode: Text.WordWrap
-                                    width: parent.width
+                                // Stats pill row
+                                Row {
+                                    spacing: vpx(8)
+                                    visible: {
+                                        var pt = gameData ? gameData.playTime : 0;
+                                        var manual = (gameData && gameData.extra) ? (gameData.extra["x-playtime"] || 0) : 0;
+                                        return pt > 0 || manual > 0;
+                                    }
+
+                                    Rectangle {
+                                        height: vpx(28)
+                                        width: statRow.width + vpx(16)
+                                        radius: height / 2
+                                        color: theme.main
+
+                                        Row {
+                                            id: statRow
+                                            anchors.centerIn: parent
+                                            spacing: vpx(6)
+
+                                            Text {
+                                                text: "⏱"
+                                                font.pixelSize: Math.round(screenheight * 0.018)
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                            Text {
+                                                text: {
+                                                    var pt = gameData ? gameData.playTime : 0;
+                                                    if (pt > 0)
+                                                        return expandedPanel.formatPlayTime(pt);
+                                                    var manual = (gameData && gameData.extra) ? (gameData.extra["x-playtime"] || 0) : 0;
+                                                    return manual > 0 ? expandedPanel.formatPlayTime(manual) : "";
+                                                }
+                                                color: theme.text
+                                                font.family: titleFont.name
+                                                font.pixelSize: Math.round(screenheight * 0.018)
+                                                font.bold: true
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                    }
                                 }
 
-                                Text {
-                                    text: gameData ? gameData.genreList.join(", ") : ""
-                                    color: theme.icon
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.022)
-                                    visible: text !== ""
-                                    wrapMode: Text.WordWrap
-                                    width: parent.width
-                                }
-
-                                Text {
-                                    text: "playTime raw: " + (gameData.playTime)
-                                    color: theme.icon
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.022)
-                                    width: parent.width
-                                }
-
+                                // Ultimo avvio
                                 Text {
                                     text: {
                                         if (!gameData || !gameData.lastPlayed)
@@ -308,24 +469,160 @@ ListView {
                                         var d = new Date(gameData.lastPlayed);
                                         if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
                                             return "";
-                                        return "Ultimo: " + Qt.formatDate(d, "dd/MM/yyyy");
+                                        return "Giocato il " + Qt.formatDate(d, "dd/MM/yyyy");
                                     }
                                     color: theme.icon
                                     font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    font.pixelSize: Math.round(screenheight * 0.018)
                                     visible: text !== ""
                                     width: parent.width
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                Item {
+                                    width: parent.width
+                                    height: vpx(32)
+                                    visible: gameData && gameData.playTime > 0
+
+                                    property real progressVal: Math.min((gameData ? gameData.playTime : 0) / 360000, 1) // 100h = 100%
+
+                                    Text {
+                                        id: progressLabel
+                                        text: "Ore giocate"
+                                        color: theme.icon
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.016)
+                                        anchors {
+                                            top: parent.top
+                                            left: parent.left
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        anchors {
+                                            left: parent.left
+                                            right: progressPct.left
+                                            rightMargin: vpx(8)
+                                        }
+                                        y: progressLabel.height + vpx(4)
+                                        height: vpx(5)
+                                        radius: height / 2
+                                        color: theme.main
+
+                                        Rectangle {
+                                            width: parent.width * parent.parent.progressVal
+                                            height: parent.height
+                                            radius: parent.radius
+                                            color: theme.accent
+                                            Behavior on width {
+                                                NumberAnimation {
+                                                    duration: 400
+                                                    easing.type: Easing.OutCubic
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Text {
+                                        id: progressPct
+                                        anchors {
+                                            right: parent.right
+                                            bottom: parent.bottom
+                                        }
+                                        text: gameData ? Math.round((gameData.playTime / 360000) * 100) + "%" : ""
+                                        color: theme.accent
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.016)
+                                        font.bold: true
+                                    }
+                                }
+
+                                Text {
+                                    text: {
+                                        var start = (gameData && gameData.extra) ? (gameData.extra["x-start-date"] || "") : "";
+                                        var end = (gameData && gameData.extra) ? (gameData.extra["x-end-date"] || "") : "";
+                                        if (start && end)
+                                            return "Dal " + start + "\nal " + end;
+                                        if (start)
+                                            return "Iniziato: " + start;
+                                        return "";
+                                    }
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.017)
+                                    visible: text !== ""
+                                    width: parent.width
+                                    wrapMode: Text.WordWrap
+                                }
+
+                                // Sviluppatore pill
+                                Rectangle {
+                                    width: devText.width + vpx(16)
+                                    height: vpx(24)
+                                    radius: height / 2
+                                    color: theme.main
+                                    visible: gameData && gameData.developer !== ""
+
+                                    Text {
+                                        id: devText
+                                        anchors.centerIn: parent
+                                        text: gameData ? (gameData.developer || "") : ""
+                                        color: theme.icon
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.017)
+                                    }
+                                }
+
+                                // Giocatori pill
+                                Rectangle {
+                                    width: playersRow.width + vpx(16)
+                                    height: vpx(24)
+                                    radius: height / 2
+                                    color: theme.main
+                                    visible: gameData && gameData.players > 0
+
+                                    Row {
+                                        id: playersRow
+                                        anchors.centerIn: parent
+                                        spacing: vpx(4)
+                                        Text {
+                                            text: "👤"
+                                            font.pixelSize: Math.round(screenheight * 0.016)
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                        Text {
+                                            text: gameData ? gameData.players : ""
+                                            color: theme.icon
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.017)
+                                            anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
                                 }
                             }
                         }
 
+                        // SEPARATORE VERTICALE
+                        Rectangle {
+                            anchors {
+                                top: parent.top
+                                bottom: parent.bottom
+                                left: leftCol.right
+                                leftMargin: vpx(24)
+                            }
+                            width: 1
+                            color: theme.text
+                            opacity: 0.10
+                        }
+
+                        // COLONNA DESTRA: descrizione
                         Column {
                             id: rightCol
-                            spacing: vpx(16)
+                            spacing: vpx(12)
                             anchors {
                                 top: parent.top
                                 left: leftCol.right
-                                leftMargin: vpx(32)
+                                leftMargin: vpx(40)
                                 right: parent.right
                             }
 
@@ -333,60 +630,53 @@ ListView {
                                 text: "Descrizione"
                                 color: theme.text
                                 font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.03)
+                                font.pixelSize: Math.round(screenheight * 0.022)
                                 font.bold: true
+                                opacity: 0.5
+                                font.letterSpacing: 1.5
                             }
+
                             Text {
-                                text: gameData ? (gameData.description || "") : ""
-                                color: theme.icon
+                                text: gameData ? (gameData.description || "Nessuna descrizione disponibile.") : ""
+                                color: theme.text
                                 font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.022)
+                                font.pixelSize: Math.round(screenheight * 0.023)
                                 wrapMode: Text.WordWrap
                                 width: parent.width
-                                maximumLineCount: 6
+                                maximumLineCount: 7
                                 elide: Text.ElideRight
-                                visible: text !== ""
+                                lineHeight: 1.4
                             }
-                            Text {
-                                text: {
-                                    if (!gameData)
-                                        return "";
-                                    var parts = [];
-                                    if (gameData.developer)
-                                        parts.push("Sviluppatore: " + gameData.developer);
-                                    if (gameData.publisher)
-                                        parts.push("Publisher: " + gameData.publisher);
-                                    return parts.join("\n");
+
+                            // Rating
+                            Row {
+                                spacing: vpx(8)
+                                visible: gameData && gameData.rating > 0
+
+                                Text {
+                                    text: "★"
+                                    color: theme.accent
+                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    anchors.verticalCenter: parent.verticalCenter
                                 }
-                                color: theme.icon
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.022)
-                                wrapMode: Text.WordWrap
-                                width: parent.width
-                                visible: text !== ""
-                            }
-                            Text {
-                                text: gameData && gameData.players > 0 ? "Giocatori: " + gameData.players : ""
-                                color: theme.icon
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.022)
-                                visible: text !== ""
-                            }
-                            Text {
-                                text: gameData && gameData.rating > 0 ? "Rating: " + Math.round(gameData.rating * 100) + "%" : ""
-                                color: theme.icon
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.022)
-                                visible: text !== ""
+                                Text {
+                                    text: gameData ? Math.round(gameData.rating * 10).toFixed(1) + " / 10" : ""
+                                    color: theme.text
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    font.bold: true
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
                             }
                         }
                     }
 
+                    // PULSANTE PLAY — cerchio accent in basso a destra
                     Rectangle {
                         id: playButton
                         width: vpx(56)
-                        height: vpx(48)  // più stretto senza testo
-                        radius: vpx(12)
+                        height: vpx(56)
+                        radius: width / 2
                         color: theme.accent
                         anchors {
                             bottom: parent.bottom
@@ -397,19 +687,20 @@ ListView {
                         layer.effect: DropShadow {
                             transparentBorder: true
                             horizontalOffset: 0
-                            verticalOffset: vpx(3)
-                            radius: 8
-                            samples: 16
-                            color: "#40000000"
+                            verticalOffset: vpx(4)
+                            radius: 12
+                            samples: 24
+                            color: "#50000000"
                         }
 
                         Image {
                             id: playIcon
                             source: "../assets/images/navigation/play.svg"
-                            width: vpx(22)
-                            height: vpx(22)
+                            width: vpx(20)
+                            height: vpx(20)
                             fillMode: Image.PreserveAspectFit
                             anchors.centerIn: parent
+                            anchors.horizontalCenterOffset: vpx(1)
                         }
                         ColorOverlay {
                             anchors.fill: playIcon
@@ -417,8 +708,17 @@ ListView {
                             color: "white"
                         }
 
+                        scale: playMouse.containsMouse ? 1.1 : 1.0
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 100
+                            }
+                        }
+
                         MouseArea {
+                            id: playMouse
                             anchors.fill: parent
+                            hoverEnabled: true
                             onClicked: {
                                 wrapper.expanded = false;
                                 anim.start();
@@ -466,16 +766,6 @@ ListView {
 
                 radius: vpx(24)
                 color: theme.button
-
-                layer.enabled: enableDropShadows && !selected
-                layer.effect: DropShadow {
-                    transparentBorder: true
-                    horizontalOffset: 0
-                    verticalOffset: vpx(4)
-                    radius: 16
-                    samples: 32
-                    color: "#30000000"
-                }
 
                 anchors.centerIn: parent
             }
