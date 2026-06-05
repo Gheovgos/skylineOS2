@@ -101,7 +101,6 @@ ListView {
                 visible: expanded
                 opacity: expanded ? 1 : 0
 
-                // *** PUNTO 2: bordo accent quando favorito ***
                 border.width: expanded && gameData && gameData.favorite ? vpx(3) : 0
                 border.color: theme.accent
                 Behavior on border.width {
@@ -110,7 +109,6 @@ ListView {
                     }
                 }
 
-                // *** PUNTO 2: glow accent quando favorito ***
                 layer.enabled: true
                 layer.effect: DropShadow {
                     transparentBorder: true
@@ -161,14 +159,6 @@ ListView {
                     }
                 }
 
-                function formatPlayTime(seconds) {
-                    if (!seconds || seconds <= 0)
-                        return "0:00";
-                    var h = Math.floor(seconds / 3600);
-                    var m = Math.floor((seconds % 3600) / 60);
-                    return h + ":" + (m < 10 ? "0" + m : m);
-                }
-
                 Rectangle {
                     id: dimOverlay
                     parent: homeScreenContainer
@@ -189,7 +179,7 @@ ListView {
                     }
                 }
 
-                // Background screenshot sfumato
+                // Background screenshot
                 Image {
                     parent: homeScreenContainer
                     anchors.fill: parent
@@ -199,7 +189,7 @@ ListView {
                     smooth: true
                     visible: source !== "" && expanded
                     opacity: 0.15
-                    z: 8  // sotto dimOverlay (z:9) e expandedPanel (z:10)
+                    z: 8
 
                     layer.enabled: true
                     layer.effect: FastBlur {
@@ -220,7 +210,7 @@ ListView {
                         }
                     }
 
-                    // TITOLO
+                    // TITLE
                     Text {
                         id: panelTitle
                         text: gameData ? gameData.title : ""
@@ -236,7 +226,7 @@ ListView {
                         }
                     }
 
-                    // SOTTOTITOLO: genere + anno
+                    // Subtitle
                     Row {
                         id: panelSubtitle
                         spacing: vpx(6)
@@ -246,6 +236,34 @@ ListView {
                             left: parent.left
                         }
                         visible: gameData && gameData.genreList && gameData.genreList.length > 0
+
+                        // Total Players
+                        Rectangle {
+                            width: playersRow.width + vpx(16)
+                            height: vpx(24)
+                            radius: height / 2
+                            color: theme.main
+                            visible: gameData && gameData.players > 0
+
+                            Row {
+                                id: playersRow
+                                anchors.centerIn: parent
+                                spacing: vpx(4)
+                                Image {
+                                    source: "../assets/images/navigation/player.svg"
+                                    width: vpx(18)
+                                    height: vpx(18)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                                Text {
+                                    text: gameData ? gameData.players : ""
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.017)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                }
+                            }
+                        }
 
                         property var pillColors: ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"]
 
@@ -271,7 +289,7 @@ ListView {
                         }
                     }
 
-                    // SEPARATORE ORIZZONTALE
+                    // SEPARATOR HOR
                     Rectangle {
                         id: divider
                         anchors {
@@ -285,7 +303,7 @@ ListView {
                         opacity: 0.12
                     }
 
-                    // BADGE FAVORITO — cerchio accent in alto a destra
+                    // BADGE (TODO BETTER)
                     Rectangle {
                         id: favBadge
                         width: vpx(32)
@@ -342,7 +360,7 @@ ListView {
                         }
                     }
 
-                    // AREA CONTENUTO
+                    // Content Area
                     Item {
                         id: contentArea
                         anchors {
@@ -351,10 +369,10 @@ ListView {
                             left: parent.left
                             right: parent.right
                             bottom: playButton.top
-                            bottomMargin: vpx(20)
+                            //bottomMargin: vpx(20)
                         }
 
-                        // COLONNA SINISTRA: cover + stats
+                        // Left Column: cover + stats
                         Item {
                             id: leftCol
                             width: Math.round(parent.width * 0.26)
@@ -369,7 +387,7 @@ ListView {
                                 width: parent.width
                                 spacing: vpx(14)
 
-                                // Cover con ombra
+                                // Cover with shadow
                                 Rectangle {
                                     width: parent.width
                                     height: width
@@ -423,7 +441,7 @@ ListView {
                                     spacing: vpx(8)
                                     visible: {
                                         var pt = gameData ? gameData.playTime : 0;
-                                        var manual = (gameData && gameData.extra) ? (gameData.extra["x-playtime"] || 0) : 0;
+                                        var manual = (gameData && gameData.extra) ? (gameData.extra.playtime || 0) : 0;
                                         return pt > 0 || manual > 0;
                                     }
 
@@ -445,11 +463,10 @@ ListView {
                                             }
                                             Text {
                                                 text: {
-                                                    var pt = gameData ? gameData.playTime : 0;
-                                                    if (pt > 0)
-                                                        return expandedPanel.formatPlayTime(pt);
-                                                    var manual = (gameData && gameData.extra) ? (gameData.extra["x-playtime"] || 0) : 0;
-                                                    return manual > 0 ? expandedPanel.formatPlayTime(manual) : "";
+                                                    if (gameData.extra.playtime)
+                                                        return new Date(gameData.extra.playtime[0] * 1000).getUTCHours() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCMinutes() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCSeconds();
+                                                    else
+                                                        return new Date(gameData.playTime * 1000).getUTCHours() + ":" + new Date(gameData.playTime * 1000).getUTCMinutes() + ":" + new Date(gameData.playTime * 1000).getUTCSeconds();
                                                 }
                                                 color: theme.text
                                                 font.family: titleFont.name
@@ -459,139 +476,19 @@ ListView {
                                             }
                                         }
                                     }
-                                }
 
-                                // Ultimo avvio
-                                Text {
-                                    text: {
-                                        if (!gameData || !gameData.lastPlayed)
-                                            return "";
-                                        var d = new Date(gameData.lastPlayed);
-                                        if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
-                                            return "";
-                                        return "Giocato il " + Qt.formatDate(d, "dd/MM/yyyy");
-                                    }
-                                    color: theme.icon
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.018)
-                                    visible: text !== ""
-                                    width: parent.width
-                                    wrapMode: Text.WordWrap
-                                }
-
-                                Item {
-                                    width: parent.width
-                                    height: vpx(32)
-                                    visible: gameData && gameData.playTime > 0
-
-                                    property real progressVal: Math.min((gameData ? gameData.playTime : 0) / 360000, 1) // 100h = 100%
-
-                                    Text {
-                                        id: progressLabel
-                                        text: "Ore giocate"
-                                        color: theme.icon
-                                        font.family: titleFont.name
-                                        font.pixelSize: Math.round(screenheight * 0.016)
-                                        anchors {
-                                            top: parent.top
-                                            left: parent.left
-                                        }
-                                    }
-
+                                    // Developer
                                     Rectangle {
-                                        anchors {
-                                            left: parent.left
-                                            right: progressPct.left
-                                            rightMargin: vpx(8)
-                                        }
-                                        y: progressLabel.height + vpx(4)
-                                        height: vpx(5)
+                                        width: devText.width + vpx(16)
+                                        height: vpx(24)
                                         radius: height / 2
                                         color: theme.main
+                                        visible: gameData && gameData.developer !== ""
 
-                                        Rectangle {
-                                            width: parent.width * parent.parent.progressVal
-                                            height: parent.height
-                                            radius: parent.radius
-                                            color: theme.accent
-                                            Behavior on width {
-                                                NumberAnimation {
-                                                    duration: 400
-                                                    easing.type: Easing.OutCubic
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    Text {
-                                        id: progressPct
-                                        anchors {
-                                            right: parent.right
-                                            bottom: parent.bottom
-                                        }
-                                        text: gameData ? Math.round((gameData.playTime / 360000) * 100) + "%" : ""
-                                        color: theme.accent
-                                        font.family: titleFont.name
-                                        font.pixelSize: Math.round(screenheight * 0.016)
-                                        font.bold: true
-                                    }
-                                }
-
-                                Text {
-                                    text: {
-                                        var start = (gameData && gameData.extra) ? (gameData.extra["x-start-date"] || "") : "";
-                                        var end = (gameData && gameData.extra) ? (gameData.extra["x-end-date"] || "") : "";
-                                        if (start && end)
-                                            return "Dal " + start + "\nal " + end;
-                                        if (start)
-                                            return "Iniziato: " + start;
-                                        return "";
-                                    }
-                                    color: theme.icon
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.017)
-                                    visible: text !== ""
-                                    width: parent.width
-                                    wrapMode: Text.WordWrap
-                                }
-
-                                // Sviluppatore pill
-                                Rectangle {
-                                    width: devText.width + vpx(16)
-                                    height: vpx(24)
-                                    radius: height / 2
-                                    color: theme.main
-                                    visible: gameData && gameData.developer !== ""
-
-                                    Text {
-                                        id: devText
-                                        anchors.centerIn: parent
-                                        text: gameData ? (gameData.developer || "") : ""
-                                        color: theme.icon
-                                        font.family: titleFont.name
-                                        font.pixelSize: Math.round(screenheight * 0.017)
-                                    }
-                                }
-
-                                // Giocatori pill
-                                Rectangle {
-                                    width: playersRow.width + vpx(16)
-                                    height: vpx(24)
-                                    radius: height / 2
-                                    color: theme.main
-                                    visible: gameData && gameData.players > 0
-
-                                    Row {
-                                        id: playersRow
-                                        anchors.centerIn: parent
-                                        spacing: vpx(4)
                                         Text {
-                                            text: "👤"
-                                            font.pixelSize: Math.round(screenheight * 0.016)
-                                            anchors.verticalCenter: parent.verticalCenter
-                                        }
-                                        Text {
-                                            text: gameData ? gameData.players : ""
+                                            id: devText
+                                            anchors.centerIn: parent
+                                            text: gameData ? (gameData.developer || "") : ""
                                             color: theme.icon
                                             font.family: titleFont.name
                                             font.pixelSize: Math.round(screenheight * 0.017)
@@ -599,10 +496,43 @@ ListView {
                                         }
                                     }
                                 }
+
+                                //Progress
+                                Row {
+                                    spacing: vpx(8)
+                                    visible: gameData && gameData.extra.progress > 0
+
+                                    Rectangle {
+                                        height: vpx(28)
+                                        width: progressRow.width + vpx(16)
+                                        radius: height / 2
+                                        color: theme.main
+
+                                        Row {
+                                            id: progressRow
+                                            anchors.centerIn: parent
+                                            spacing: vpx(6)
+
+                                            Image {
+                                                source: "../assets/images/navigation/trophy.svg"
+                                                width: vpx(20)
+                                                height: width
+                                            }
+                                            Text {
+                                                text: gameData.extra.progress + "%"
+                                                color: theme.text
+                                                font.family: titleFont.name
+                                                font.pixelSize: Math.round(screenheight * 0.018)
+                                                font.bold: true
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
 
-                        // SEPARATORE VERTICALE
+                        // SEPARATOR
                         Rectangle {
                             anchors {
                                 top: parent.top
@@ -615,7 +545,7 @@ ListView {
                             opacity: 0.10
                         }
 
-                        // COLONNA DESTRA: descrizione
+                        // RIGHT COLUMN: DESCRIPTION, RATING, LAST PLAYED
                         Column {
                             id: rightCol
                             spacing: vpx(12)
@@ -626,29 +556,7 @@ ListView {
                                 right: parent.right
                             }
 
-                            Text {
-                                text: "Descrizione"
-                                color: theme.text
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.022)
-                                font.bold: true
-                                opacity: 0.5
-                                font.letterSpacing: 1.5
-                            }
-
-                            Text {
-                                text: gameData ? (gameData.description || "Nessuna descrizione disponibile.") : ""
-                                color: theme.text
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.023)
-                                wrapMode: Text.WordWrap
-                                width: parent.width
-                                maximumLineCount: 7
-                                elide: Text.ElideRight
-                                lineHeight: 1.4
-                            }
-
-                            // Rating
+                            // Rating && Completition Percentage
                             Row {
                                 spacing: vpx(8)
                                 visible: gameData && gameData.rating > 0
@@ -660,7 +568,8 @@ ListView {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                                 Text {
-                                    text: gameData ? Math.round(gameData.rating * 10).toFixed(1) + " / 10" : ""
+
+                                    text: gameData ? (gameData.rating * 10).toFixed(1) : ""
                                     color: theme.text
                                     font.family: titleFont.name
                                     font.pixelSize: Math.round(screenheight * 0.022)
@@ -668,10 +577,97 @@ ListView {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
+
+                            //
+
+                            Text {
+                                text: "Description"
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.022)
+                                font.bold: true
+                                opacity: 0.5
+                                font.letterSpacing: 1.5
+                            }
+
+                            Text {
+                                text: gameData ? (gameData.description || "No description available.") : ""
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.023)
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                maximumLineCount: 7
+                                elide: Text.ElideRight
+                                lineHeight: 1.4
+                            }
+
+                            // Last played
+                            Column {
+                                spacing: vpx(2)
+
+                                Text {
+                                    text: "LAST PLAYED"
+                                    color: theme.icon
+                                    opacity: 0.45
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                    font.letterSpacing: 1.5
+                                }
+
+                                Text {
+                                    text: {
+                                        var d = new Date(gameData.lastPlayed);
+                                        if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
+                                            return "";
+                                        return Qt.formatDate(d, "dd MMM yyyy");
+                                    }
+
+                                    color: theme.text
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.020)
+                                    font.bold: true
+                                }
+                            }
+
+                            Column {
+                                spacing: vpx(2)
+
+                                property string startDate: (gameData && gameData.extra) ? gameData.extra.startdate : ""
+                                property string endDate: (gameData && gameData.extra) ? gameData.extra.enddate : ""
+
+                                visible: gameData && gameData.extra && (gameData.extra.startdate || gameData.extra.enddate)
+
+                                Text {
+                                    text: gameData.extra.enddate ? "PLAY PERIOD" : "STARTED"
+                                    color: theme.icon
+                                    opacity: 0.45
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                    font.letterSpacing: 1.5
+                                }
+
+                                Text {
+                                    text: {
+                                        var start = gameData.extra.startdate || "";
+                                        var end = gameData.extra.enddate || "";
+
+                                        if (start && end)
+                                            return "Started: " + Qt.formatDate(new Date(start), "dd/MM/yyyy") + " Finished: " + Qt.formatDate(new Date(end), "dd/MM/yyyy");
+
+                                        return start;
+                                    }
+
+                                    color: theme.text
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.020)
+                                    font.bold: true
+                                }
+                            }
                         }
                     }
 
-                    // PULSANTE PLAY — cerchio accent in basso a destra
+                    // PLAY BUTTON
                     Rectangle {
                         id: playButton
                         width: vpx(56)
@@ -726,6 +722,55 @@ ListView {
                             }
                         }
                     }
+                }
+
+                //Platform
+                Image {
+                    id: platformIcon
+
+                    width: vpx(28)
+                    height: vpx(28)
+
+                    anchors {
+                        left: parent.left
+                        bottom: parent.bottom
+                        leftMargin: vpx(18)
+                        bottomMargin: vpx(18)
+                    }
+
+                    fillMode: Image.PreserveAspectFit
+                    smooth: true
+                    asynchronous: true
+                    z: 20
+
+                    source: {
+                        if (!gameData || !gameData.collections || gameData.collections.count === 0)
+                            return "";
+
+                        var p = gameData.collections.get(0).shortName;
+                        if (!p)
+                            return "";
+
+                        return "../assets/images/platforms/" + p + ".svg";
+                    }
+                }
+
+                Text {
+                    id: platformText
+
+                    text: (gameData && gameData.collections && gameData.collections.count > 0) ? gameData.collections.get(0).name : ""
+
+                    anchors {
+                        left: platformIcon.right
+                        leftMargin: vpx(8)
+                        verticalCenter: platformIcon.verticalCenter
+                    }
+
+                    color: theme.accent
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.015)
+                    font.bold: true
+                    z: 20
                 }
 
                 Keys.onLeftPressed: {
