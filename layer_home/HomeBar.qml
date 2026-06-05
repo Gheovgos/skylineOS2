@@ -148,8 +148,8 @@ ListView {
                     }
                 }
 
-                // Padding interno
                 Item {
+                    id: panelContent
                     anchors {
                         fill: parent
                         margins: vpx(32)
@@ -161,7 +161,6 @@ ListView {
                         }
                     }
 
-                    // TITOLO in alto a sinistra
                     Text {
                         id: panelTitle
                         text: gameData ? gameData.title : ""
@@ -172,219 +171,221 @@ ListView {
                         anchors {
                             top: parent.top
                             left: parent.left
+                            right: favBadge.left
+                            rightMargin: vpx(8)
                         }
                     }
 
-                    Column {
-                        id: leftColumn
-                        spacing: vpx(12)
-                        width: Math.round(parent.width * 0.28)
+                    Rectangle {
+                        id: favBadge
+                        width: vpx(36)
+                        height: vpx(36)
+                        radius: width / 2
+                        color: gameData && gameData.favorite ? theme.accent : theme.main
+                        anchors {
+                            top: parent.top
+                            right: parent.right
+                        }
+
+                        Image {
+                            id: favIcon
+                            source: "../assets/images/heart_filled.png"
+                            anchors {
+                                fill: parent
+                                margins: vpx(8)
+                            }
+                            fillMode: Image.PreserveAspectFit
+                            asynchronous: true
+                        }
+                        ColorOverlay {
+                            anchors.fill: favIcon
+                            source: favIcon
+                            color: "white"
+                        }
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: {
+                                if (gameData) {
+                                    gameData.favorite = !gameData.favorite;
+                                    gameData.favorite ? turnOnSfx.play() : turnOffSfx.play();
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        id: contentArea
                         anchors {
                             top: panelTitle.bottom
                             topMargin: vpx(20)
                             left: parent.left
+                            right: parent.right
+                            bottom: playButton.top
+                            bottomMargin: vpx(16)
                         }
 
-                        // Cover (boxFront)
-                        Rectangle {
-                            width: parent.width
-                            height: width
-                            radius: vpx(12)
-                            color: theme.main
+                        Item {
+                            id: leftCol
+                            width: Math.round(parent.width * 0.28)
+                            anchors {
+                                top: parent.top
+                                left: parent.left
+                                bottom: parent.bottom
+                            }
+                            clip: true
 
-                            Image {
-                                id: coverImage
-                                anchors.fill: parent
-                                anchors.margins: vpx(2)
-                                source: gameData ? (gameData.assets.boxFront || "") : ""
-                                fillMode: Image.PreserveAspectFit
-                                asynchronous: true
-                                smooth: true
+                            Column {
+                                width: parent.width
+                                spacing: vpx(12)
 
-                                layer.enabled: true
-                                layer.effect: OpacityMask {
-                                    maskSource: Rectangle {
-                                        width: coverImage.width
-                                        height: coverImage.height
-                                        radius: vpx(10)
-                                        visible: false
+                                Rectangle {
+                                    width: parent.width
+                                    height: width
+                                    radius: vpx(12)
+                                    color: theme.main
+
+                                    Image {
+                                        id: coverImage
+                                        anchors {
+                                            fill: parent
+                                            margins: vpx(2)
+                                        }
+                                        source: gameData ? (gameData.assets.boxFront || "") : ""
+                                        fillMode: Image.PreserveAspectFit
+                                        asynchronous: true
+                                        smooth: true
+                                        layer.enabled: true
+                                        layer.effect: OpacityMask {
+                                            maskSource: Rectangle {
+                                                width: coverImage.width
+                                                height: coverImage.height
+                                                radius: vpx(10)
+                                                visible: false
+                                            }
+                                        }
+                                    }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "?"
+                                        color: theme.icon
+                                        font.pixelSize: Math.round(screenheight * 0.05)
+                                        visible: coverImage.status !== Image.Ready
                                     }
                                 }
+
+                                Text {
+                                    text: gameData && gameData.releaseYear > 0 ? gameData.releaseYear : ""
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    visible: gameData && gameData.releaseYear > 0
+                                    wrapMode: Text.WordWrap
+                                    width: parent.width
+                                }
+
+                                Text {
+                                    text: gameData ? gameData.genreList.join(", ") : ""
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    visible: text !== ""
+                                    wrapMode: Text.WordWrap
+                                    width: parent.width
+                                }
+
+                                Text {
+                                    text: "playTime raw: " + (gameData.playTime)
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    width: parent.width
+                                }
+
+                                Text {
+                                    text: {
+                                        if (!gameData || !gameData.lastPlayed)
+                                            return "";
+                                        var d = new Date(gameData.lastPlayed);
+                                        if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
+                                            return "";
+                                        return "Ultimo: " + Qt.formatDate(d, "dd/MM/yyyy");
+                                    }
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.022)
+                                    visible: text !== ""
+                                    width: parent.width
+                                }
+                            }
+                        }
+
+                        Column {
+                            id: rightCol
+                            spacing: vpx(16)
+                            anchors {
+                                top: parent.top
+                                left: leftCol.right
+                                leftMargin: vpx(32)
+                                right: parent.right
                             }
 
-                            // Placeholder if not cover
                             Text {
-                                anchors.centerIn: parent
-                                text: "?"
-                                color: theme.icon
-                                font.pixelSize: Math.round(screenheight * 0.05)
-                                visible: !coverImage.source || coverImage.status !== Image.Ready
+                                text: "Descrizione"
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.03)
+                                font.bold: true
                             }
-                        }
-
-                        // Date rilascio
-                        Text {
-                            text: {
-                                if (!gameData)
-                                    return "";
-                                var rd = gameData.releaseYear ? gameData.releaseYear : "";
-                                return rd ? rd : "";
-                            }
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.022)
-                            visible: text !== ""
-                            wrapMode: Text.WordWrap
-                            width: parent.width
-                        }
-
-                        // Generi
-                        Text {
-                            text: gameData ? gameData.genreList.join(", ") : ""
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.022)
-                            visible: text !== ""
-                            wrapMode: Text.WordWrap
-                            width: parent.width
-                        }
-
-                        // Ore totali giocate
-                        Row {
-                            spacing: vpx(8)
-                            visible: gameData && gameData.playTime > 0
-
-                            Image {
-                                id: clockIcon
-                                source: "../assets/images/navigation/clock.svg"
-                                width: vpx(20)
-                                height: vpx(20)
-                                fillMode: Image.PreserveAspectFit
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            ColorOverlay {
-                                anchors.fill: clockIcon
-                                source: clockIcon
-                                color: theme.icon
-                            }
-
                             Text {
-                                text: "Ore totali: " + expandedPanel.formatPlayTime(gameData ? gameData.playTime : 0)
+                                text: gameData ? (gameData.description || "") : ""
                                 color: theme.icon
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.022)
-                                anchors.verticalCenter: parent.verticalCenter
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                maximumLineCount: 6
+                                elide: Text.ElideRight
+                                visible: text !== ""
                             }
-                        }
-
-                        // Progress (ultimo avvio)
-                        Row {
-                            spacing: vpx(8)
-                            visible: gameData && gameData.lastPlayed !== undefined
-
-                            Image {
-                                id: progressIcon
-                                source: "../assets/images/navigation/progress.svg"
-                                width: vpx(20)
-                                height: vpx(20)
-                                fillMode: Image.PreserveAspectFit
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            ColorOverlay {
-                                anchors.fill: progressIcon
-                                source: progressIcon
-                                color: theme.icon
-                            }
-
                             Text {
-                                text: gameData && gameData.lastPlayed ? Qt.formatDate(gameData.lastPlayed, "dd/MM/yyyy") : ""
+                                text: {
+                                    if (!gameData)
+                                        return "";
+                                    var parts = [];
+                                    if (gameData.developer)
+                                        parts.push("Sviluppatore: " + gameData.developer);
+                                    if (gameData.publisher)
+                                        parts.push("Publisher: " + gameData.publisher);
+                                    return parts.join("\n");
+                                }
                                 color: theme.icon
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.022)
-                                anchors.verticalCenter: parent.verticalCenter
+                                wrapMode: Text.WordWrap
+                                width: parent.width
+                                visible: text !== ""
+                            }
+                            Text {
+                                text: gameData && gameData.players > 0 ? "Giocatori: " + gameData.players : ""
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.022)
+                                visible: text !== ""
+                            }
+                            Text {
+                                text: gameData && gameData.rating > 0 ? "Rating: " + Math.round(gameData.rating * 100) + "%" : ""
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.022)
                                 visible: text !== ""
                             }
                         }
                     }
 
-                    Column {
-                        id: rightColumn
-                        spacing: vpx(16)
-                        anchors {
-                            top: panelTitle.bottom
-                            topMargin: vpx(20)
-                            left: leftColumn.right
-                            leftMargin: vpx(32)
-                            right: parent.right
-                        }
-
-                        // Descrizione
-                        Text {
-                            id: descTitle
-                            text: "Descrizione"
-                            color: theme.text
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.03)
-                            font.bold: true
-                        }
-
-                        Text {
-                            id: descText
-                            text: gameData ? (gameData.description || "") : ""
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.022)
-                            wrapMode: Text.WordWrap
-                            width: parent.width
-                            maximumLineCount: 6
-                            elide: Text.ElideRight
-                            visible: text !== ""
-                        }
-
-                        // Note aggiuntive (developer/publisher)
-                        Text {
-                            text: {
-                                if (!gameData)
-                                    return "";
-                                var parts = [];
-                                if (gameData.developer)
-                                    parts.push("Sviluppatore: " + gameData.developer);
-                                if (gameData.publisher)
-                                    parts.push("Publisher: " + gameData.publisher);
-                                return parts.join("\n");
-                            }
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.022)
-                            wrapMode: Text.WordWrap
-                            width: parent.width
-                            visible: text !== ""
-                        }
-
-                        // Giocatori
-                        Text {
-                            text: gameData && gameData.players > 0 ? "Giocatori: " + gameData.players : ""
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.022)
-                            visible: text !== ""
-                        }
-
-                        // Rating
-                        Text {
-                            text: gameData && gameData.rating > 0 ? "Rating: " + Math.round(gameData.rating * 100) + "%" : ""
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.022)
-                            visible: text !== ""
-                        }
-                    }
-
-                    // PULSANTE PLAY in basso a destra
                     Rectangle {
                         id: playButton
-                        width: vpx(120)
-                        height: vpx(48)
+                        width: vpx(56)
+                        height: vpx(48)  // più stretto senza testo
                         radius: vpx(12)
                         color: theme.accent
                         anchors {
@@ -402,32 +403,18 @@ ListView {
                             color: "#40000000"
                         }
 
-                        Row {
+                        Image {
+                            id: playIcon
+                            source: "../assets/images/navigation/play.svg"
+                            width: vpx(22)
+                            height: vpx(22)
+                            fillMode: Image.PreserveAspectFit
                             anchors.centerIn: parent
-                            spacing: vpx(8)
-
-                            Image {
-                                id: playIcon
-                                source: "../assets/images/navigation/play.svg"
-                                width: vpx(18)
-                                height: vpx(18)
-                                fillMode: Image.PreserveAspectFit
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
-                            ColorOverlay {
-                                anchors.fill: playIcon
-                                source: playIcon
-                                color: "white"
-                            }
-
-                            Text {
-                                text: "Play"
-                                color: "white"
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.025)
-                                font.bold: true
-                                anchors.verticalCenter: parent.verticalCenter
-                            }
+                        }
+                        ColorOverlay {
+                            anchors.fill: playIcon
+                            source: playIcon
+                            color: "white"
                         }
 
                         MouseArea {
@@ -439,45 +426,8 @@ ListView {
                             }
                         }
                     }
-
-                    // BADGE favorito in alto a destra
-                    Rectangle {
-                        width: vpx(36)
-                        height: vpx(36)
-                        radius: width / 2
-                        color: gameData && gameData.favorite ? theme.accent : theme.main
-                        anchors {
-                            top: parent.top
-                            right: parent.right
-                        }
-
-                        Image {
-                            id: favIcon
-                            source: "../assets/images/heart_filled.png"
-                            anchors.fill: parent
-                            anchors.margins: vpx(8)
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                        }
-                        ColorOverlay {
-                            anchors.fill: favIcon
-                            source: favIcon
-                            color: "white"
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            onClicked: {
-                                if (gameData) {
-                                    gameData.favorite = !gameData.favorite;
-                                    gameData.favorite ? turnOnSfx.play() : turnOffSfx.play();
-                                }
-                            }
-                        }
-                    }
                 }
 
-                // Blocca navigazione lista quando espanso
                 Keys.onLeftPressed: {
                     if (expanded)
                         event.accepted = true;
@@ -498,11 +448,8 @@ ListView {
                     if (!expanded)
                         return;
                     event.accepted = true;
-                    // Filters/Back chiude
-                    if (api.keys.isFilters(event) || api.keys.isCancel(event)) {
+                    if (api.keys.isFilters(event) || api.keys.isCancel(event))
                         wrapper.expanded = false;
-                    }
-                    // Accept sul pannello = play
                     if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                         wrapper.expanded = false;
                         anim.start();
