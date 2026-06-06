@@ -69,6 +69,12 @@ FocusScope {
             setting: "35"
             type: "input"
         }
+        ListElement {
+            settingName: "Max games on Home Screen"
+            settingSubtitle: ""
+            setting: "35"
+            type: "input"
+        }
     }
 
     property var homePage: {
@@ -87,7 +93,7 @@ FocusScope {
             type: "input"
         }
         ListElement {
-            settingName: "RetroAchievements Password"
+            settingName: "RetroAchievements API Key"
             settingSubtitle: ""
             setting: ""
             type: "input"
@@ -96,8 +102,8 @@ FocusScope {
             settingName: "Login"
             settingSubtitle: ""
             setting: "OK"
+            type: "button"
         }
-
     }
 
     property var raPage: {
@@ -318,7 +324,7 @@ FocusScope {
 
                 function saveSetting() {
                     if (type === "input") {
-                        console.log("++++++++++", type)
+                        console.log("++++++++++", type);
                         api.memory.set(settingName, currentInput);
                     } else {
                         api.memory.set(settingName + 'Index', savedIndex);
@@ -391,7 +397,13 @@ FocusScope {
                     }
                     opacity: selected ? 1 : 0.2
 
-                    sourceComponent: (type === "input") ? inputComponent : toggleComponent
+                    sourceComponent: {
+                        if (type === "input")
+                            return inputComponent;
+                        if (type === "button")
+                            return buttonComponent;
+                        return toggleComponent;
+                    }
 
                     Component {
                         id: toggleComponent
@@ -412,6 +424,26 @@ FocusScope {
                             font.pixelSize: vpx(20)
                             verticalAlignment: Text.AlignVCenter
                             height: itemheight
+                        }
+                    }
+
+                    Component {
+                        id: buttonComponent
+                        Rectangle {
+                            width: btnText.width + vpx(24)
+                            height: vpx(30)
+                            radius: height / 2
+                            color: theme.accent
+
+                            Text {
+                                id: btnText
+                                anchors.centerIn: parent
+                                text: setting
+                                color: "white"
+                                font.family: titleFont.name
+                                font.pixelSize: vpx(18)
+                                font.bold: true
+                            }
                         }
                     }
                 }
@@ -448,6 +480,14 @@ FocusScope {
                         event.accepted = true;
                         if (type === "input") {
                             inputPanel.open(settingName, setting);
+                        } else if (type === "button") {
+                            selectSfx.play();
+                            if (settingName === "Login") {
+                                selectSfx.play();
+                                if (settingName === "Login") {
+                                    tryRALogin();
+                                }
+                            }
                         } else {
                             selectSfx.play();
                             nextSetting();
@@ -475,6 +515,15 @@ FocusScope {
                             navSound.play();
                             settingsList.focus = true;
                             settingsList.currentIndex = index;
+                        }
+                    }
+                    onPressAndHold: {
+                        if (type === "input") {
+                            inputPanel.open(settingName, setting);
+                        } else {
+                            selectSfx.play();
+                            nextSetting();
+                            saveSetting();
                         }
                     }
                 }
@@ -506,6 +555,75 @@ FocusScope {
                 cur.handleKey(event);
             }
         }
+    }
+
+    property string raLoginStatus: ""
+
+    function tryRALogin() {
+        var username = api.memory.get("RetroAchievements Username") || "";
+        var apiKey = api.memory.get("RetroAchievements API Key") || "";
+
+        if (!username || !apiKey) {
+            raLoginStatus = "error";
+            return;
+        }
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            console.log(xhr.status)
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        if (data && data.User) {
+                            raLoginStatus = "ok";
+                            api.memory.set("RA_LoggedIn", "Yes");
+                            api.memory.set("RA_Username", data.User);
+                        } else {
+                            raLoginStatus = "error";
+                            api.memory.set("RA_LoggedIn", "No");
+                        }
+                    } catch (e) {
+                        raLoginStatus = "error";
+                    }
+                } else {
+                    raLoginStatus = "error";
+                }
+            }
+        };
+
+        raLoginStatus = "loading";
+        xhr.open("GET", "https://retroachievements.org/API/API_GetUserProfile.php?u=" + username + "&y=" + apiKey);
+        xhr.send();
+    }
+
+    Text {
+        anchors {
+            bottom: inputPanel.top
+            horizontalCenter: parent.horizontalCenter
+            bottomMargin: vpx(16)
+        }
+        text: {
+            if (raLoginStatus === "ok")
+                return "Login OK";
+            if (raLoginStatus === "error")
+                return "Invalid credentials";
+            if (raLoginStatus === "loading")
+                return "Loading...";
+            return "";
+        }
+        color: {
+            if (raLoginStatus === "ok")
+                return "#10B981";
+            if (raLoginStatus === "error")
+                return "#EF4444";
+            return theme.icon;
+        }
+        font.family: titleFont.name
+        font.pixelSize: Math.round(screenheight * 0.020)
+        font.bold: raLoginStatus === "ok"
+        visible: raLoginStatus !== ""
+        z: 101
     }
 
     // INPUT
