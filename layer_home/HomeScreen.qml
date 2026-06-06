@@ -192,27 +192,6 @@ FocusScope {
                     visible: isNaN(api.device.batteryPercent) ? false : showPercent
                 }
 
-                Image {
-                    id: wifiIcon
-
-                    sourceSize.width: vpx(26)
-                    sourceSize.height: vpx(26)
-                    fillMode: Image.PreserveAspectFit
-
-                    source: "../assets/images/navigation/wifi.svg"
-
-                    anchors.verticalCenter: sysTime.verticalCenter
-
-                    visible: api.network && api.network.isConnected
-
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
-                        color: theme.text
-                        antialiasing: true
-                        cached: true
-                    }
-                }
-
                 BatteryIcon {
                     id: batteryIcon
                     width: Math.round(screenheight * 0.0433)
@@ -278,6 +257,27 @@ FocusScope {
                         running: isNaN(api.device.batteryPercent) ? false : true
                         triggeredOnStart: isNaN(api.device.batteryPercent) ? false : true
                         onTriggered: chargingIcon.set()
+                    }
+                }
+
+                Image {
+                    id: wifiIcon
+
+                    sourceSize.width: vpx(26)
+                    sourceSize.height: vpx(26)
+                    fillMode: Image.PreserveAspectFit
+
+                    source: "../assets/images/navigation/wifi.svg"
+
+                    anchors.verticalCenter: sysTime.verticalCenter
+
+                    visible: api.network && api.network.isConnected
+
+                    layer.enabled: true
+                    layer.effect: ColorOverlay {
+                        color: theme.text
+                        antialiasing: true
+                        cached: true
                     }
                 }
             }

@@ -978,6 +978,12 @@ ListView {
                 }
             }
 
+            onPressAndHold: {
+                var item = homeLayout.currentItem;
+                if (item)
+                    item.expanded = !item.expanded;
+            }
+
             Text {
                 id: topTitle
                 text: idx > -1 ? gameData.title : name
