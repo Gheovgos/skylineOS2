@@ -9,6 +9,13 @@ FocusScope {
         id: settingsModel
 
         ListElement {
+            settingName: "Username"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+
+        ListElement {
             settingName: "Game Background"
             settingSubtitle: ""
             setting: "Screenshot,Fanart,Boxart"
@@ -72,6 +79,35 @@ FocusScope {
     }
 
     ListModel {
+        id: raModel
+        ListElement {
+            settingName: "RetroAchievements Username"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+        ListElement {
+            settingName: "RetroAchievements Password"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+        ListElement {
+            settingName: "Login"
+            settingSubtitle: ""
+            setting: "OK"
+        }
+
+    }
+
+    property var raPage: {
+        return {
+            pageName: "Retroachievements",
+            listmodel: raModel
+        };
+    }
+
+    ListModel {
         id: perfSettingsModel
         ListElement {
             settingName: "Enable DropShadows"
@@ -87,7 +123,7 @@ FocusScope {
         };
     }
 
-    property var settingsArr: [generalPage, homePage, performancePage]
+    property var settingsArr: [generalPage, homePage, raPage, performancePage]
 
     property real itemheight: vpx(50)
 
@@ -279,10 +315,10 @@ FocusScope {
 
                 property bool editMode: false
                 property string currentInput: api.memory.get(settingName) || setting
-                property string type: modelData ? (modelData.type || "toggle") : "toggle"
 
                 function saveSetting() {
                     if (type === "input") {
+                        console.log("++++++++++", type)
                         api.memory.set(settingName, currentInput);
                     } else {
                         api.memory.set(settingName + 'Index', savedIndex);
@@ -304,7 +340,6 @@ FocusScope {
                         savedIndex = settingList.length - 1;
                 }
 
-                // Funzione pubblica chiamabile dall'esterno
                 function handleKey(event) {
                     if (event.key === Qt.Key_Backspace) {
                         currentInput = currentInput.slice(0, -1);
@@ -347,7 +382,6 @@ FocusScope {
                     }
                 }
                 // Setting value
-                // Valore (toggle o input)
                 Loader {
                     id: valueLoader
                     anchors {

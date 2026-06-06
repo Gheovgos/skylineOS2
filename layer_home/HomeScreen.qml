@@ -80,32 +80,47 @@ FocusScope {
             }
 
             // Top bar TODO with Exophase / RA
-            Image {
-                id: profileIcon
-                anchors {
-                    top: parent.top
-                    left: parent.left
-                }
-                width: Math.round(screenheight * 0.0833)
-                height: width
-                source: "../assets/images/profile_icon.png"
-                sourceSize {
-                    width: 128
-                    height: 128
-                }
-                smooth: true
-                antialiasing: true
-                layer.enabled: enableDropShadows
-                layer.effect: DropShadow {
-                    transparentBorder: true
-                    horizontalOffset: 0
-                    verticalOffset: 0
-                    color: "#4D000000"
-                    radius: 3.0
-                    samples: 6
-                    z: -2
-                }
-            }
+            Row {
+    spacing: vpx(10)
+    anchors {
+        top: parent.top
+        left: parent.left
+    }
+
+    Image {
+        id: profileIcon
+        width: Math.round(screenheight * 0.0833)
+        height: width
+        source: "../assets/images/profile_icon.png"
+
+        smooth: true
+        antialiasing: true
+        layer.enabled: enableDropShadows
+        layer.effect: DropShadow {
+            transparentBorder: true
+            horizontalOffset: 0
+            verticalOffset: 0
+            color: "#4D000000"
+            radius: 3.0
+            samples: 6
+        }
+    }
+
+    Text {
+        id: usernameText
+        text: api.memory.has("Username") ? api.memory.get("Username") : ""
+        color: theme.text
+        font.family: titleFont.name
+
+        // leggermente più piccolo
+        font.pixelSize: Math.round(screenheight * 0.028)
+
+        font.bold: true
+
+        // 👇 allineamento verticale corretto
+        anchors.verticalCenter: profileIcon.verticalCenter
+    }
+}
 
             Text {
                 id: collectionHomeTitle
@@ -296,7 +311,6 @@ FocusScope {
             focus: true
         }
 
-        // Button menu
         // Button menu
         Item {
             id: buttonMenuContainer

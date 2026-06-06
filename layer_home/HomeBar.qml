@@ -23,6 +23,7 @@ ListView {
     highlightMoveDuration: 100
     highlightMoveVelocity: -1
     keyNavigationWraps: true
+    property real cardScale: parseFloat(settings.homeCardSize) / 35.0
 
     NumberAnimation {
         id: anim
@@ -71,7 +72,7 @@ ListView {
                 currentScreenID = idx;
             }
 
-            width: homeLayout.height//isGame ? homeLayout.height : homeLayout.height*0.7
+            width: homeLayout.height * homeLayout.cardScale
             height: width
             color: "transparent"
 

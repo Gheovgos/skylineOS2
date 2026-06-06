@@ -27,6 +27,7 @@ FocusScope
             batteryPercentSetting:  api.memory.has("Display Battery Percentage") ? api.memory.get("Display Battery Percentage") : "No",
             enableDropShadows:      api.memory.has("Enable DropShadows") ? api.memory.get("Enable DropShadows") : "Yes",
             showWifi:               api.memory.has("Display Wifi Icon") ? api.memory.get("Display Wifi Icon") : "Yes",
+            username:               api.memory.has("Username") ? api.memory.get("Username") : "",
             darkMode:               api.memory.has("Dark Mode") ? api.memory.get("Dark Mode") : "No",
             homeCardSize:           api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
             playBGM:                api.memory.has("Background Music") ? api.memory.get("Background Music"): "No"
