@@ -170,14 +170,6 @@ FocusScope
 
     property var theme : api.memory.get("Dark Mode") === "No" ? themeLight : themeDark ;
 
-    function toggleDarkMode(){
-        if(theme === themeLight){
-        api.memory.set('theme', 'themeDark');
-        }else{
-        api.memory.set('theme', 'themeLight');
-        }
-    }
-
     // State settings
     states: [
         State {

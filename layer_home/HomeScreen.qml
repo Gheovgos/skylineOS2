@@ -342,32 +342,144 @@ FocusScope {
                 }
 
                 MenuButton {
-                    id: themeButton
+                    id: infoButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Toggle Theme"
-                    icon: "../assets/images/navigation/theme.svg"
-
+                    label: "Feed"
+                    icon: "../assets/images/navigation/info.svg"
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            selectSfx.play();
-                            toggleDarkMode();
+                            // TODO: showInfoScreen();
                         }
                     }
                     Keys.onLeftPressed: {
-                        borderSfx.play();
+                        navSound.play();
+                        suspendButton.focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        storeButton.focus = true;
+                    }
+                    onClicked: {
+                        if (infoButton.focus) { /* TODO */ } else {
+                            infoButton.focus = true;
+                            navSound.play();
+                            homeSwitcher.currentIndex = -1;
+                        }
+                    }
+                }
+
+                MenuButton {
+                    id: storeButton
+                    width: vpx(56)
+                    height: vpx(56)
+                    label: "Store"
+                    icon: "../assets/images/navigation/Store.svg"
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            // TODO: showStoreScreen();
+                        }
+                    }
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        infoButton.focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        galleryButton.focus = true;
+                    }
+                    onClicked: {
+                        if (storeButton.focus) { /* TODO */ } else {
+                            storeButton.focus = true;
+                            navSound.play();
+                            homeSwitcher.currentIndex = -1;
+                        }
+                    }
+                }
+
+                MenuButton {
+                    id: galleryButton
+                    width: vpx(56)
+                    height: vpx(56)
+                    label: "Gallery"
+                    icon: "../assets/images/navigation/Gallery.svg"
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            // TODO: showGalleryScreen();
+                        }
+                    }
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        storeButton.focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        backlogButton.focus = true;
+                    }
+                    onClicked: {
+                        if (galleryButton.focus) { /* TODO */ } else {
+                            galleryButton.focus = true;
+                            navSound.play();
+                            homeSwitcher.currentIndex = -1;
+                        }
+                    }
+                }
+
+                MenuButton {
+                    id: backlogButton
+                    width: vpx(56)
+                    height: vpx(56)
+                    label: "Backlog"
+                    icon: "../assets/images/navigation/backlog.svg"
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            // TODO
+                        }
+                    }
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        galleryButton.focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        controllerButton.focus = true;
+                    }
+                    onClicked: {
+                        if (backlogButton.focus) { /* TODO */ } else {
+                            backlogButton.focus = true;
+                            navSound.play();
+                            homeSwitcher.currentIndex = -1;
+                        }
+                    }
+                }
+
+                MenuButton {
+                    id: controllerButton
+                    width: vpx(56)
+                    height: vpx(56)
+                    label: "Controller"
+                    icon: "../assets/images/navigation/Controller.svg"
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            // TODO: showControllerScreen();
+                        }
+                    }
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        backlogButton.focus = true;
                     }
                     Keys.onRightPressed: {
                         navSound.play();
                         settingsButton.focus = true;
                     }
                     onClicked: {
-                        if (themeButton.focus) {
-                            selectSfx.play();
-                            toggleDarkMode();
-                        } else {
-                            themeButton.focus = true;
+                        if (controllerButton.focus) { /* TODO */ } else {
+                            controllerButton.focus = true;
                             navSound.play();
                             homeSwitcher.currentIndex = -1;
                         }
@@ -389,133 +501,17 @@ FocusScope {
                     }
                     Keys.onLeftPressed: {
                         navSound.play();
-                        themeButton.focus = true;
+                        controllerButton.focus = true;
                     }
                     Keys.onRightPressed: {
                         borderSfx.play();
-                        infoButton.focus = true;
+                        suspendButton.focus = true;
                     }
                     onClicked: {
                         if (settingsButton.focus) {
                             showSettingsScreen();
                         } else {
                             settingsButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
-                    }
-                }
-
-                MenuButton {
-                    id: infoButton
-                    width: vpx(56)
-                    height: vpx(56)
-                    label: "Info"
-                    icon: "../assets/images/navigation/info.svg"
-                    Keys.onPressed: {
-                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-                            event.accepted = true;
-                            // TODO: showInfoScreen();
-                        }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        settingsButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        galleryButton.focus = true;
-                    }
-                    onClicked: {
-                        if (infoButton.focus) { /* TODO */ } else {
-                            infoButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
-                    }
-                }
-
-                MenuButton {
-                    id: galleryButton
-                    width: vpx(56)
-                    height: vpx(56)
-                    label: "Gallery"
-                    icon: "../assets/images/navigation/Gallery.svg"
-                    Keys.onPressed: {
-                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-                            event.accepted = true;
-                            // TODO: showGalleryScreen();
-                        }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        infoButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        storeButton.focus = true;
-                    }
-                    onClicked: {
-                        if (galleryButton.focus) { /* TODO */ } else {
-                            galleryButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
-                    }
-                }
-
-                MenuButton {
-                    id: storeButton
-                    width: vpx(56)
-                    height: vpx(56)
-                    label: "Store"
-                    icon: "../assets/images/navigation/Store.svg"
-                    Keys.onPressed: {
-                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-                            event.accepted = true;
-                            // TODO: showStoreScreen();
-                        }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        galleryButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        controllerButton.focus = true;
-                    }
-                    onClicked: {
-                        if (storeButton.focus) { /* TODO */ } else {
-                            storeButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
-                    }
-                }
-
-                MenuButton {
-                    id: controllerButton
-                    width: vpx(56)
-                    height: vpx(56)
-                    label: "Controller"
-                    icon: "../assets/images/navigation/Controller.svg"
-                    Keys.onPressed: {
-                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-                            event.accepted = true;
-                            // TODO: showControllerScreen();
-                        }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        storeButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        suspendButton.focus = true;
-                    }
-                    onClicked: {
-                        if (controllerButton.focus) { /* TODO */ } else {
-                            controllerButton.focus = true;
                             navSound.play();
                             homeSwitcher.currentIndex = -1;
                         }
@@ -536,10 +532,11 @@ FocusScope {
                     }
                     Keys.onLeftPressed: {
                         navSound.play();
-                        controllerButton.focus = true;
+                        settingsButton.focus = true;
                     }
                     Keys.onRightPressed: {
                         borderSfx.play();
+                        infoButton.focus = true;
                     }
                     onClicked: {
                         if (suspendButton.focus) { /* TODO */ } else {
