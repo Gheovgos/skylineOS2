@@ -1047,8 +1047,10 @@ ListView {
     }
 
     Keys.onUpPressed: {
-        borderSfx.play();
-    }
+    borderSfx.play();
+    profileButton.focus = true;
+    homeSwitcher.currentIndex = -1;
+}
 
     Keys.onDownPressed: {
         _index = currentIndex;

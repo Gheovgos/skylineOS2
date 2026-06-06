@@ -81,46 +81,150 @@ FocusScope {
 
             // Top bar TODO with Exophase / RA
             Row {
-    spacing: vpx(10)
-    anchors {
-        top: parent.top
-        left: parent.left
-    }
+                spacing: vpx(10)
+                anchors {
+                    top: parent.top
+                    left: parent.left
+                }
+
+                Item {
+                    id: profileButton
+                    width: Math.round(screenheight * 0.0833)
+                    height: width
+                    anchors.verticalCenter: parent.verticalCenter
+
+                    property bool selected: focus
+
+                    // Highlight DIETRO l'immagine (z negativo)
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width + vpx(8)
+                        height: parent.height + vpx(8)
+                        radius: width / 2
+                        color: theme.accent
+                        z: -1
+                        opacity: profileButton.selected ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 150
+                            }
+                        }
+
+                        SequentialAnimation on opacity {
+                            running: profileButton.selected
+                            loops: Animation.Infinite
+                            NumberAnimation {
+                                to: 1.0
+                                duration: 0
+                            }
+                            NumberAnimation {
+                                to: 0.85
+                                duration: 400
+                                easing {
+                                    type: Easing.OutQuad
+                                }
+                            }
+                            NumberAnimation {
+                                to: 1.0
+                                duration: 500
+                                easing {
+                                    type: Easing.InQuad
+                                }
+                            }
+                            PauseAnimation {
+                                duration: 200
+                            }
+                        }
+                    }
+
+                    Item {
+    id: profileImageClip
+    anchors.fill: parent
 
     Image {
         id: profileIcon
-        width: Math.round(screenheight * 0.0833)
-        height: width
-        source: "../assets/images/profile_icon.png"
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop
+        visible: false
 
-        smooth: true
-        antialiasing: true
-        layer.enabled: enableDropShadows
-        layer.effect: DropShadow {
-            transparentBorder: true
-            horizontalOffset: 0
-            verticalOffset: 0
-            color: "#4D000000"
-            radius: 3.0
-            samples: 6
-        }
+        source: api.memory.get("RA_LoggedIn") === "Yes"
+                ? "https://media.retroachievements.org/UserPic/"
+                  + api.memory.get("RA_Username") + ".png"
+                : "../assets/images/profile_icon.png"
     }
 
-    Text {
-        id: usernameText
-        text: api.memory.has("Username") ? api.memory.get("Username") : ""
-        color: theme.text
-        font.family: titleFont.name
+    Rectangle {
+        id: maskRect
+        anchors.fill: parent
+        radius: width / 2
+        visible: false
+    }
 
-        // leggermente più piccolo
-        font.pixelSize: Math.round(screenheight * 0.028)
-
-        font.bold: true
-
-        // 👇 allineamento verticale corretto
-        anchors.verticalCenter: profileIcon.verticalCenter
+    OpacityMask {
+        anchors.fill: parent
+        source: profileIcon
+        maskSource: maskRect
     }
 }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            if (profileButton.focus) {
+                                navSound.play();
+                            } else {
+                                profileButton.focus = true;
+                                navSound.play();
+                                homeSwitcher.currentIndex = -1;
+                            }
+                        }
+                    }
+
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            navSound.play();
+                        }
+                    }
+
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        infoButton.focus = true;
+                        profileButton.focus = false;
+                    }
+
+                    Keys.onDownPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 0;
+                        profileButton.focus = false;
+                    }
+                }
+
+                Text {
+                    id: usernameText
+                    text: {
+                        if (api.memory.get("RA_LoggedIn") === "Yes")
+                            return api.memory.get("RA_Username") || "";
+                        if (api.memory.has("Username") && api.memory.get("Username") !== "")
+                            return api.memory.get("Username");
+                        return "";
+                    }
+                    color: profileButton.selected ? theme.accent : theme.text
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.028)
+                    font.bold: true
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: text !== ""
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+                }
+            }
 
             Text {
                 id: collectionHomeTitle
@@ -130,8 +234,8 @@ FocusScope {
                 font.pixelSize: Math.round(screenheight * 0.0277)
                 font.bold: true
                 anchors {
-                    verticalCenter: profileIcon.verticalCenter
-                    left: profileIcon.right
+                    verticalCenter: profileButton.verticalCenter
+                    left: profileButton.right
                     leftMargin: vpx(12)
                 }
             }
@@ -139,7 +243,7 @@ FocusScope {
             RowLayout {
                 spacing: vpx(5)
                 anchors {
-                    verticalCenter: profileIcon.verticalCenter
+                    verticalCenter: profileButton.verticalCenter
                     right: parent.right
                     rightMargin: vpx(15)
                 }
@@ -165,9 +269,6 @@ FocusScope {
 
                     onTimeSettingChanged: sysTime.set()
 
-                    anchors {
-                        verticalCenter: profileIcon.verticalCenter
-                    }
                     color: theme.text
                     font.family: titleFont.name
                     font.weight: Font.Bold
