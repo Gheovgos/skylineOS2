@@ -138,34 +138,31 @@ FocusScope {
                     }
 
                     Item {
-    id: profileImageClip
-    anchors.fill: parent
+                        id: profileImageClip
+                        anchors.fill: parent
 
-    Image {
-        id: profileIcon
-        anchors.fill: parent
-        fillMode: Image.PreserveAspectCrop
-        visible: false
+                        Image {
+                            id: profileIcon
+                            anchors.fill: parent
+                            fillMode: Image.PreserveAspectCrop
+                            visible: false
 
-        source: api.memory.get("RA_LoggedIn") === "Yes"
-                ? "https://media.retroachievements.org/UserPic/"
-                  + api.memory.get("RA_Username") + ".png"
-                : "../assets/images/profile_icon.png"
-    }
+                            source: api.memory.get("RA_LoggedIn") === "Yes" ? "https://media.retroachievements.org/UserPic/" + api.memory.get("RA_Username") + ".png" : "../assets/images/profile_icon.png"
+                        }
 
-    Rectangle {
-        id: maskRect
-        anchors.fill: parent
-        radius: width / 2
-        visible: false
-    }
+                        Rectangle {
+                            id: maskRect
+                            anchors.fill: parent
+                            radius: width / 2
+                            visible: false
+                        }
 
-    OpacityMask {
-        anchors.fill: parent
-        source: profileIcon
-        maskSource: maskRect
-    }
-}
+                        OpacityMask {
+                            anchors.fill: parent
+                            source: profileIcon
+                            maskSource: maskRect
+                        }
+                    }
 
                     MouseArea {
                         anchors.fill: parent

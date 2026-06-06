@@ -85,6 +85,59 @@ FocusScope {
     }
 
     ListModel {
+        id: menuButtonModel
+
+        ListElement {
+            settingName: "Feed Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+
+        ListElement {
+            settingName: "Store Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+
+        ListElement {
+            settingName: "Gallery Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+
+        ListElement {
+            settingName: "Gallery Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+
+        ListElement {
+            settingName: "Controller Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+
+        ListElement {
+            settingName: "Settings Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+
+        ListElement {
+            settingName: "Suspend Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+        }
+    }
+
+    property var buttonModelPage: {
+        return {
+            pageName: "Buttons Settings",
+            listmodel: menuButtonModel
+        };
+    }
+
+    ListModel {
         id: raModel
         ListElement {
             settingName: "RetroAchievements Username"
@@ -129,7 +182,7 @@ FocusScope {
         };
     }
 
-    property var settingsArr: [generalPage, homePage, raPage, performancePage]
+    property var settingsArr: [generalPage, homePage, buttonModelPage, raPage, performancePage]
 
     property real itemheight: vpx(50)
 

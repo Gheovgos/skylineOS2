@@ -385,151 +385,216 @@ ListView {
                             }
                             clip: true
 
-                            Column {
+                            Flickable {
+                                id: detailsFlick
+
                                 width: parent.width
-                                spacing: vpx(14)
+                                height: parent.height
 
-                                // Cover with shadow
-                                Rectangle {
-                                    width: parent.width
-                                    height: width
-                                    radius: vpx(16)
-                                    color: theme.main
+                                contentWidth: width
+                                contentHeight: contentColumn.height
 
-                                    layer.enabled: enableDropShadows
-                                    layer.effect: DropShadow {
-                                        transparentBorder: true
-                                        horizontalOffset: 0
-                                        verticalOffset: vpx(6)
-                                        radius: 16
-                                        samples: 32
-                                        color: "#50000000"
-                                    }
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
 
-                                    Image {
-                                        id: coverImage
-                                        anchors {
-                                            fill: parent
-                                            margins: vpx(0)
-                                        }
-                                        source: gameData ? (gameData.assets.boxFront || "") : ""
-                                        fillMode: Image.PreserveAspectFit
-                                        asynchronous: true
-                                        smooth: true
-                                        layer.enabled: true
-                                        layer.effect: OpacityMask {
-                                            maskSource: Rectangle {
-                                                width: coverImage.width
-                                                height: coverImage.height
-                                                radius: vpx(16)
-                                                visible: false
-                                            }
-                                        }
-                                    }
-                                    // Placeholder
-                                    Text {
-                                        anchors.centerIn: parent
-                                        text: gameData ? (gameData.title.charAt(0)) : "?"
-                                        color: theme.icon
-                                        font.family: titleFont.name
-                                        font.pixelSize: Math.round(screenheight * 0.06)
-                                        font.bold: true
-                                        visible: coverImage.status !== Image.Ready
-                                    }
-                                }
+                                Column {
+                                    id: contentColumn
 
-                                // Stats pill row
-                                Row {
-                                    spacing: vpx(8)
-                                    visible: {
-                                        var pt = gameData ? gameData.playTime : 0;
-                                        var manual = (gameData && gameData.extra) ? (gameData.extra.playtime || 0) : 0;
-                                        return pt > 0 || manual > 0;
-                                    }
+                                    width: detailsFlick.width
+                                    spacing: vpx(14)
 
                                     Rectangle {
-                                        height: vpx(28)
-                                        width: statRow.width + vpx(16)
-                                        radius: height / 2
+                                        width: parent.width
+                                        height: width
+                                        radius: vpx(16)
                                         color: theme.main
 
-                                        Row {
-                                            id: statRow
-                                            anchors.centerIn: parent
-                                            spacing: vpx(6)
+                                        layer.enabled: enableDropShadows
+                                        layer.effect: DropShadow {
+                                            transparentBorder: true
+                                            horizontalOffset: 0
+                                            verticalOffset: vpx(6)
+                                            radius: 16
+                                            samples: 32
+                                            color: "#50000000"
+                                        }
 
-                                            Text {
-                                                text: "⏱"
-                                                font.pixelSize: Math.round(screenheight * 0.018)
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
-                                            Text {
-                                                text: {
-                                                    if (gameData.extra.playtime)
-                                                        return new Date(gameData.extra.playtime[0] * 1000).getUTCHours() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCMinutes() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCSeconds();
-                                                    else
-                                                        return new Date(gameData.playTime * 1000).getUTCHours() + ":" + new Date(gameData.playTime * 1000).getUTCMinutes() + ":" + new Date(gameData.playTime * 1000).getUTCSeconds();
+                                        Image {
+                                            id: coverImage
+
+                                            anchors.fill: parent
+
+                                            source: gameData ? (gameData.assets.boxFront || "") : ""
+                                            fillMode: Image.PreserveAspectFit
+                                            asynchronous: true
+                                            smooth: true
+
+                                            layer.enabled: true
+                                            layer.effect: OpacityMask {
+                                                maskSource: Rectangle {
+                                                    width: coverImage.width
+                                                    height: coverImage.height
+                                                    radius: vpx(16)
+                                                    visible: false
                                                 }
-                                                color: theme.text
-                                                font.family: titleFont.name
-                                                font.pixelSize: Math.round(screenheight * 0.018)
-                                                font.bold: true
-                                                anchors.verticalCenter: parent.verticalCenter
                                             }
                                         }
-                                    }
-
-                                    // Developer
-                                    Rectangle {
-                                        width: devText.width + vpx(16)
-                                        height: vpx(24)
-                                        radius: height / 2
-                                        color: theme.main
-                                        visible: gameData && gameData.developer !== ""
 
                                         Text {
-                                            id: devText
                                             anchors.centerIn: parent
-                                            text: gameData ? (gameData.developer || "") : ""
+                                            text: gameData ? gameData.title.charAt(0) : "?"
                                             color: theme.icon
                                             font.family: titleFont.name
-                                            font.pixelSize: Math.round(screenheight * 0.017)
-                                            anchors.verticalCenter: parent.verticalCenter
+                                            font.pixelSize: Math.round(screenheight * 0.06)
+                                            font.bold: true
+                                            visible: coverImage.status !== Image.Ready
                                         }
                                     }
-                                }
 
-                                //Progress
-                                Row {
-                                    spacing: vpx(8)
-                                    visible: gameData && gameData.extra.progress > 0
+                                    Row {
+                                        spacing: vpx(8)
 
-                                    Rectangle {
-                                        height: vpx(28)
-                                        width: progressRow.width + vpx(16)
-                                        radius: height / 2
-                                        color: theme.main
+                                        visible: {
+                                            var pt = gameData ? gameData.playTime : 0;
+                                            var manual = (gameData && gameData.extra) ? (gameData.extra.playtime || 0) : 0;
+                                            return pt > 0 || manual > 0;
+                                        }
 
-                                        Row {
-                                            id: progressRow
-                                            anchors.centerIn: parent
-                                            spacing: vpx(6)
+                                        Rectangle {
+                                            height: vpx(28)
+                                            width: statRow.width + vpx(16)
+                                            radius: height / 2
+                                            color: theme.main
 
-                                            Image {
-                                                source: "../assets/images/navigation/trophy.svg"
-                                                width: vpx(20)
-                                                height: width
+                                            Row {
+                                                id: statRow
+                                                anchors.centerIn: parent
+                                                spacing: vpx(6)
+
+                                                Text {
+                                                    text: "⏱"
+                                                    font.pixelSize: Math.round(screenheight * 0.018)
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                }
+
+                                                Text {
+                                                    text: {
+                                                        if (gameData.extra.playtime)
+                                                            return new Date(gameData.extra.playtime[0] * 1000).getUTCHours() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCMinutes() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCSeconds();
+                                                        else
+                                                            return new Date(gameData.playTime * 1000).getUTCHours() + ":" + new Date(gameData.playTime * 1000).getUTCMinutes() + ":" + new Date(gameData.playTime * 1000).getUTCSeconds();
+                                                    }
+
+                                                    color: theme.text
+                                                    font.family: titleFont.name
+                                                    font.pixelSize: Math.round(screenheight * 0.018)
+                                                    font.bold: true
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                }
                                             }
+                                        }
+
+                                        Rectangle {
+                                            width: devText.width + vpx(16)
+                                            height: vpx(24)
+                                            radius: height / 2
+                                            color: theme.main
+                                            visible: gameData && gameData.developer !== ""
+
                                             Text {
-                                                text: gameData.extra.progress + "%"
-                                                color: theme.text
+                                                id: devText
+
+                                                anchors.centerIn: parent
+
+                                                text: gameData ? (gameData.developer || "") : ""
+
+                                                color: theme.icon
                                                 font.family: titleFont.name
-                                                font.pixelSize: Math.round(screenheight * 0.018)
-                                                font.bold: true
+                                                font.pixelSize: Math.round(screenheight * 0.017)
+
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                         }
                                     }
+
+                                    Row {
+                                        spacing: vpx(8)
+                                        visible: gameData && gameData.extra.progress > 0
+
+                                        Rectangle {
+                                            height: vpx(28)
+                                            width: progressRow.width + vpx(16)
+                                            radius: height / 2
+                                            color: theme.main
+
+                                            Row {
+                                                id: progressRow
+                                                anchors.centerIn: parent
+                                                spacing: vpx(6)
+
+                                                Image {
+                                                    source: "../assets/images/navigation/trophy.svg"
+                                                    width: vpx(20)
+                                                    height: width
+                                                }
+
+                                                Text {
+                                                    text: gameData.extra.progress + "%"
+
+                                                    color: theme.text
+                                                    font.family: titleFont.name
+                                                    font.pixelSize: Math.round(screenheight * 0.018)
+                                                    font.bold: true
+
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Rectangle {
+                                    anchors {
+                                        top: parent.top
+                                        bottom: parent.bottom
+                                        right: parent.right
+                                    }
+
+                                    width: vpx(4)
+                                    radius: width / 2
+                                    color: "#20FFFFFF"
+
+                                    visible: detailsFlick.contentHeight > detailsFlick.height
+                                }
+
+                                Rectangle {
+                                    anchors.right: parent.right
+
+                                    width: vpx(4)
+                                    radius: width / 2
+                                    color: theme.accent
+
+                                    visible: detailsFlick.contentHeight > detailsFlick.height
+
+                                    height: Math.max(vpx(24), detailsFlick.height * detailsFlick.height / detailsFlick.contentHeight)
+
+                                    y: detailsFlick.visibleArea.yPosition * (detailsFlick.height - height)
+
+                                    opacity: detailsFlick.moving ? 1 : 0
+
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 200
+                                        }
+                                    }
+                                }
+
+                                Keys.onDownPressed: {
+                                    contentY = Math.min(contentY + vpx(120), contentHeight - height);
+                                }
+
+                                Keys.onUpPressed: {
+                                    contentY = Math.max(contentY - vpx(120), 0);
                                 }
                             }
                         }
@@ -592,16 +657,60 @@ ListView {
                                 font.letterSpacing: 1.5
                             }
 
-                            Text {
-                                text: gameData ? (gameData.description || "No description available.") : ""
-                                color: theme.text
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.023)
-                                wrapMode: Text.WordWrap
+                            Flickable {
+                                id: descriptionFlick
                                 width: parent.width
-                                maximumLineCount: 7
-                                elide: Text.ElideRight
-                                lineHeight: 1.4
+                                height: Math.round(screenheight * 0.18)
+
+                                contentHeight: descText.paintedHeight
+                                clip: true
+                                interactive: true
+
+                                Text {
+                                    id: descText
+
+                                    text: gameData ? (gameData.description || "No description available.") : ""
+
+                                    width: descriptionFlick.width - vpx(8)
+
+                                    color: theme.text
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.023)
+
+                                    wrapMode: Text.WordWrap
+                                    lineHeight: 1.4
+                                }
+
+                                // Track
+                                Rectangle {
+                                    anchors {
+                                        top: parent.top
+                                        bottom: parent.bottom
+                                        right: parent.right
+                                    }
+
+                                    width: vpx(4)
+                                    radius: width / 2
+                                    color: "#20FFFFFF"
+
+                                    visible: descriptionFlick.contentHeight > descriptionFlick.height
+                                }
+
+                                // Thumb
+                                Rectangle {
+                                    anchors.right: parent.right
+
+                                    width: vpx(4)
+                                    radius: width / 2
+
+                                    color: theme.accent
+
+                                    visible: descriptionFlick.contentHeight > descriptionFlick.height
+
+                                    height: Math.max(vpx(20), descriptionFlick.height * descriptionFlick.height / descriptionFlick.contentHeight)
+
+                                    y: descriptionFlick.visibleArea.yPosition * (descriptionFlick.height - height)
+                                }
                             }
 
                             // Last played
@@ -1047,10 +1156,10 @@ ListView {
     }
 
     Keys.onUpPressed: {
-    borderSfx.play();
-    profileButton.focus = true;
-    homeSwitcher.currentIndex = -1;
-}
+        borderSfx.play();
+        profileButton.focus = true;
+        homeSwitcher.currentIndex = -1;
+    }
 
     Keys.onDownPressed: {
         _index = currentIndex;
