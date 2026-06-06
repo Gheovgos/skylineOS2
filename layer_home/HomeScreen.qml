@@ -271,7 +271,7 @@ FocusScope {
 
                     anchors.verticalCenter: sysTime.verticalCenter
 
-                    visible: api.network && api.network.isConnected
+                    visible: (settings.showWifi === "Yes")
 
                     layer.enabled: true
                     layer.effect: ColorOverlay {

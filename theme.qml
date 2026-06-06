@@ -26,6 +26,7 @@ FocusScope
             wordWrap:               api.memory.has("Word Wrap on Titles") ? api.memory.get("Word Wrap on Titles") : "Yes",
             batteryPercentSetting:  api.memory.has("Display Battery Percentage") ? api.memory.get("Display Battery Percentage") : "No",
             enableDropShadows:      api.memory.has("Enable DropShadows") ? api.memory.get("Enable DropShadows") : "Yes",
+            showWifi:               api.memory.has("Display Wifi Icon") ? api.memory.get("Display Wifi Icon") : "Yes",
             playBGM:                api.memory.has("Background Music") ? api.memory.get("Background Music"): "No"
         }
     }

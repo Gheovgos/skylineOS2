@@ -1,5 +1,6 @@
 import QtQuick 2.15
 import QtGraphicalEffects 1.12
+import QtMultimedia 5.9
 import "../global"
 import "../Lists"
 import "../utils.js" as Utils
@@ -843,8 +844,8 @@ ListView {
                 source: gameBG
 
                 sourceSize {
-                    width: 256
-                    height: 256
+                    width: 512
+                    height: 512
                 }
 
                 anchors.centerIn: parent
@@ -978,13 +979,11 @@ ListView {
                 }
 
                 onPressAndHold: {
-                var item = homeLayout.currentItem;
-                if (item)
-                    item.expanded = !item.expanded;
+                    var item = homeLayout.currentItem;
+                    if (item)
+                        item.expanded = !item.expanded;
+                }
             }
-            }
-
-            
 
             Text {
                 id: topTitle

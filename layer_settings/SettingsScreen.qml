@@ -3,10 +3,10 @@ import QtQuick.Layouts 1.11
 import QtGraphicalEffects 1.0
 
 FocusScope {
-id: root
+    id: root
 
     ListModel {
-    id: settingsModel
+        id: settingsModel
 
         ListElement {
             settingName: "Game Background"
@@ -25,15 +25,13 @@ id: root
             settingSubtitle: "(Requires Reload)"
             setting: "Yes,No"
         }
-        
-
     }
 
     property var generalPage: {
         return {
             pageName: "General",
             listmodel: settingsModel
-        }
+        };
     }
 
     ListModel {
@@ -48,13 +46,23 @@ id: root
             settingSubtitle: "(%)"
             setting: "No,Yes"
         }
+        ListElement {
+            settingName: "Display Wifi Icon"
+            settingSubtitle: ""
+            setting: "No,Yes"
+        }
+        ListElement {
+            settingName: "Home Card Size"
+            settingSubtitle: ""
+            setting: "Medium,Large,Small"
+        }
     }
 
     property var homePage: {
         return {
             pageName: "Home Screen",
             listmodel: homeSettingsModel
-        }
+        };
     }
 
     ListModel {
@@ -70,7 +78,7 @@ id: root
         return {
             pageName: "Performance",
             listmodel: perfSettingsModel
-        }
+        };
     }
 
     property var settingsArr: [generalPage, homePage, performancePage]
@@ -78,8 +86,7 @@ id: root
     property real itemheight: vpx(50)
 
     // Top bar
-    Item
-    {
+    Item {
         id: topBar
         anchors.left: parent.left
         anchors.top: parent.top
@@ -87,75 +94,77 @@ id: root
         height: Math.round(screenheight * 0.1222)
         z: 5
 
-        Image
-        {
+        Image {
             id: headerIcon
-            width: Math.round(screenheight*0.0611)
+            width: Math.round(screenheight * 0.0611)
             height: width
             source: "../assets/images/navigation/Settings.png"
             sourceSize.width: vpx(64)
             sourceSize.height: vpx(64)
 
             anchors {
-                top: parent.top; topMargin: Math.round(screenheight*0.0416)
-                left: parent.left; leftMargin: vpx(38)
+                top: parent.top
+                topMargin: Math.round(screenheight * 0.0416)
+                left: parent.left
+                leftMargin: vpx(38)
             }
 
-            Text
-            {
+            Text {
                 id: collectionTitle
                 text: "Theme Settings"
                 color: theme.text
                 font.family: titleFont.name
-                font.pixelSize: Math.round(screenheight*0.0277)
+                font.pixelSize: Math.round(screenheight * 0.0277)
                 font.bold: true
                 anchors {
                     verticalCenter: headerIcon.verticalCenter
-                    left: parent.right; leftMargin: vpx(12)
+                    left: parent.right
+                    leftMargin: vpx(12)
                 }
             }
         }
 
         ColorOverlay {
-                anchors.fill: headerIcon
-                source: headerIcon
-                color: theme.text
-                cached: true
+            anchors.fill: headerIcon
+            source: headerIcon
+            color: theme.text
+            cached: true
         }
 
         MouseArea {
-                anchors.fill: parent
-                hoverEnabled: false
-                onEntered: {}
-                onExited: {}
-                onClicked: {}
-            }
+            anchors.fill: parent
+            hoverEnabled: false
+            onEntered: {}
+            onExited: {}
+            onClicked: {}
+        }
 
         // Line
         Rectangle {
             y: parent.height - vpx(1)
-            anchors.left: parent.left; anchors.right: parent.right
+            anchors.left: parent.left
+            anchors.right: parent.right
             height: 1
             color: theme.secondary
         }
     }
 
     ListView {
-    id: pagelist
-    
+        id: pagelist
+
         focus: true
         anchors {
             top: topBar.bottom
-            bottom: parent.bottom; //bottomMargin: helpMargin
-            left: parent.left; //leftMargin: globalMargin
+            bottom: parent.bottom //bottomMargin: helpMargin
+            left: parent.left //leftMargin: globalMargin
         }
         width: vpx(300)
         model: settingsArr
         delegate: Component {
-        id: pageDelegate
-        
+            id: pageDelegate
+
             Item {
-            id: pageRow
+                id: pageRow
 
                 property bool selected: ListView.isCurrentItem
 
@@ -164,8 +173,8 @@ id: root
 
                 // Page name
                 Text {
-                id: pageNameText
-                
+                    id: pageNameText
+
                     text: modelData.pageName
                     color: theme.text
                     //font.family: subtitleFont.name
@@ -177,7 +186,8 @@ id: root
                     width: contentWidth
                     height: parent.height
                     anchors {
-                        left: parent.left; leftMargin: vpx(25)
+                        left: parent.left
+                        leftMargin: vpx(25)
                     }
                 }
 
@@ -192,12 +202,17 @@ id: root
                         settingsList.focus = true;
                     }
                 }
-
             }
-        } 
+        }
 
-        Keys.onUpPressed: { navSound.play(); decrementCurrentIndex() }
-        Keys.onDownPressed: { navSound.play(); incrementCurrentIndex() }
+        Keys.onUpPressed: {
+            navSound.play();
+            decrementCurrentIndex();
+        }
+        Keys.onDownPressed: {
+            navSound.play();
+            incrementCurrentIndex();
+        }
         Keys.onPressed: {
             // Accept
             if (api.keys.isAccept(event) && !event.isAutoRepeat) {
@@ -211,13 +226,13 @@ id: root
                 showHomeScreen();
             }
         }
-
     }
 
     Rectangle {
         anchors {
-            left: pagelist.right;
-            top: pagelist.top; bottom: pagelist.bottom
+            left: pagelist.right
+            top: pagelist.top
+            bottom: pagelist.bottom
         }
         width: vpx(1)
         color: theme.text
@@ -225,15 +240,16 @@ id: root
     }
 
     ListView {
-    id: settingsList
+        id: settingsList
 
         model: settingsArr[pagelist.currentIndex].listmodel
         delegate: settingsDelegate
-        
+
         anchors {
-            top: topBar.bottom; bottom: parent.bottom; 
-            left: pagelist.right; //leftMargin: globalMargin
-            right: parent.right; //rightMargin: globalMargin
+            top: topBar.bottom
+            bottom: parent.bottom
+            left: pagelist.right //leftMargin: globalMargin
+            right: parent.right //rightMargin: globalMargin
         }
         width: vpx(500)
 
@@ -247,10 +263,10 @@ id: root
         clip: false
 
         Component {
-        id: settingsDelegate
-        
+            id: settingsDelegate
+
             Item {
-            id: settingRow
+                id: settingRow
 
                 property bool selected: ListView.isCurrentItem && settingsList.focus
                 property variant settingList: setting.split(',')
@@ -262,7 +278,7 @@ id: root
                 }
 
                 function nextSetting() {
-                    if (savedIndex != settingList.length -1)
+                    if (savedIndex != settingList.length - 1)
                         savedIndex++;
                     else
                         savedIndex = 0;
@@ -272,7 +288,7 @@ id: root
                     if (savedIndex > 0)
                         savedIndex--;
                     else
-                        savedIndex = settingList.length -1;
+                        savedIndex = settingList.length - 1;
                 }
 
                 width: ListView.view.width
@@ -280,8 +296,8 @@ id: root
 
                 // Setting name
                 Text {
-                id: settingNameText
-                
+                    id: settingNameText
+
                     text: settingSubtitle != "" ? settingName + " " + settingSubtitle + ": " : settingName + ": "
                     color: theme.text
                     //font.family: subtitleFont.name
@@ -292,14 +308,15 @@ id: root
                     width: contentWidth
                     height: parent.height
                     anchors {
-                        left: parent.left; leftMargin: vpx(25)
+                        left: parent.left
+                        leftMargin: vpx(25)
                     }
                 }
                 // Setting value
-                Text { 
-                id: settingtext; 
-                
-                    text: settingList[savedIndex]; 
+                Text {
+                    id: settingtext
+
+                    text: settingList[savedIndex]
                     color: theme.accent
                     //font.family: subtitleFont.name
                     font.pixelSize: vpx(20)
@@ -308,14 +325,17 @@ id: root
 
                     height: parent.height
                     anchors {
-                        right: parent.right; rightMargin: vpx(25)
+                        right: parent.right
+                        rightMargin: vpx(25)
                     }
                 }
 
                 Rectangle {
-                    anchors { 
-                        left: parent.left; leftMargin: vpx(25)
-                        right: parent.right; rightMargin: vpx(25)
+                    anchors {
+                        left: parent.left
+                        leftMargin: vpx(25)
+                        right: parent.right
+                        rightMargin: vpx(25)
                         bottom: parent.bottom
                     }
                     color: theme.text
@@ -326,7 +346,7 @@ id: root
                 // Input handling
                 // Next setting
                 Keys.onRightPressed: {
-                    selectSfx.play()
+                    selectSfx.play();
                     nextSetting();
                     saveSetting();
                 }
@@ -341,14 +361,14 @@ id: root
                     // Accept
                     if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                         event.accepted = true;
-                        selectSfx.play()
+                        selectSfx.play();
                         nextSetting();
                         saveSetting();
                     }
                     // Back
                     if (api.keys.isCancel(event) && !event.isAutoRepeat) {
                         event.accepted = true;
-                        navSound.play()
+                        navSound.play();
                         pagelist.focus = true;
                     }
                 }
@@ -359,7 +379,7 @@ id: root
                     hoverEnabled: false //settings.MouseHover == "Yes"
                     onEntered: { /*navSound.play();*/ }
                     onClicked: {
-                        if(selected){
+                        if (selected) {
                             selectSfx.play();
                             nextSetting();
                             saveSetting();
@@ -371,10 +391,15 @@ id: root
                     }
                 }
             }
-        } 
+        }
 
-        Keys.onUpPressed: { navSound.play(); decrementCurrentIndex() }
-        Keys.onDownPressed: { navSound.play(); incrementCurrentIndex() }
+        Keys.onUpPressed: {
+            navSound.play();
+            decrementCurrentIndex();
+        }
+        Keys.onDownPressed: {
+            navSound.play();
+            incrementCurrentIndex();
+        }
     }
-
 }
