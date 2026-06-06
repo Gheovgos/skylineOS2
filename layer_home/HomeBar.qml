@@ -976,13 +976,15 @@ ListView {
                     homeSwitcher.focus = true;
                     buttonMenu.focus = false;
                 }
-            }
 
-            onPressAndHold: {
+                onPressAndHold: {
                 var item = homeLayout.currentItem;
                 if (item)
                     item.expanded = !item.expanded;
             }
+            }
+
+            
 
             Text {
                 id: topTitle
