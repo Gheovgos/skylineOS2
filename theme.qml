@@ -27,6 +27,8 @@ FocusScope
             batteryPercentSetting:  api.memory.has("Display Battery Percentage") ? api.memory.get("Display Battery Percentage") : "No",
             enableDropShadows:      api.memory.has("Enable DropShadows") ? api.memory.get("Enable DropShadows") : "Yes",
             showWifi:               api.memory.has("Display Wifi Icon") ? api.memory.get("Display Wifi Icon") : "Yes",
+            darkMode:               api.memory.has("Dark Mode") ? api.memory.get("Dark Mode") : "No",
+            homeCardSize:           api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
             playBGM:                api.memory.has("Background Music") ? api.memory.get("Background Music"): "No"
         }
     }
@@ -166,7 +168,7 @@ FocusScope
         }
     }
 
-    property var theme : api.memory.get('theme') === 'themeLight' ? themeLight : themeDark ;
+    property var theme : api.memory.get("Dark Mode") === "No" ? themeLight : themeDark ;
 
     function toggleDarkMode(){
         if(theme === themeLight){

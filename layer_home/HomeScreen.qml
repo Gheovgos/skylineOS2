@@ -292,7 +292,7 @@ FocusScope {
                 right: parent.right
                 top: topbar.bottom
             }
-            height: Math.round(screenheight * 0.3555)
+            height: Math.round(screenheight * (parseFloat(settings.homeCardSize) / 100))
             focus: true
         }
 
