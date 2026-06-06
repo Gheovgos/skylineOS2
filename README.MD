@@ -32,6 +32,19 @@ I hate it when things aren't customizable, especially when it costs next to noth
 - Card size (warning: don’t go over 50, as it breaks for now! A settings reset needs to be implemented)
 - Number of cards displayed on screen (default 12)
 
+## Planned features
+
+In order of priority
+
+- Better bottom buttons
+- Better RA integration
+- More customization! And use all data from metadata
+- Exophase support
+- More and better visual effects
+- Redesign of All games list
+
+No ETA! I work on it on my free time
+
 ## Latest Releases
 
 ### v0.1
