@@ -479,12 +479,31 @@ ListView {
 
                                                 Text {
                                                     text: {
-                                                        if (gameData.extra.playtime)
-                                                            return new Date(gameData.extra.playtime[0] * 1000).getUTCHours() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCMinutes() + ":" + new Date(gameData.extra.playtime[0] * 1000).getUTCSeconds();
-                                                        else
-                                                            return new Date(gameData.playTime * 1000).getUTCHours() + ":" + new Date(gameData.playTime * 1000).getUTCMinutes() + ":" + new Date(gameData.playTime * 1000).getUTCSeconds();
-                                                    }
+                                                        if (!gameData)
+                                                            return "0:00";
 
+                                                        // Fonte 1: campo custom x-playtime nel metadata
+                                                        var manual = 0;
+                                                        if (gameData.extra && gameData.extra.playtime) {
+                                                            manual = parseInt(gameData.extra.playtime) || 0;
+                                                        }
+
+                                                        // Fonte 2: tempo tracciato da Pegasus nativo
+                                                        var nativeTime = gameData.playTime || 0;
+
+                                                        // Fonte 3: tempo tracciato da noi via api.memory
+                                                        var key = "playtime_" + gameData.title.split(" ").join("_");
+                                                        var tracked = parseInt(api.memory.get(key) || "0");
+
+                                                        // Priorità: manual > native + tracked
+                                                        var total = manual > 0 ? manual : (nativeTime + tracked);
+
+                                                        if (total <= 0)
+                                                            return "0:00";
+                                                        var h = Math.floor(total / 3600);
+                                                        var m = Math.floor((total % 3600) / 60);
+                                                        return h + ":" + (m < 10 ? "0" + m : m);
+                                                    }
                                                     color: theme.text
                                                     font.family: titleFont.name
                                                     font.pixelSize: Math.round(screenheight * 0.018)
