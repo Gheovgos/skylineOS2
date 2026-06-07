@@ -157,6 +157,13 @@ FocusScope {
             setting: "OK"
             type: "button"
         }
+
+        ListElement {
+            settingName: "Logout"
+            settingSubtitle: ""
+            setting: "Logout"
+            type: "button"
+        }
     }
 
     property var raPage: {
@@ -173,11 +180,17 @@ FocusScope {
             settingSubtitle: ""
             setting: "Yes, No"
         }
+        ListElement {
+            settingName: "Restore All Settings"
+            settingSubtitle: ""
+            setting: "Reset"
+            type: "button"
+        }
     }
 
     property var performancePage: {
         return {
-            pageName: "Performance",
+            pageName: "Advanced Settings",
             listmodel: perfSettingsModel
         };
     }
@@ -377,7 +390,6 @@ FocusScope {
 
                 function saveSetting() {
                     if (type === "input") {
-                        console.log("++++++++++", type);
                         api.memory.set(settingName, currentInput);
                     } else {
                         api.memory.set(settingName + 'Index', savedIndex);
@@ -537,9 +549,14 @@ FocusScope {
                             selectSfx.play();
                             if (settingName === "Login") {
                                 selectSfx.play();
-                                if (settingName === "Login") {
-                                    tryRALogin();
-                                }
+                                tryRALogin();
+                            } else if (settingName === "Restore All Settings") {
+                                restoreAllSettings();
+                            } else if (settingName === "Logout") {
+                                api.memory.unset("RA_LoggedIn");
+                                api.memory.unset("RA_Username");
+                                raLoginStatus = "";
+                                selectSfx.play();
                             }
                         } else {
                             selectSfx.play();
@@ -573,6 +590,11 @@ FocusScope {
                     onPressAndHold: {
                         if (type === "input") {
                             inputPanel.open(settingName, setting);
+                        } else if (type === "button") {
+                            selectSfx.play();
+                            if (settingName === "Login") {
+                                tryRALogin();
+                            }
                         } else {
                             selectSfx.play();
                             nextSetting();
@@ -623,7 +645,7 @@ FocusScope {
 
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function () {
-            console.log(xhr.status)
+            console.log(xhr.status);
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
                     try {
@@ -679,6 +701,30 @@ FocusScope {
         z: 101
     }
 
+    function restoreAllSettings() {
+        api.memory.unset("Game Background");
+        api.memory.unset("Game BackgroundIndex");
+        api.memory.unset("Background Music");
+        api.memory.unset("Background MusicIndex");
+        api.memory.unset("Word Wrap on Titles");
+        api.memory.unset("Word Wrap on TitlesIndex");
+        api.memory.unset("Dark Mode");
+        api.memory.unset("Dark ModeIndex");
+        api.memory.unset("Time Format");
+        api.memory.unset("Time FormatIndex");
+        api.memory.unset("Display Battery Percentage");
+        api.memory.unset("Display Battery PercentageIndex");
+        api.memory.unset("Display Wifi Icon");
+        api.memory.unset("Display Wifi IconIndex");
+        api.memory.unset("Home Card Size");
+        api.memory.unset("Max games on Home Screen");
+        api.memory.unset("Enable DropShadows");
+        api.memory.unset("Enable DropShadowsIndex");
+        api.memory.unset("Username");
+        raLoginStatus = "";
+        selectSfx.play();
+    }
+
     // INPUT
     Rectangle {
         id: inputPanel
@@ -722,15 +768,47 @@ FocusScope {
         property string settingDefault: ""
         property string inputValue: ""
 
+        TextInput {
+            id: hiddenInput
+            visible: false
+            focus: inputPanel.visible
+            Keys.onPressed: {
+                if (event.key === Qt.Key_Backspace) {
+                    event.accepted = true;
+                    inputPanel.inputValue = inputPanel.inputValue.slice(0, -1);
+                    return;
+                }
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                    event.accepted = true;
+                    api.memory.set(inputPanel.settingKey, inputPanel.inputValue);
+                    inputPanel.close();
+                    return;
+                }
+                if (event.key === Qt.Key_Escape) {
+                    event.accepted = true;
+                    inputPanel.close();
+                    return;
+                }
+            }
+            onTextChanged: {
+                if (text !== "") {
+                    inputPanel.inputValue += text;
+                    text = "";
+                }
+            }
+        }
+
         function open(key, defaultVal) {
             settingKey = key;
             settingDefault = defaultVal;
             inputValue = api.memory.get(key) || defaultVal;
             visible = true;
-            focus = true;
+            hiddenInput.focus = true;
+            Qt.inputMethod.show();
         }
 
         function close() {
+            Qt.inputMethod.hide();
             visible = false;
             settingsList.focus = true;
         }
