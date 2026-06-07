@@ -451,6 +451,59 @@ ListView {
                                         }
                                     }
 
+                                    Row {
+                                        spacing: vpx(8)
+
+                                                                            // Developer pill
+                                    Rectangle {
+                                        width: devText.width + vpx(16)
+                                        height: vpx(28)
+                                        radius: height / 2
+                                        color: theme.main
+                                        visible: gameData && gameData.developer !== ""
+
+                                        Text {
+                                            id: devText
+                                            anchors.centerIn: parent
+                                            text: gameData ? (gameData.developer || "") : ""
+                                            color: theme.icon
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.017)
+                                        }
+                                    }
+
+                                    // Progress pill
+                                    Rectangle {
+                                        height: vpx(28)
+                                        width: progressRow.width + vpx(16)
+                                        radius: height / 2
+                                        color: theme.main
+                                        visible: gameData && gameData.extra && gameData.extra.progress > 0
+
+                                        Row {
+                                            id: progressRow
+                                            anchors.centerIn: parent
+                                            spacing: vpx(6)
+
+                                            Image {
+                                                source: "../assets/images/navigation/trophy.svg"
+                                                width: vpx(16)
+                                                height: vpx(16)
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+
+                                            Text {
+                                                text: gameData && gameData.extra ? (gameData.extra.progress + "%") : ""
+                                                color: theme.text
+                                                font.family: titleFont.name
+                                                font.pixelSize: Math.round(screenheight * 0.018)
+                                                font.bold: true
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
+                                        }
+                                    }
+                                    }
+
                                     // Playtime pill
                                     Row {
                                         spacing: vpx(8)
@@ -513,54 +566,6 @@ ListView {
                                         }
                                     }
 
-                                    // Developer pill
-                                    Rectangle {
-                                        width: devText.width + vpx(16)
-                                        height: vpx(28)
-                                        radius: height / 2
-                                        color: theme.main
-                                        visible: gameData && gameData.developer !== ""
-
-                                        Text {
-                                            id: devText
-                                            anchors.centerIn: parent
-                                            text: gameData ? (gameData.developer || "") : ""
-                                            color: theme.icon
-                                            font.family: titleFont.name
-                                            font.pixelSize: Math.round(screenheight * 0.017)
-                                        }
-                                    }
-
-                                    // Progress pill
-                                    Rectangle {
-                                        height: vpx(28)
-                                        width: progressRow.width + vpx(16)
-                                        radius: height / 2
-                                        color: theme.main
-                                        visible: gameData && gameData.extra && gameData.extra.progress > 0
-
-                                        Row {
-                                            id: progressRow
-                                            anchors.centerIn: parent
-                                            spacing: vpx(6)
-
-                                            Image {
-                                                source: "../assets/images/navigation/trophy.svg"
-                                                width: vpx(16)
-                                                height: vpx(16)
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
-
-                                            Text {
-                                                text: gameData && gameData.extra ? (gameData.extra.progress + "%") : ""
-                                                color: theme.text
-                                                font.family: titleFont.name
-                                                font.pixelSize: Math.round(screenheight * 0.018)
-                                                font.bold: true
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
-                                        }
-                                    }
                                 }
 
                                 Rectangle {
