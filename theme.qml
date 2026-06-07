@@ -1,4 +1,4 @@
-// skylineOS
+// skylineOS v2
 
 import QtQuick 2.12
 import QtQuick.Layouts 1.11
@@ -109,6 +109,7 @@ FocusScope {
         /*homeScreen.visible = false;
         softwareScreen.visible = true;*/
         refreshSettings();
+        console.log("+++++Sono nel menu");
         softwareScreen.focus = true;
         toSoftware.play();
     }
@@ -119,6 +120,8 @@ FocusScope {
     }
 
     function showHomeScreen() {
+        refreshSettings();
+        console.log("+++++Sono nel menu");
         homeScreen.focus = true;
         currentCollection = -1;
         homeSfx.play();
@@ -136,8 +139,35 @@ FocusScope {
         launchSfx.play();
     }
 
+    function pushToStackTimer(game) {
+        api.memory.set("STACK_TIMER", [game.title, Math.floor(Date.now() / 1000)]);
+        api.memory.set("LAST_STACK_ITEM", game.title);
+        console.log("Timer started for:", game.title, "at:", Math.floor(Date.now() / 1000));
+    }
+
+    function popToStackTimer() {
+        if (api.memory.has("LAST_STACK_ITEM")) {
+            var last = api.memory.get("LAST_STACK_ITEM");
+            var startTime = api.memory.get("STACK_TIMER")[1];
+            var elapsed = Math.floor(Date.now() / 1000) - startTime;
+
+            console.log("Elapsed seconds:", elapsed, "for game:", last);
+
+            var prevTime = api.memory.has(last) ? parseInt(api.memory.get(last)) : 0;
+            api.memory.set(last, prevTime + elapsed);
+
+            console.log("Nuovo totale per", last, ":", api.memory.get(last));
+        }
+
+        api.memory.unset("LAST_STACK_ITEM");
+        api.memory.unset("STACK_TIMER");
+    }
+
     // Launch the current game from HomeBar
     function launchGame(game) {
+        console.log("Launching Game: ", game.title);
+        pushToStackTimer(game);
+
         api.memory.set('Last Collection', currentCollection);
         if (game != null)
             game.launch();
@@ -409,6 +439,8 @@ FocusScope {
     //starting collection is set here
     Component.onCompleted: {
         state: "homescreen";
+        refreshSettings();
+        popToStackTimer();
         currentCollection = -1;
         api.memory.unset('Last Collection');
         homeSfx.play();
@@ -470,58 +502,6 @@ FocusScope {
         else
             sortByIndex = 0;
         api.memory.set('sortIndex', sortByIndex);
-    }
-
-    property var sessionStartTime: null
-    property bool trackingSession: false
-
-    Timer {
-        id: sessionTimer
-        interval: 60000
-        repeat: true
-        running: trackingSession
-        onTriggered: {
-            console.log("=== SESSION TIMER TRIGGERED ===");
-            console.log("currentGame:", currentGame ? currentGame.title : "null");
-            console.log("trackingSession:", trackingSession);
-            console.log("sessionStartTime:", sessionStartTime);
-            if (sessionStartTime !== null) {
-                console.log("Session started");
-                var elapsed = Math.floor((new Date() - sessionStartTime) / 1000);
-                var key = "playtime_" + currentGame.title.replace(/\s/g, "_");
-                var existing = parseInt(api.memory.get(key) || "0");
-                api.memory.set(key, existing + 60);
-            }
-        }
-    }
-
-    Connections {
-        target: Qt.application
-        onStateChanged: {
-            console.log("=== APP STATE CHANGED ===", Qt.application.state);
-            console.log("Qt.ApplicationSuspended =", Qt.ApplicationSuspended);
-            console.log("Qt.ApplicationInactive =", Qt.ApplicationInactive);
-            console.log("Qt.ApplicationActive =", Qt.ApplicationActive);
-            if (Qt.application.state === Qt.ApplicationSuspended || Qt.application.state === Qt.ApplicationInactive) {
-                if (currentGame && !trackingSession) {
-                    sessionStartTime = new Date();
-                    trackingSession = true;
-                    sessionTimer.start();
-                }
-            } else if (Qt.application.state === Qt.ApplicationActive) {
-                if (trackingSession) {
-                    trackingSession = false;
-                    sessionTimer.stop();
-                    if (sessionStartTime !== null) {
-                        var elapsed = Math.floor((new Date() - sessionStartTime) / 1000);
-                        var key = "playtime_" + currentGame.title.replace(/\s/g, "_");
-                        var existing = parseInt(api.memory.get(key) || "0");
-                        api.memory.set(key, existing + elapsed);
-                        sessionStartTime = null;
-                    }
-                }
-            }
-        }
     }
 
     // Help bar

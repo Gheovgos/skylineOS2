@@ -451,13 +451,15 @@ ListView {
                                         }
                                     }
 
+                                    // Playtime pill
                                     Row {
                                         spacing: vpx(8)
-
                                         visible: {
                                             var pt = gameData ? gameData.playTime : 0;
                                             var manual = (gameData && gameData.extra) ? (gameData.extra.playtime || 0) : 0;
-                                            return pt > 0 || manual > 0;
+                                            var stackKey = gameData ? gameData.title.split(" ").join("_") : "";
+                                            var stackTime = parseInt(api.memory.get(stackKey) || "0");
+                                            return pt > 0 || manual > 0 || stackTime > 0;
                                         }
 
                                         Rectangle {
@@ -471,33 +473,30 @@ ListView {
                                                 anchors.centerIn: parent
                                                 spacing: vpx(6)
 
-                                                Text {
-                                                    text: "⏱"
-                                                    font.pixelSize: Math.round(screenheight * 0.018)
+                                                Image {
+                                                    id: clockIcon
+                                                    source: "../assets/images/navigation/clock.svg"
+                                                    width: vpx(14)
+                                                    height: vpx(14)
+                                                    fillMode: Image.PreserveAspectFit
                                                     anchors.verticalCenter: parent.verticalCenter
                                                 }
-
+                                               
                                                 Text {
                                                     text: {
                                                         if (!gameData)
                                                             return "0:00";
-
-                                                        // Fonte 1: campo custom x-playtime nel metadata
                                                         var manual = 0;
                                                         if (gameData.extra && gameData.extra.playtime) {
                                                             manual = parseInt(gameData.extra.playtime) || 0;
+                                                            var memKey = gameData.title.split(" ").join("_");
+                                                            if (api.memory.has(memKey))
+                                                                api.memory.unset(memKey);
                                                         }
-
-                                                        // Fonte 2: tempo tracciato da Pegasus nativo
+                                                        var stackKey = gameData.title.split(" ").join("_");
+                                                        var stackTime = parseInt(api.memory.get(stackKey) || "0");
                                                         var nativeTime = gameData.playTime || 0;
-
-                                                        // Fonte 3: tempo tracciato da noi via api.memory
-                                                        var key = "playtime_" + gameData.title.split(" ").join("_");
-                                                        var tracked = parseInt(api.memory.get(key) || "0");
-
-                                                        // Priorità: manual > native + tracked
-                                                        var total = manual > 0 ? manual : (nativeTime + tracked);
-
+                                                        var total = manual > 0 ? manual : (stackTime > 0 ? stackTime : nativeTime);
                                                         if (total <= 0)
                                                             return "0:00";
                                                         var h = Math.floor(total / 3600);
@@ -512,61 +511,53 @@ ListView {
                                                 }
                                             }
                                         }
+                                    }
 
-                                        Rectangle {
-                                            width: devText.width + vpx(16)
-                                            height: vpx(24)
-                                            radius: height / 2
-                                            color: theme.main
-                                            visible: gameData && gameData.developer !== ""
+                                    // Developer pill
+                                    Rectangle {
+                                        width: devText.width + vpx(16)
+                                        height: vpx(28)
+                                        radius: height / 2
+                                        color: theme.main
+                                        visible: gameData && gameData.developer !== ""
 
-                                            Text {
-                                                id: devText
-
-                                                anchors.centerIn: parent
-
-                                                text: gameData ? (gameData.developer || "") : ""
-
-                                                color: theme.icon
-                                                font.family: titleFont.name
-                                                font.pixelSize: Math.round(screenheight * 0.017)
-
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
+                                        Text {
+                                            id: devText
+                                            anchors.centerIn: parent
+                                            text: gameData ? (gameData.developer || "") : ""
+                                            color: theme.icon
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.017)
                                         }
                                     }
 
-                                    Row {
-                                        spacing: vpx(8)
-                                        visible: gameData && gameData.extra.progress > 0
+                                    // Progress pill
+                                    Rectangle {
+                                        height: vpx(28)
+                                        width: progressRow.width + vpx(16)
+                                        radius: height / 2
+                                        color: theme.main
+                                        visible: gameData && gameData.extra && gameData.extra.progress > 0
 
-                                        Rectangle {
-                                            height: vpx(28)
-                                            width: progressRow.width + vpx(16)
-                                            radius: height / 2
-                                            color: theme.main
+                                        Row {
+                                            id: progressRow
+                                            anchors.centerIn: parent
+                                            spacing: vpx(6)
 
-                                            Row {
-                                                id: progressRow
-                                                anchors.centerIn: parent
-                                                spacing: vpx(6)
+                                            Image {
+                                                source: "../assets/images/navigation/trophy.svg"
+                                                width: vpx(16)
+                                                height: vpx(16)
+                                                anchors.verticalCenter: parent.verticalCenter
+                                            }
 
-                                                Image {
-                                                    source: "../assets/images/navigation/trophy.svg"
-                                                    width: vpx(20)
-                                                    height: width
-                                                }
-
-                                                Text {
-                                                    text: gameData.extra.progress + "%"
-
-                                                    color: theme.text
-                                                    font.family: titleFont.name
-                                                    font.pixelSize: Math.round(screenheight * 0.018)
-                                                    font.bold: true
-
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                }
+                                            Text {
+                                                text: gameData && gameData.extra ? (gameData.extra.progress + "%") : ""
+                                                color: theme.text
+                                                font.family: titleFont.name
+                                                font.pixelSize: Math.round(screenheight * 0.018)
+                                                font.bold: true
+                                                anchors.verticalCenter: parent.verticalCenter
                                             }
                                         }
                                     }
