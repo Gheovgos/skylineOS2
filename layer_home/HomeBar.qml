@@ -537,16 +537,23 @@ ListView {
                                                 Text {
                                                     text: {
                                                         if (!gameData)
-                                                            return "0:00";
-                                                        var manual = 0;
+                                                            return "00:00";
+                                                        var totalSeconds = 0;
 
                                                         if (gameData.extra && gameData.extra.playtime) {
-                                                            manual = gameData.extra.playtime;
+                                                            totalSeconds = gameData.extra.playtime;
+                                                            // Free memory
                                                             if (api.memory.has(gameData.title)) api.memory.unset(gameData.title);
-                                                            return manual;
-                                                        } else if(api.memory.has(gameData.title)) {
-                                                            return api.memory.get(gameData.title)
-                                                        } else if(gameData.playTime > 0) return gameData.playTime
+                                                        } 
+                                                        else if(api.memory.has(gameData.title)) totalSeconds = api.memory.get(gameData.title)
+                                                        else if(gameData.playTime > 0)          totalSeconds = gameData.playTime
+
+                                                        if(totalSeconds <= 0) return "00:00"
+
+                                                        var h = Math.floor(totalSeconds / 3600)
+                                                        var m = Math.floor((totalSeconds % 3600) / 60);
+
+                                                        return h + ":" + (m < 10 ? "0" + m : m);
                                                     }
                                                     color: theme.text
                                                     font.family: titleFont.name
