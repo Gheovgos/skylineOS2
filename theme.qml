@@ -109,7 +109,6 @@ FocusScope {
         /*homeScreen.visible = false;
         softwareScreen.visible = true;*/
         refreshSettings();
-        console.log("+++++Sono nel menu");
         softwareScreen.focus = true;
         toSoftware.play();
     }
@@ -121,7 +120,6 @@ FocusScope {
 
     function showHomeScreen() {
         refreshSettings();
-        console.log("+++++Sono nel menu");
         homeScreen.focus = true;
         currentCollection = -1;
         homeSfx.play();

@@ -394,6 +394,7 @@ FocusScope {
                     } else {
                         api.memory.set(settingName + 'Index', savedIndex);
                         api.memory.set(settingName, settingList[savedIndex]);
+                        console.log(api.memory.get(settingName))
                     }
                 }
 

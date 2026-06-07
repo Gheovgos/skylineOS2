@@ -458,6 +458,10 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: "Feed"
+                    visible: {
+                        console.log("+++++++++", api.memory.get("Feed Button Show"))
+                        return true
+                    }
                     icon: "../assets/images/navigation/info.svg"
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
