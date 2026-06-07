@@ -138,20 +138,25 @@ FocusScope {
 
     // Launch the current game from HomeBar
     function launchGame(game) {
-        api.memory.set('Last Collection', currentCollection);
-        if (game != null)
-            game.launch();
-        else
-            currentGame.launch();
+    api.memory.set('Last Collection', currentCollection);
+    var target = game || currentGame;
+    if (target) {
+        launchedGame = target;          // ← salva chi stiamo lanciando
+        sessionStartTime = new Date();  // ← salva il momento del lancio
     }
-
+    if (target)
+        target.launch();
+}
     // Launch current game from SoftwareScreen
     function launchSoftware() {
-        api.memory.set('Last Collection', currentCollection);
-        softwareList[sortByIndex].currentGame(currentGameIndex).launch();
-        //currentGame.launch();
+    api.memory.set('Last Collection', currentCollection);
+    var target = softwareList[sortByIndex].currentGame(currentGameIndex);
+    if (target) {
+        launchedGame = target;
+        sessionStartTime = new Date();
     }
-
+    target.launch();
+}
     // Preference order for Game Backgrounds, tiles always come first due to assumption that it's set manually
     function getGameBackground(gameData, preference) {
         switch (preference) {
@@ -473,56 +478,30 @@ FocusScope {
     }
 
     property var sessionStartTime: null
+property var launchedGame: null 
     property bool trackingSession: false
+    property int playtimeVersion: 0 
 
-    Timer {
-        id: sessionTimer
-        interval: 60000
-        repeat: true
-        running: trackingSession
-        onTriggered: {
-            console.log("=== SESSION TIMER TRIGGERED ===");
-            console.log("currentGame:", currentGame ? currentGame.title : "null");
-            console.log("trackingSession:", trackingSession);
-            console.log("sessionStartTime:", sessionStartTime);
-            if (sessionStartTime !== null) {
-                console.log("Session started");
-                var elapsed = Math.floor((new Date() - sessionStartTime) / 1000);
-                var key = "playtime_" + currentGame.title.replace(/\s/g, "_");
-                var existing = parseInt(api.memory.get(key) || "0");
-                api.memory.set(key, existing + 60);
-            }
-        }
-    }
+
 
     Connections {
-        target: Qt.application
-        onStateChanged: {
-            console.log("=== APP STATE CHANGED ===", Qt.application.state);
-            console.log("Qt.ApplicationSuspended =", Qt.ApplicationSuspended);
-            console.log("Qt.ApplicationInactive =", Qt.ApplicationInactive);
-            console.log("Qt.ApplicationActive =", Qt.ApplicationActive);
-            if (Qt.application.state === Qt.ApplicationSuspended || Qt.application.state === Qt.ApplicationInactive) {
-                if (currentGame && !trackingSession) {
-                    sessionStartTime = new Date();
-                    trackingSession = true;
-                    sessionTimer.start();
+    target: Qt.application
+    onStateChanged: {
+        if (Qt.application.state === Qt.ApplicationActive) {
+            if (sessionStartTime !== null && launchedGame !== null) {
+                var elapsed = Math.floor((new Date() - sessionStartTime) / 1000);
+                if (elapsed > 5) {  // ignora rientri accidentali < 5 secondi
+                    var key = "playtime_" + launchedGame.title.split(" ").join("_");
+                    var prev = parseInt(api.memory.get(key) || "0");
+                    api.memory.set(key, prev + elapsed);
+                    playtimeVersion++;
                 }
-            } else if (Qt.application.state === Qt.ApplicationActive) {
-                if (trackingSession) {
-                    trackingSession = false;
-                    sessionTimer.stop();
-                    if (sessionStartTime !== null) {
-                        var elapsed = Math.floor((new Date() - sessionStartTime) / 1000);
-                        var key = "playtime_" + currentGame.title.replace(/\s/g, "_");
-                        var existing = parseInt(api.memory.get(key) || "0");
-                        api.memory.set(key, existing + elapsed);
-                        sessionStartTime = null;
-                    }
-                }
+                sessionStartTime = null;
+                launchedGame = null;
             }
         }
     }
+}
 
     // Help bar
     Item {
