@@ -467,35 +467,57 @@ ListView {
                                             color: theme.main
 
                                             Row {
-                                                id: statRow
-                                                anchors.centerIn: parent
-                                                spacing: vpx(6)
+    spacing: vpx(8)
 
-                                                Text {
-                                                    text: "⏱"
-                                                    font.pixelSize: Math.round(screenheight * 0.018)
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                }
+    visible: {
+        var _ = playtimeVersion;
+        var pt = gameData ? gameData.playTime : 0;
+        var manual = (gameData && gameData.extra) ? (gameData.extra.playtime || 0) : 0;
+        var key = "playtime_" + (gameData ? gameData.title.split(" ").join("_") : "");
+        var tracked = parseInt(api.memory.get(key) || "0");
+        return pt > 0 || manual > 0 || tracked > 0;
+    }
 
-                                                Text {
-                                                    text: {
-    var _ = playtimeVersion;  // ← dipendenza reattiva, forza il ricalcolo
-    var key = "playtime_" + gameData.title.split(" ").join("_");
-    var tracked = parseInt(api.memory.get(key) || "0");
-    var nativeTime = gameData ? (gameData.playTime || 0) : 0;
-    var total = nativeTime + tracked;
-    if (total <= 0) return "0:00";
-    var h = Math.floor(total / 3600);
-    var m = Math.floor((total % 3600) / 60);
-    return h + ":" + (m < 10 ? "0" + m : m);
+    Rectangle {
+        height: vpx(28)
+        width: statRow.width + vpx(16)
+        radius: height / 2
+        color: theme.main
+
+        Row {
+            id: statRow
+            anchors.centerIn: parent
+            spacing: vpx(6)
+
+            Text {
+                text: "⏱"
+                font.pixelSize: Math.round(screenheight * 0.018)
+                anchors.verticalCenter: parent.verticalCenter
+            }
+
+            Text {
+                text: {
+                    var _ = playtimeVersion;
+                    if (!gameData) return "0:00";
+                    var manual = (gameData.extra && gameData.extra.playtime) ? parseInt(gameData.extra.playtime) || 0 : 0;
+                    var nativeT = gameData.playTime || 0;
+                    var key = "playtime_" + gameData.title.split(" ").join("_");
+                    var tracked = parseInt(api.memory.get(key) || "0");
+                    var total = manual > 0 ? manual : (nativeT + tracked);
+                    if (total <= 0) return "0:00";
+                    var h = Math.floor(total / 3600);
+                    var m = Math.floor((total % 3600) / 60);
+                    return h + ":" + (m < 10 ? "0" + m : m);
+                }
+                color: theme.text
+                font.family: titleFont.name
+                font.pixelSize: Math.round(screenheight * 0.018)
+                font.bold: true
+                anchors.verticalCenter: parent.verticalCenter
+            }
+        }
+    }
 }
-                                                    color: theme.text
-                                                    font.family: titleFont.name
-                                                    font.pixelSize: Math.round(screenheight * 0.018)
-                                                    font.bold: true
-                                                    anchors.verticalCenter: parent.verticalCenter
-                                                }
-                                            }
                                         }
 
                                         Rectangle {
