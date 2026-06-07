@@ -510,8 +510,7 @@ ListView {
                                         visible: {
                                             var pt = gameData ? gameData.playTime : 0;
                                             var manual = (gameData && gameData.extra) ? (gameData.extra.playtime || 0) : 0;
-                                            var stackKey = gameData ? gameData.title.split(" ").join("_") : "";
-                                            var stackTime = parseInt(api.memory.get(stackKey) || "0");
+                                            var stackTime = parseInt(api.memory.get(gameData.title) || "0");
                                             return pt > 0 || manual > 0 || stackTime > 0;
                                         }
 
@@ -540,21 +539,14 @@ ListView {
                                                         if (!gameData)
                                                             return "0:00";
                                                         var manual = 0;
+
                                                         if (gameData.extra && gameData.extra.playtime) {
-                                                            manual = parseInt(gameData.extra.playtime) || 0;
-                                                            var memKey = gameData.title.split(" ").join("_");
-                                                            if (api.memory.has(memKey))
-                                                                api.memory.unset(memKey);
-                                                        }
-                                                        var stackKey = gameData.title.split(" ").join("_");
-                                                        var stackTime = parseInt(api.memory.get(stackKey) || "0");
-                                                        var nativeTime = gameData.playTime || 0;
-                                                        var total = manual > 0 ? manual : (stackTime > 0 ? stackTime : nativeTime);
-                                                        if (total <= 0)
-                                                            return "0:00";
-                                                        var h = Math.floor(total / 3600);
-                                                        var m = Math.floor((total % 3600) / 60);
-                                                        return h + ":" + (m < 10 ? "0" + m : m);
+                                                            manual = gameData.extra.playtime;
+                                                            if (api.memory.has(gameData.title)) api.memory.unset(gameData.title);
+                                                            return manual;
+                                                        } else if(api.memory.has(gameData.title)) {
+                                                            return api.memory.get(gameData.title)
+                                                        } else if(gameData.playTime > 0) return gameData.playTime
                                                     }
                                                     color: theme.text
                                                     font.family: titleFont.name
