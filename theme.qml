@@ -30,7 +30,14 @@ FocusScope {
             darkMode: api.memory.has("Dark Mode") ? api.memory.get("Dark Mode") : "No",
             homeCardSize: api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
             softCount: api.memory.has("Max games on Home Screen") ? parseInt(api.memory.get("Max games on Home Screen")) : 12,
-            playBGM: api.memory.has("Background Music") ? api.memory.get("Background Music") : "No"
+            playBGM: api.memory.has("Background Music") ? api.memory.get("Background Music") : "No",
+            
+            showFeed: api.memory.has("Feed Button Show") ? api.memory.get("Feed Button Show") : "Yes",
+            showStore: api.memory.has("Store Button Show") ? api.memory.get("Store Button Show") : "Yes",
+            showGallery: api.memory.has("Gallery Button Show") ? api.memory.get("Gallery Button Show") : "Yes",
+            showController: api.memory.has("Controller Button Show") ? api.memory.get("Controller Button Show") : "Yes",
+            showSettings: api.memory.has("Settings Button Show") ? api.memory.get("Settings Button Show") : "Yes",
+            showSuspend: api.memory.has("Suspend Button Show") ? api.memory.get("Suspend Button Show") : "Yes"
         };
     }
 

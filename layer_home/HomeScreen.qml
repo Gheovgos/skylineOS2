@@ -459,8 +459,7 @@ FocusScope {
                     height: vpx(56)
                     label: "Feed"
                     visible: {
-                        console.log("+++++++++", api.memory.get("Feed Button Show"))
-                        return true
+                        return (api.memory.get("Feed Button Show") === "Yes") ? true : false
                     }
                     icon: "../assets/images/navigation/info.svg"
                     Keys.onPressed: {
@@ -492,6 +491,9 @@ FocusScope {
                     height: vpx(56)
                     label: "Store"
                     icon: "../assets/images/navigation/Store.svg"
+                    visible: {
+                        return (api.memory.get("Store Button Show") === "Yes") ? true : false
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -521,6 +523,9 @@ FocusScope {
                     height: vpx(56)
                     label: "Gallery"
                     icon: "../assets/images/navigation/Gallery.svg"
+                    visible: {
+                        return (api.memory.get("Gallery Button Show") === "Yes") ? true : false
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -550,6 +555,9 @@ FocusScope {
                     height: vpx(56)
                     label: "Backlog"
                     icon: "../assets/images/navigation/backlog.svg"
+                    visible: {
+                        return (api.memory.get("Backlog Button Show") === "Yes") ? true : false
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -579,6 +587,9 @@ FocusScope {
                     height: vpx(56)
                     label: "Controller"
                     icon: "../assets/images/navigation/Controller.svg"
+                    visible: {
+                        return (api.memory.get("Controller Button Show") === "Yes") ? true : false
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -640,6 +651,9 @@ FocusScope {
                     height: vpx(56)
                     label: "Suspend"
                     icon: "../assets/images/navigation/Suspend.svg"
+                    visible: {
+                        return (api.memory.get("Suspend Button Show") === "Yes") ? true : false
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;

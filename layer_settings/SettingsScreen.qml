@@ -19,18 +19,21 @@ FocusScope {
             settingName: "Game Background"
             settingSubtitle: ""
             setting: "Screenshot,Fanart,Boxart"
+            type: "toggle"
         }
 
         ListElement {
             settingName: "Background Music"
             settingSubtitle: "(Requires Reload)"
             setting: "No,Yes"
+            type: "toggle"
         }
 
         ListElement {
             settingName: "Word Wrap on Titles"
             settingSubtitle: "(Requires Reload)"
             setting: "Yes,No"
+            type: "toggle"
         }
     }
 
@@ -47,21 +50,25 @@ FocusScope {
             settingName: "Dark Mode"
             settingSubtitle: ""
             setting: "No,Yes"
+            type: "toggle"
         }
         ListElement {
             settingName: "Time Format"
             settingSubtitle: ""
             setting: "12hr,24hr"
+            type: "toggle"
         }
         ListElement {
             settingName: "Display Battery Percentage"
             settingSubtitle: "(%)"
             setting: "No,Yes"
+            type: "toggle"
         }
         ListElement {
             settingName: "Display Wifi Icon"
             settingSubtitle: ""
             setting: "No,Yes"
+            type: "toggle"
         }
         ListElement {
             settingName: "Home Card Size"
@@ -91,42 +98,49 @@ FocusScope {
             settingName: "Feed Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
+            type: "toggle"
         }
 
         ListElement {
             settingName: "Store Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
+            type: "toggle"
         }
 
         ListElement {
             settingName: "Gallery Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
+            type: "toggle"
         }
 
         ListElement {
             settingName: "Gallery Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
+            type: "toggle"
         }
 
         ListElement {
             settingName: "Controller Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
+            type: "toggle"
         }
 
-        ListElement {
+/*         ListElement {
             settingName: "Settings Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
-        }
+            type: "toggle"
+        } */
 
         ListElement {
             settingName: "Suspend Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
+            type: "toggle"
         }
     }
 
@@ -179,6 +193,7 @@ FocusScope {
             settingName: "Enable DropShadows"
             settingSubtitle: ""
             setting: "Yes, No"
+            type: "toggle"
         }
         ListElement {
             settingName: "Restore All Settings"
@@ -392,9 +407,12 @@ FocusScope {
                     if (type === "input") {
                         api.memory.set(settingName, currentInput);
                     } else {
+                        console.log("-----------------")
                         api.memory.set(settingName + 'Index', savedIndex);
                         api.memory.set(settingName, settingList[savedIndex]);
+                        console.log(settingList[savedIndex])
                         console.log(api.memory.get(settingName))
+                        console.log("-----------------")
                     }
                 }
 
@@ -544,26 +562,28 @@ FocusScope {
                 Keys.onPressed: {
                     if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                         event.accepted = true;
-                        if (type === "input") {
+                        if(typeof type != "undefined") {
+                            if (type === "input") {
                             inputPanel.open(settingName, setting);
-                        } else if (type === "button") {
-                            selectSfx.play();
-                            if (settingName === "Login") {
+                            } else if (type === "button") {
                                 selectSfx.play();
-                                tryRALogin();
-                            } else if (settingName === "Restore All Settings") {
-                                restoreAllSettings();
-                            } else if (settingName === "Logout") {
-                                api.memory.unset("RA_LoggedIn");
-                                api.memory.unset("RA_Username");
-                                raLoginStatus = "";
-                                selectSfx.play();
+                                if (settingName === "Login") {
+                                    selectSfx.play();
+                                    tryRALogin();
+                                } else if (settingName === "Restore All Settings") {
+                                    restoreAllSettings();
+                                } else if (settingName === "Logout") {
+                                    api.memory.unset("RA_LoggedIn");
+                                    api.memory.unset("RA_Username");
+                                    raLoginStatus = "";
+                                    selectSfx.play();
+                                }
                             }
                         } else {
                             selectSfx.play();
                             nextSetting();
                             saveSetting();
-                        }
+                        } 
                     }
                     if (api.keys.isCancel(event) && !event.isAutoRepeat) {
                         event.accepted = true;
