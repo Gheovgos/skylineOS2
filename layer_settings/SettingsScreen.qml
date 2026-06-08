@@ -116,7 +116,7 @@ FocusScope {
         }
 
         ListElement {
-            settingName: "Gallery Button Show"
+            settingName: "Backlog Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
             type: "toggle"
