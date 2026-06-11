@@ -459,13 +459,13 @@ FocusScope {
                     height: vpx(56)
                     label: "Feed"
                     visible: {
-                        return (api.memory.get("Feed Button Show") === "Yes") ? true : false
+                        return (api.memory.get("Feed Button Show") === "Yes") ? true : false;
                     }
                     icon: "../assets/images/navigation/info.svg"
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO: showInfoScreen();
+                            showButtonScreen("info");
                         }
                     }
                     Keys.onLeftPressed: {
@@ -477,7 +477,10 @@ FocusScope {
                         storeButton.focus = true;
                     }
                     onClicked: {
-                        if (infoButton.focus) { /* TODO */ } else {
+                        if (infoButton.focus) {
+                            event.accepted = true;
+                            showButtonScreen("info");
+                        } else {
                             infoButton.focus = true;
                             navSound.play();
                             homeSwitcher.currentIndex = -1;
@@ -492,7 +495,7 @@ FocusScope {
                     label: "Store"
                     icon: "../assets/images/navigation/Store.svg"
                     visible: {
-                        return (api.memory.get("Store Button Show") === "Yes") ? true : false
+                        return (api.memory.get("Store Button Show") === "Yes") ? true : false;
                     }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
@@ -506,11 +509,43 @@ FocusScope {
                     }
                     Keys.onRightPressed: {
                         navSound.play();
-                        galleryButton.focus = true;
+                        browserButton.focus = true;
                     }
                     onClicked: {
                         if (storeButton.focus) { /* TODO */ } else {
                             storeButton.focus = true;
+                            navSound.play();
+                            homeSwitcher.currentIndex = -1;
+                        }
+                    }
+                }
+
+                MenuButton {
+                    id: browserButton
+                    width: vpx(56)
+                    height: vpx(56)
+                    label: "Browser"
+                    icon: "../assets/images/navigation/browser.svg"
+                    visible: {
+                        return (api.memory.get("Browser Button Show") === "Yes") ? true : false;
+                    }
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            // TODO: showStoreScreen();
+                        }
+                    }
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        storeButton.focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        galleryButton.focus = true;
+                    }
+                    onClicked: {
+                        if (browserButton.focus) { /* TODO */ } else {
+                            browserButton.focus = true;
                             navSound.play();
                             homeSwitcher.currentIndex = -1;
                         }
@@ -524,7 +559,7 @@ FocusScope {
                     label: "Gallery"
                     icon: "../assets/images/navigation/Gallery.svg"
                     visible: {
-                        return (api.memory.get("Gallery Button Show") === "Yes") ? true : false
+                        return (api.memory.get("Gallery Button Show") === "Yes") ? true : false;
                     }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
@@ -534,7 +569,7 @@ FocusScope {
                     }
                     Keys.onLeftPressed: {
                         navSound.play();
-                        storeButton.focus = true;
+                        browserButton.focus = true;
                     }
                     Keys.onRightPressed: {
                         navSound.play();
@@ -556,7 +591,7 @@ FocusScope {
                     label: "Backlog"
                     icon: "../assets/images/navigation/backlog.svg"
                     visible: {
-                        return (api.memory.get("Backlog Button Show") === "Yes") ? true : false
+                        return (api.memory.get("Backlog Button Show") === "Yes") ? true : false;
                     }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
@@ -588,7 +623,7 @@ FocusScope {
                     label: "Controller"
                     icon: "../assets/images/navigation/Controller.svg"
                     visible: {
-                        return (api.memory.get("Controller Button Show") === "Yes") ? true : false
+                        return (api.memory.get("Controller Button Show") === "Yes") ? true : false;
                     }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
@@ -652,7 +687,7 @@ FocusScope {
                     label: "Suspend"
                     icon: "../assets/images/navigation/Suspend.svg"
                     visible: {
-                        return (api.memory.get("Suspend Button Show") === "Yes") ? true : false
+                        return (api.memory.get("Suspend Button Show") === "Yes") ? true : false;
                     }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {

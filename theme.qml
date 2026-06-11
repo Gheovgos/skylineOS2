@@ -11,6 +11,7 @@ import "layer_home"
 import "layer_grid"
 import "layer_settings"
 import "layer_help"
+import "layer_buttons"
 import "Lists"
 import "resources" as Resources
 
@@ -31,7 +32,6 @@ FocusScope {
             homeCardSize: api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
             softCount: api.memory.has("Max games on Home Screen") ? parseInt(api.memory.get("Max games on Home Screen")) : 12,
             playBGM: api.memory.has("Background Music") ? api.memory.get("Background Music") : "No",
-            
             showFeed: api.memory.has("Feed Button Show") ? api.memory.get("Feed Button Show") : "Yes",
             showStore: api.memory.has("Store Button Show") ? api.memory.get("Store Button Show") : "Yes",
             showGallery: api.memory.has("Gallery Button Show") ? api.memory.get("Gallery Button Show") : "Yes",
@@ -122,6 +122,17 @@ FocusScope {
 
     function showSettingsScreen() {
         settingsScreen.focus = true;
+        settingsSfx.play();
+    }
+
+    function showButtonScreen(menu) {
+        switch (menu) {
+            case "info":
+                infoScreen.focus = true;
+                break;
+            default:
+                break;
+        }
         settingsSfx.play();
     }
 
@@ -248,6 +259,10 @@ FocusScope {
         State {
             name: "settingsscreen"
             when: settingsScreen.focus == true
+        },
+        State {
+            name: "infoscreen"
+            when: infoScreen.focus == true
         },
         State {
             name: "playgame"
@@ -407,6 +422,62 @@ FocusScope {
             }
         },
         Transition {
+            from: "homescreen"
+            to: "infoscreen"
+            SequentialAnimation {
+                PropertyAnimation {
+                    target: homeScreen
+                    property: "opacity"
+                    to: 0
+                    duration: 200
+                }
+                PropertyAction {
+                    target: homeScreen
+                    property: "visible"
+                    value: false
+                }
+                PropertyAction {
+                    target: infoScreen
+                    property: "visible"
+                    value: true
+                }
+                PropertyAnimation {
+                    target: infoScreen
+                    property: "opacity"
+                    to: 1
+                    duration: 200
+                }
+            }
+        },
+        Transition {
+            from: "infoscreen"
+            to: "homescreen"
+            SequentialAnimation {
+                PropertyAnimation {
+                    target: infoScreen
+                    property: "opacity"
+                    to: 0
+                    duration: 200
+                }
+                PropertyAction {
+                    target: infoScreen
+                    property: "visible"
+                    value: false
+                }
+                PropertyAction {
+                    target: homeScreen
+                    property: "visible"
+                    value: true
+                }
+                PropertyAnimation {
+                    target: homeScreen
+                    property: "opacity"
+                    to: 1
+                    duration: 200
+                }
+            }
+        },
+        Transition {
             from: ""
             to: "homescreen"
             ParallelAnimation {
@@ -474,6 +545,20 @@ FocusScope {
 
     SettingsScreen {
         id: settingsScreen
+        opacity: 0
+        visible: false
+        anchors {
+            left: parent.left
+            leftMargin: screenmargin
+            right: parent.right
+            rightMargin: screenmargin
+            top: parent.top
+            bottom: helpBar.top
+        }
+    }
+
+    InfoScreen {
+        id: infoScreen
         opacity: 0
         visible: false
         anchors {

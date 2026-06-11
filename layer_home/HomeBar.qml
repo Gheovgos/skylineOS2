@@ -35,6 +35,9 @@ ListView {
     model: gamesListModel
     delegate: homeBarDelegate
 
+    boundsBehavior: Flickable.StopAtBounds
+    boundsMovement: Flickable.StopAtBounds
+
     Component {
         id: homeBarDelegate
         Rectangle {
@@ -454,54 +457,54 @@ ListView {
                                     Row {
                                         spacing: vpx(8)
 
-                                                                            // Developer pill
-                                    Rectangle {
-                                        width: devText.width + vpx(16)
-                                        height: vpx(28)
-                                        radius: height / 2
-                                        color: theme.main
-                                        visible: gameData && gameData.developer !== ""
-
-                                        Text {
-                                            id: devText
-                                            anchors.centerIn: parent
-                                            text: gameData ? (gameData.developer || "") : ""
-                                            color: theme.icon
-                                            font.family: titleFont.name
-                                            font.pixelSize: Math.round(screenheight * 0.017)
-                                        }
-                                    }
-
-                                    // Progress pill
-                                    Rectangle {
-                                        height: vpx(28)
-                                        width: progressRow.width + vpx(16)
-                                        radius: height / 2
-                                        color: theme.main
-                                        visible: gameData && gameData.extra && gameData.extra.progress > 0
-
-                                        Row {
-                                            id: progressRow
-                                            anchors.centerIn: parent
-                                            spacing: vpx(6)
-
-                                            Image {
-                                                source: "../assets/images/navigation/trophy.svg"
-                                                width: vpx(16)
-                                                height: vpx(16)
-                                                anchors.verticalCenter: parent.verticalCenter
-                                            }
+                                        // Developer pill
+                                        Rectangle {
+                                            width: devText.width + vpx(16)
+                                            height: vpx(28)
+                                            radius: height / 2
+                                            color: theme.main
+                                            visible: gameData && gameData.developer !== ""
 
                                             Text {
-                                                text: gameData && gameData.extra ? (gameData.extra.progress + "%") : ""
-                                                color: theme.text
+                                                id: devText
+                                                anchors.centerIn: parent
+                                                text: gameData ? (gameData.developer || "") : ""
+                                                color: theme.icon
                                                 font.family: titleFont.name
-                                                font.pixelSize: Math.round(screenheight * 0.018)
-                                                font.bold: true
-                                                anchors.verticalCenter: parent.verticalCenter
+                                                font.pixelSize: Math.round(screenheight * 0.017)
                                             }
                                         }
-                                    }
+
+                                        // Progress pill
+                                        Rectangle {
+                                            height: vpx(28)
+                                            width: progressRow.width + vpx(16)
+                                            radius: height / 2
+                                            color: theme.main
+                                            visible: gameData && gameData.extra && gameData.extra.progress > 0
+
+                                            Row {
+                                                id: progressRow
+                                                anchors.centerIn: parent
+                                                spacing: vpx(6)
+
+                                                Image {
+                                                    source: "../assets/images/navigation/trophy.svg"
+                                                    width: vpx(16)
+                                                    height: vpx(16)
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                }
+
+                                                Text {
+                                                    text: gameData && gameData.extra ? (gameData.extra.progress + "%") : ""
+                                                    color: theme.text
+                                                    font.family: titleFont.name
+                                                    font.pixelSize: Math.round(screenheight * 0.018)
+                                                    font.bold: true
+                                                    anchors.verticalCenter: parent.verticalCenter
+                                                }
+                                            }
+                                        }
                                     }
 
                                     // Playtime pill
@@ -533,7 +536,7 @@ ListView {
                                                     fillMode: Image.PreserveAspectFit
                                                     anchors.verticalCenter: parent.verticalCenter
                                                 }
-                                               
+
                                                 Text {
                                                     text: {
                                                         if (!gameData)
@@ -543,14 +546,17 @@ ListView {
                                                         if (gameData.extra && gameData.extra.playtime) {
                                                             totalSeconds = gameData.extra.playtime;
                                                             // Free memory
-                                                            if (api.memory.has(gameData.title)) api.memory.unset(gameData.title);
-                                                        } 
-                                                        else if(api.memory.has(gameData.title)) totalSeconds = api.memory.get(gameData.title)
-                                                        else if(gameData.playTime > 0)          totalSeconds = gameData.playTime
+                                                            if (api.memory.has(gameData.title))
+                                                                api.memory.unset(gameData.title);
+                                                        } else if (api.memory.has(gameData.title))
+                                                            totalSeconds = api.memory.get(gameData.title);
+                                                        else if (gameData.playTime > 0)
+                                                            totalSeconds = gameData.playTime;
 
-                                                        if(totalSeconds <= 0) return "00:00"
+                                                        if (totalSeconds <= 0)
+                                                            return "00:00";
 
-                                                        var h = Math.floor(totalSeconds / 3600)
+                                                        var h = Math.floor(totalSeconds / 3600);
                                                         var m = Math.floor((totalSeconds % 3600) / 60);
 
                                                         return h + ":" + (m < 10 ? "0" + m : m);
@@ -564,7 +570,6 @@ ListView {
                                             }
                                         }
                                     }
-
                                 }
 
                                 Rectangle {

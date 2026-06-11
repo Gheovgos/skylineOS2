@@ -56,7 +56,7 @@ ___
 
 ## Attributions
 
-- SVGs: [SVGrepo](https://www.svgrepo.com/)
+- SVGs: [Lucide.dev](https://lucide.dev/icons/globe)
 - Author: [Zacksly](https://zacksly.itch.io)
 - Another author: RBertoCases/skylineOS
 - Source: https://zacksly.itch.io/switch-button-icons-and-controls

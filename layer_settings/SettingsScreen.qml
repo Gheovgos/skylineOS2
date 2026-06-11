@@ -102,7 +102,21 @@ FocusScope {
         }
 
         ListElement {
+            settingName: "Feed RSS List"
+            settingSubtitle: "Separate links with §"
+            setting: ""
+            type: "input"
+        }
+
+        ListElement {
             settingName: "Store Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+            type: "toggle"
+        }
+
+        ListElement {
+            settingName: "Browser Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
             type: "toggle"
@@ -129,7 +143,7 @@ FocusScope {
             type: "toggle"
         }
 
-/*         ListElement {
+        /*         ListElement {
             settingName: "Settings Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
@@ -407,12 +421,12 @@ FocusScope {
                     if (type === "input") {
                         api.memory.set(settingName, currentInput);
                     } else {
-                        console.log("-----------------")
+                        console.log("-----------------");
                         api.memory.set(settingName + 'Index', savedIndex);
                         api.memory.set(settingName, settingList[savedIndex]);
-                        console.log(settingList[savedIndex])
-                        console.log(api.memory.get(settingName))
-                        console.log("-----------------")
+                        console.log(settingList[savedIndex]);
+                        console.log(api.memory.get(settingName));
+                        console.log("-----------------");
                     }
                 }
 
@@ -562,9 +576,9 @@ FocusScope {
                 Keys.onPressed: {
                     if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                         event.accepted = true;
-                        if(typeof type != "undefined") {
+                        if (typeof type != "undefined") {
                             if (type === "input") {
-                            inputPanel.open(settingName, setting);
+                                inputPanel.open(settingName, setting);
                             } else if (type === "button") {
                                 selectSfx.play();
                                 if (settingName === "Login") {
@@ -583,7 +597,7 @@ FocusScope {
                             selectSfx.play();
                             nextSetting();
                             saveSetting();
-                        } 
+                        }
                     }
                     if (api.keys.isCancel(event) && !event.isAutoRepeat) {
                         event.accepted = true;
