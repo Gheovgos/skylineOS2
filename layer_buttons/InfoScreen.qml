@@ -3,240 +3,303 @@ import QtQuick 2.12
 FocusScope {
     id: infoScreenRoot
 
-    // 1. CHOOSE THE FEED URL
-    property string rawFeeds: api.memory.has("Feed RSS List") ? api.memory.get("Feed RSS List") : "https://www.polygon.com/rss/index.xml"
-    property var feedsArray: rawFeeds.split("§")
-    property string activeFeedUrl: feedsArray[0].trim()
+    property string rawFeeds: api.memory.has("Feed RSS List")
+        ? api.memory.get("Feed RSS List")
+        : "https://www.polygon.com/rss/index.xml§https://feeds.arstechnica.com/arstechnica/index"
+    property var feedsArray: rawFeeds.split("§").map(function(s){ return s.trim(); })
+    property int activeFeedIndex: 0
+    property string activeFeedUrl: feedsArray[activeFeedIndex]
     property bool isLoading: true
 
-    // 2. PROPERTIES TO HOLD THE SELECTED ARTICLE DATA FOR THE POPUP
     property string selectedTitle: ""
     property string selectedDate: ""
     property string selectedDescription: ""
     property string selectedImageUrl: ""
 
-    // Helper function to open popup and fill data safely
     function openArticle(title, date, desc, img) {
-        infoScreenRoot.selectedTitle = title;
-        infoScreenRoot.selectedDate = date;
-        infoScreenRoot.selectedDescription = desc ? desc : "No description text available for this article.";
+        infoScreenRoot.selectedTitle  = title;
+        infoScreenRoot.selectedDate   = date;
+        infoScreenRoot.selectedDescription = (desc && desc.length > 0)
+            ? desc
+            : "No description available for this article.";
         infoScreenRoot.selectedImageUrl = img;
         articleContentPopup.visible = true;
+        popupFlickable.contentY = 0; 
     }
 
-    // 3. THE DYNAMIC CONTAINER FOR REAL ARTICLES
-    ListModel {
-        id: articlesModel
+    function cleanText(raw) {
+        if (!raw) return "";
+        var s = raw.replace(/<[^>]*>/gm, "");
+        s = s.replace(/&amp;/g,    "&")
+             .replace(/&lt;/g,     "<")
+             .replace(/&gt;/g,     ">")
+             .replace(/&quot;/g,   "\"")
+             .replace(/&apos;/g,   "'")
+             .replace(/&#8230;/g,  "…")
+             .replace(/&#8217;/g,  "'")
+             .replace(/&#8216;/g,  "'")
+             .replace(/&#8220;/g,  "\u201C")
+             .replace(/&#8221;/g,  "\u201D")
+             .replace(/&#(\d+);/g, function(_, code){ return String.fromCharCode(parseInt(code)); })
+             .replace(/&nbsp;/g,   " ");
+        s = s.replace(/\s{2,}/g, " ").trim();
+        return s;
     }
 
-    // 4. JAVASCRIPT NETWORK FETCH & REGEX PARSER
+    ListModel { id: articlesModel }
+
+    // ── FETCH ──────────────────────────────────────────────
     function fetchRSSContent() {
         infoScreenRoot.isLoading = true;
         articlesModel.clear();
-
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                if (xhr.status === 200) {
-                    parseXMLText(xhr.responseText);
-                } else {
-                    articlesModel.append({
-                        "articleTitle": "Error connection to feed server",
-                        "articleDate": "HTTP Status: " + xhr.status,
-                        "articleImageUrl": "",
-                        "articleDescription": ""
-                    });
-                    infoScreenRoot.isLoading = false;
-                }
+            if (xhr.readyState !== XMLHttpRequest.DONE) return;
+            if (xhr.status === 200) {
+                parseXMLText(xhr.responseText);
+            } else {
+                articlesModel.append({
+                    articleTitle: "Connection error",
+                    articleDate:  "HTTP Status: " + xhr.status,
+                    articleImageUrl: "",
+                    articleDescription: "Could not reach: " + infoScreenRoot.activeFeedUrl
+                });
+                infoScreenRoot.isLoading = false;
             }
-        }
+        };
         xhr.open("GET", infoScreenRoot.activeFeedUrl);
         xhr.send();
     }
 
     function parseXMLText(xmlText) {
-        var itemRegex = /<(item|entry)>([\s\S]*?)<\/\1>/g;
+        var itemRegex = /<(item|entry)([\s\S]*?)<\/\1>/g;
         var match;
         var count = 0;
 
         while ((match = itemRegex.exec(xmlText)) !== null && count < 15) {
-            var itemContent = match[2];
+            var block = match[0];
 
-            var titleMatch = itemContent.match(/<title>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/);
-            var dateMatch = itemContent.match(/<(pubDate|published)>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/\1>/);
-            var imageMatch = itemContent.match(/<enclosure[\s\S]*?url=["']([\s\S]*?)["']/) || itemContent.match(/<media:content[\s\S]*?url=["']([\s\S]*?)["']/) || itemContent.match(/<img[\s\S]*?src=["']([\s\S]*?)["']/);
-            var descriptionMatch = itemContent.match(/<description>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/description>/) || itemContent.match(/<summary>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/summary>/);
+            var titleM = block.match(/<title[^>]*>(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?<\/title>/);
 
-            var title = titleMatch ? titleMatch[1].trim() : "No Title available";
-            var date = dateMatch ? dateMatch[1].trim() : "Recent news";
-            var imageUrl = imageMatch ? imageMatch[1].trim() : "";
-            var description = descriptionMatch ? descriptionMatch[1].trim() : "";
+            var dateM  = block.match(/<(?:pubDate|published|updated|dc:date)[^>]*>([\s\S]*?)<\/(?:pubDate|published|updated|dc:date)>/);
 
-            title = title.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
-            description = description.replace(/<[^>]*>?/gm, ''); 
-            description = description.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+            var imgM   = block.match(/enclosure[^>]+url=["'](https?[^"']+)["']/)
+                      || block.match(/media:(?:content|thumbnail)[^>]+url=["'](https?[^"']+)["']/)
+                      || block.match(/<img[^>]+src=["'](https?[^"']+)["']/);
 
-            if (date.length > 25) date = date.substring(0, 25);
+            var descM  = block.match(/<(?:description|summary|content(?::encoded)?)[^>]*>\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*<\/(?:description|summary|content(?::encoded)?)>/)
+                      || block.match(/<(?:description|summary|content(?::encoded)?)[^>]*>([\s\S]*?)<\/(?:description|summary|content(?::encoded)?)>/);
+
+            var title   = cleanText(titleM ? titleM[1] : "No Title");
+            var date    = dateM  ? dateM[1].trim().substring(0, 30) : "Recent";
+            var img     = imgM   ? imgM[1].trim()  : "";
+            var desc    = cleanText(descM ? (descM[1] || descM[2] || "") : "");
+
+            // Se la descrizione è troppo corta (feed che mettono solo il titolo), segnalalo
+            if (desc.length < 10) desc = "No extended description in this feed.";
 
             articlesModel.append({
-                "articleTitle": title,
-                "articleDate": date,
-                "articleImageUrl": imageUrl,
-                "articleDescription": description
+                articleTitle:       title,
+                articleDate:        date,
+                articleImageUrl:    img,
+                articleDescription: desc
             });
             count++;
         }
 
         if (articlesModel.count === 0) {
             articlesModel.append({
-                "articleTitle": "No articles found in this feed",
-                "articleDate": "Check if the URL structure is a valid RSS endpoint.",
-                "articleImageUrl": "",
-                "articleDescription": ""
+                articleTitle: "No articles found",
+                articleDate:  "Check the RSS URL",
+                articleImageUrl: "",
+                articleDescription: "The parser did not find <item> or <entry> blocks."
             });
         }
         infoScreenRoot.isLoading = false;
     }
 
-    Component.onCompleted: fetchRSSContent()
-    onActiveFeedUrlChanged: fetchRSSContent()
+    Component.onCompleted:   fetchRSSContent()
+    onActiveFeedUrlChanged:  fetchRSSContent()
 
-    // --- VISUAL LAYOUT ---
     Item {
         anchors.fill: parent
         anchors.margins: vpx(40)
 
-        // Nintendo Switch Header
+        // ── HEADER ──
         Text {
             id: headerTitle
-            text: "Gaming Live Feed"
+            text: "Live News Feed"
             color: theme.text
             font.family: titleFont.name
-            font.pixelSize: vpx(36)
+            font.pixelSize: vpx(34)
             font.bold: true
         }
 
         Text {
             id: headerSubtitle
             anchors.top: headerTitle.bottom
-            anchors.topMargin: vpx(8)
-            text: infoScreenRoot.isLoading ? "Downloading live data stream..." : "Source: " + infoScreenRoot.activeFeedUrl
+            anchors.topMargin: vpx(6)
+            text: infoScreenRoot.isLoading
+                ? "Loading feed…"
+                : "Source: " + infoScreenRoot.activeFeedUrl
             color: theme.icon
-            font.family: titleFont.name
-            font.pixelSize: vpx(16)
+            font.pixelSize: vpx(14)
             elide: Text.ElideRight
             width: parent.width
         }
 
+        Row {
+            id: feedTabs
+            anchors.top: headerSubtitle.bottom
+            anchors.topMargin: vpx(12)
+            spacing: vpx(8)
+
+            Repeater {
+                model: infoScreenRoot.feedsArray.length
+                delegate: Rectangle {
+                    property bool active: infoScreenRoot.activeFeedIndex === index
+                    width: feedTabLabel.implicitWidth + vpx(20)
+                    height: vpx(28)
+                    color:  active ? theme.accent : theme.button
+                    border.color: theme.secondary
+                    border.width: vpx(1)
+                    radius: vpx(5)
+
+                    Text {
+                        id: feedTabLabel
+                        anchors.centerIn: parent
+                        text: {
+                            var url = infoScreenRoot.feedsArray[index];
+                            var m = url.match(/https?:\/\/(?:www\.)?([^\/]+)/);
+                            return m ? m[1] : "Feed " + (index + 1);
+                        }
+                        color: parent.active ? "white" : theme.text
+                        font.pixelSize: vpx(11)
+                        font.bold: parent.active
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: infoScreenRoot.activeFeedIndex = index
+                    }
+                }
+            }
+        }
+
         Rectangle {
             id: headerSeparator
-            anchors.top: headerSubtitle.bottom
-            anchors.topMargin: vpx(20)
+            anchors.top: feedTabs.bottom
+            anchors.topMargin: vpx(14)
             width: parent.width
             height: vpx(2)
             color: theme.secondary
         }
 
         Row {
+            id: bodyRow
             anchors.top: headerSeparator.bottom
-            anchors.topMargin: vpx(30)
+            anchors.topMargin: vpx(20)
             anchors.bottom: parent.bottom
             width: parent.width
-            spacing: vpx(40)
+            spacing: vpx(30)
 
-            // LEFT SIDE: Interactive Image Box
+            property bool hasImage: feedsListView.currentItem
+                                 && articlesModel.count > 0
+                                 && articlesModel.get(feedsListView.currentIndex).articleImageUrl !== ""
+
+            // Img
             Rectangle {
-                width: vpx(420)
-                height: vpx(260)
+                width: vpx(380)
+                height: vpx(240)
+                visible: bodyRow.hasImage
                 color: theme.button
                 border.color: theme.secondary
                 border.width: vpx(2)
                 radius: vpx(8)
                 clip: true
                 anchors.verticalCenter: parent.verticalCenter
-                // Sicuro e reattivo basato sulle proprietà estratte dal modello
-                visible: feedsListView.currentItem && articlesModel.count > 0 && articlesModel.get(feedsListView.currentIndex).articleImageUrl !== ""
 
                 Image {
                     anchors.fill: parent
-                    source: (feedsListView.currentItem && articlesModel.count > 0) ? articlesModel.get(feedsListView.currentIndex).articleImageUrl : ""
+                    source: (articlesModel.count > 0)
+                        ? articlesModel.get(feedsListView.currentIndex).articleImageUrl
+                        : ""
                     fillMode: Image.PreserveAspectCrop
                 }
-                
+
                 Rectangle {
-                    width: vpx(95)
-                    height: vpx(26)
+                    width: liveBadge.implicitWidth + vpx(16)
+                    height: vpx(24)
                     color: "#E60012"
                     anchors.top: parent.top
                     anchors.left: parent.left
-                    anchors.margins: vpx(12)
+                    anchors.margins: vpx(10)
                     radius: vpx(4)
-                    
                     Text {
-                        text: "ONLINE NEWS"
+                        id: liveBadge
+                        text: "LIVE NEWS"
                         color: "white"
                         font.bold: true
-                        font.pixelSize: vpx(11)
+                        font.pixelSize: vpx(10)
                         anchors.centerIn: parent
                     }
                 }
             }
 
-            // RIGHT SIDE: ListView mapping the parsed real headlines
+            // List
             ListView {
                 id: feedsListView
-                // Cambia larghezza dinamicamente se l'articolo corrente ha un'immagine valida nel modello
-                width: parent.width - ((feedsListView.currentItem && articlesModel.count > 0 && articlesModel.get(feedsListView.currentIndex).articleImageUrl !== "") ? vpx(460) : 0)
+                width: parent.width - (bodyRow.hasImage ? vpx(410) : 0)
                 height: parent.height
-                spacing: vpx(12)
+                spacing: vpx(10)
                 clip: true
                 model: articlesModel
                 focus: !articleContentPopup.visible
 
+                highlight: Rectangle {
+                    color: theme.accent
+                    radius: vpx(6)
+                }
+                highlightMoveDuration: 120
+
                 delegate: Rectangle {
+                    id: articleRow
                     width: feedsListView.width
-                    height: vpx(75)
-                    color: ListView.isCurrentItem ? theme.accent : theme.button
-                    border.color: theme.secondary
-                    border.width: vpx(2)
+                    height: vpx(72)
+                    color: "transparent"      // il highlight si vede sotto
+                    border.color: ListView.isCurrentItem ? "transparent" : theme.secondary
+                    border.width: vpx(1)
                     radius: vpx(6)
 
-                    Item {
+                    Row {
                         anchors.fill: parent
                         anchors.margins: vpx(12)
-                        
+                        spacing: vpx(10)
+
                         Rectangle {
-                            id: statusDot
-                            width: vpx(8)
-                            height: vpx(8)
-                            radius: 4
-                            color: ListView.isCurrentItem ? "white" : "#E60012"
-                            anchors.left: parent.left
+                            width: vpx(7); height: vpx(7); radius: 4
                             anchors.verticalCenter: parent.verticalCenter
+                            color: ListView.isCurrentItem ? "white" : "#E60012"
                         }
 
                         Column {
-                            anchors.left: statusDot.right
-                            anchors.leftMargin: vpx(15)
-                            anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
+                            width: parent.width - vpx(20)
                             spacing: vpx(4)
 
                             Text {
                                 text: model.articleTitle
-                                color: ListView.isCurrentItem ? "white" : theme.text
+                                color: "white"
                                 font.family: titleFont.name
-                                font.pixelSize: vpx(15)
+                                font.pixelSize: vpx(14)
                                 font.bold: true
                                 elide: Text.ElideRight
                                 width: parent.width
                             }
-
                             Text {
                                 text: model.articleDate
-                                color: ListView.isCurrentItem ? "white" : theme.icon
-                                font.family: titleFont.name
-                                font.pixelSize: vpx(12)
+                                color: theme.icon
+                                font.pixelSize: vpx(11)
                                 elide: Text.ElideRight
                                 width: parent.width
                             }
@@ -246,8 +309,10 @@ FocusScope {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
-                            feedsListView.currentIndex = index
-                            infoScreenRoot.openArticle(model.articleTitle, model.articleDate, model.articleDescription, model.articleImageUrl)
+                            feedsListView.currentIndex = index;
+                            infoScreenRoot.openArticle(
+                                model.articleTitle, model.articleDate,
+                                model.articleDescription, model.articleImageUrl);
                         }
                     }
                 }
@@ -255,7 +320,106 @@ FocusScope {
         }
     }
 
-    // --- NAVIGATION CONTROL ---
+    // Article
+    Rectangle {
+        id: articleContentPopup
+        anchors.fill: parent
+        color: "#BB000000"
+        visible: false
+
+        Rectangle {
+            id: popupBox
+            width:  parent.width  * 0.78
+            height: parent.height * 0.82
+            color:  theme.main
+            border.color: theme.secondary
+            border.width: vpx(3)
+            radius: vpx(12)
+            anchors.centerIn: parent
+            clip: true
+
+            Image {
+                id: popupImage
+                source: infoScreenRoot.selectedImageUrl
+                visible: infoScreenRoot.selectedImageUrl !== ""
+                width:  parent.width
+                height: vpx(180)
+                fillMode: Image.PreserveAspectCrop
+                anchors.top: parent.top
+                layer.enabled: true
+            }
+
+            Flickable {
+                id: popupFlickable
+                anchors.top:    popupImage.visible ? popupImage.bottom : parent.top
+                anchors.bottom: closeHint.top
+                anchors.left:   parent.left
+                anchors.right:  parent.right
+                anchors.margins: vpx(24)
+                anchors.topMargin: popupImage.visible ? vpx(16) : vpx(24)
+
+                contentWidth:  width
+                contentHeight: popupContent.implicitHeight
+                clip: true
+                flickableDirection: Flickable.VerticalFlick
+
+                Column {
+                    id: popupContent
+                    width: popupFlickable.width
+                    spacing: vpx(12)
+
+                    Text {
+                        text: infoScreenRoot.selectedTitle
+                        color: theme.text
+                        font.family: titleFont.name
+                        font.pixelSize: vpx(22)
+                        font.bold: true
+                        wrapMode: Text.Wrap
+                        width: parent.width
+                    }
+
+                    Text {
+                        text: infoScreenRoot.selectedDate
+                        color: theme.icon
+                        font.pixelSize: vpx(13)
+                        width: parent.width
+                    }
+
+                    Rectangle {
+                        width: parent.width; height: vpx(1)
+                        color: theme.secondary
+                    }
+
+                    Text {
+                        text: infoScreenRoot.selectedDescription
+                        color: theme.text
+                        font.family: titleFont.name
+                        font.pixelSize: vpx(16)
+                        wrapMode: Text.Wrap
+                        width: parent.width
+                        lineHeight: 1.4
+                    }
+                }
+            }
+            Text {
+                id: closeHint
+                text: "B  ·  close     ↕  scroll"
+                color: theme.icon
+                font.pixelSize: vpx(11)
+                anchors.bottom:  parent.bottom
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottomMargin: vpx(10)
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            z: -1
+            onClicked: articleContentPopup.visible = false
+        }
+    }
+
+    //  KEYBOARD NAV
     Keys.onPressed: {
         if (articleContentPopup.visible) {
             if (api.keys.isCancel(event) && !event.isAutoRepeat) {
@@ -263,104 +427,41 @@ FocusScope {
                 backSfx.play();
                 articleContentPopup.visible = false;
             }
+            if (api.keys.isUp(event)) {
+                popupFlickable.contentY = Math.max(0, popupFlickable.contentY - vpx(40));
+                event.accepted = true;
+            }
+            if (api.keys.isDown(event)) {
+                popupFlickable.contentY = Math.min(
+                    popupFlickable.contentHeight - popupFlickable.height,
+                    popupFlickable.contentY + vpx(40));
+                event.accepted = true;
+            }
         } else {
             if (api.keys.isCancel(event) && !event.isAutoRepeat) {
                 event.accepted = true;
                 backSfx.play();
                 showHomeScreen();
-            } else if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+            }
+            if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                 event.accepted = true;
-                if (feedsListView.currentItem && articlesModel.count > 0) {
-                    var currentData = articlesModel.get(feedsListView.currentIndex);
+                if (articlesModel.count > 0) {
+                    var d = articlesModel.get(feedsListView.currentIndex);
                     navSound.play();
-                    infoScreenRoot.openArticle(currentData.articleTitle, currentData.articleDate, currentData.articleDescription, currentData.articleImageUrl);
+                    infoScreenRoot.openArticle(d.articleTitle, d.articleDate,
+                                               d.articleDescription, d.articleImageUrl);
                 }
             }
-        }
-    }
-
-    // --- CUSTOM COMPATIBLE POPUP BLOCK ---
-    Rectangle {
-        id: articleContentPopup
-        anchors.fill: parent
-        color: "#AA000000"
-        visible: false
-
-        Rectangle {
-            width: parent.width * 0.8
-            height: parent.height * 0.8
-            color: theme.main
-            border.color: theme.secondary
-            border.width: vpx(3)
-            radius: vpx(12)
-            anchors.centerIn: parent
-
-            Item {
-                anchors.fill: parent
-                anchors.margins: vpx(30)
-
-                Flickable {
-                    anchors.fill: parent
-                    contentWidth: parent.width
-                    contentHeight: contentColumn.height
-                    clip: true
-
-                    Column {
-                        id: contentColumn
-                        width: parent.width
-                        spacing: vpx(15)
-
-                        Text {
-                            text: infoScreenRoot.selectedTitle
-                            color: theme.text
-                            font.family: titleFont.name
-                            font.pixelSize: vpx(24)
-                            font.bold: true
-                            wrapMode: Text.Wrap
-                            width: parent.width
-                        }
-
-                        Text {
-                            text: infoScreenRoot.selectedDate
-                            color: theme.icon
-                            font.family: titleFont.name
-                            font.pixelSize: vpx(14)
-                            wrapMode: Text.Wrap
-                            width: parent.width
-                        }
-
-                        Rectangle {
-                            width: parent.width
-                            height: vpx(2)
-                            color: theme.secondary
-                        }
-
-                        Text {
-                            text: infoScreenRoot.selectedDescription
-                            color: theme.text
-                            font.family: titleFont.name
-                            font.pixelSize: vpx(18)
-                            wrapMode: Text.Wrap
-                            width: parent.width
-                        }
-                    }
-                }
+            if (api.keys.isPrevPage(event) && !event.isAutoRepeat) {
+                event.accepted = true;
+                infoScreenRoot.activeFeedIndex = Math.max(0, infoScreenRoot.activeFeedIndex - 1);
             }
-            
-            Text {
-                text: "Press B"
-                color: theme.icon
-                font.pixelSize: vpx(12)
-                anchors.bottom: parent.bottom
-                anchors.right: parent.right
-                anchors.margins: vpx(15)
+            if (api.keys.isNextPage(event) && !event.isAutoRepeat) {
+                event.accepted = true;
+                infoScreenRoot.activeFeedIndex = Math.min(
+                    infoScreenRoot.feedsArray.length - 1,
+                    infoScreenRoot.activeFeedIndex + 1);
             }
-        }
-        
-        MouseArea {
-            anchors.fill: parent
-            z: -1
-            onClicked: articleContentPopup.visible = false
         }
     }
 }

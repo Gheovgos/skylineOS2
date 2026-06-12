@@ -32,11 +32,16 @@ I hate it when things aren't customizable, especially when it costs next to noth
 - Card size (warning: don’t go over 50, as it breaks for now! A settings reset needs to be implemented)
 - Number of cards displayed on screen (default 12)
 
+## Usages
+
+Buttons:
+- To launch specific apps in bottom, put the URI path in the setting section. For example, if you are on android and want to launch MT insteand of default app Files, use "android-app://bin.mt.plus". If you dont like this feature, you can disable each button and/or replaced them, just change the text label and the svg icon
+- To add games in backlog, add entries inside the backlog.json file. For example: [{ "title": "Example title" }. { "title": "Example title2" }]
+
 ## Planned features
 
 In order of priority
 
-- Better bottom buttons
 - Better RA integration
 - More customization! And use all data from metadata
 - Exophase support

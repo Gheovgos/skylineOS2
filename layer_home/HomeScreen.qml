@@ -563,12 +563,14 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            showButtonScreen("backlog");
                         }
                     }
                     onClicked: {
                         backlogButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         navSound.play();
+                        showButtonScreen("backlog");
                     }
                 }
 

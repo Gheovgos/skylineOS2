@@ -130,6 +130,9 @@ FocusScope {
             case "info":
                 infoScreen.focus = true;
                 break;
+            case "backlog":
+                backlogScreen.focus = true;
+                break;
             default:
                 break;
         }
@@ -263,6 +266,10 @@ FocusScope {
         State {
             name: "infoscreen"
             when: infoScreen.focus == true
+        },
+        State {
+            name: "backlogscreen"
+            when: backlogScreen.focus == true
         },
         State {
             name: "playgame"
@@ -478,6 +485,62 @@ FocusScope {
             }
         },
         Transition {
+            from: "homescreen"
+            to: "backlogscreen"
+            SequentialAnimation {
+                PropertyAnimation {
+                    target: homeScreen
+                    property: "opacity"
+                    to: 0
+                    duration: 200
+                }
+                PropertyAction {
+                    target: homeScreen
+                    property: "visible"
+                    value: false
+                }
+                PropertyAction {
+                    target: backlogScreen
+                    property: "visible"
+                    value: true
+                }
+                PropertyAnimation {
+                    target: backlogScreen
+                    property: "opacity"
+                    to: 1
+                    duration: 200
+                }
+            }
+        },
+        Transition {
+            from: "backlogscreen"
+            to: "homescreen"
+            SequentialAnimation {
+                PropertyAnimation {
+                    target: backlogScreen
+                    property: "opacity"
+                    to: 0
+                    duration: 200
+                }
+                PropertyAction {
+                    target: backlogScreen
+                    property: "visible"
+                    value: false
+                }
+                PropertyAction {
+                    target: homeScreen
+                    property: "visible"
+                    value: true
+                }
+                PropertyAnimation {
+                    target: homeScreen
+                    property: "opacity"
+                    to: 1
+                    duration: 200
+                }
+            }
+        },
+        Transition {
             from: ""
             to: "homescreen"
             ParallelAnimation {
@@ -559,6 +622,20 @@ FocusScope {
 
     InfoScreen {
         id: infoScreen
+        opacity: 0
+        visible: false
+        anchors {
+            left: parent.left
+            leftMargin: screenmargin
+            right: parent.right
+            rightMargin: screenmargin
+            top: parent.top
+            bottom: helpBar.top
+        }
+    }
+
+    BacklogScreen {
+        id: backlogScreen
         opacity: 0
         visible: false
         anchors {
