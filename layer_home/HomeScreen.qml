@@ -12,7 +12,7 @@ FocusScope {
         var buttons = [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton];
         var step = (direction === "right") ? 1 : -1;
         var n = buttons.length;
-        
+
         // Calcola il prossimo indice teorico
         var nextIndex = (currentIndex + step + n) % n;
 
@@ -121,16 +121,35 @@ FocusScope {
                         z: -1
                         opacity: profileButton.selected ? 1 : 0
                         Behavior on opacity {
-                            NumberAnimation { duration: 150 }
+                            NumberAnimation {
+                                duration: 150
+                            }
                         }
 
                         SequentialAnimation on opacity {
                             running: profileButton.selected
                             loops: Animation.Infinite
-                            NumberAnimation { to: 1.0; duration: 0 }
-                            NumberAnimation { to: 0.85; duration: 400; easing { type: Easing.OutQuad } }
-                            NumberAnimation { to: 1.0; duration: 500; easing { type: Easing.InQuad } }
-                            PauseAnimation { duration: 200 }
+                            NumberAnimation {
+                                to: 1.0
+                                duration: 0
+                            }
+                            NumberAnimation {
+                                to: 0.85
+                                duration: 400
+                                easing {
+                                    type: Easing.OutQuad
+                                }
+                            }
+                            NumberAnimation {
+                                to: 1.0
+                                duration: 500
+                                easing {
+                                    type: Easing.InQuad
+                                }
+                            }
+                            PauseAnimation {
+                                duration: 200
+                            }
                         }
                     }
 
@@ -208,7 +227,9 @@ FocusScope {
                     visible: text !== ""
 
                     Behavior on color {
-                        ColorAnimation { duration: 150 }
+                        ColorAnimation {
+                            duration: 150
+                        }
                     }
                 }
             }
@@ -238,7 +259,9 @@ FocusScope {
                 Text {
                     id: sysTime
                     property var timeSetting: (settings.timeFormat === "12hr") ? "h:mmap  " : "hh:mm  "
-                    function set() { sysTime.text = Qt.formatTime(new Date(), timeSetting); }
+                    function set() {
+                        sysTime.text = Qt.formatTime(new Date(), timeSetting);
+                    }
                     Timer {
                         interval: 60000
                         repeat: true
@@ -258,7 +281,9 @@ FocusScope {
 
                 Text {
                     id: batteryPercentage
-                    function set() { batteryPercentage.text = homeScreenContainer.batteryStatus + "%"; }
+                    function set() {
+                        batteryPercentage.text = homeScreenContainer.batteryStatus + "%";
+                    }
                     Timer {
                         interval: 60000
                         repeat: isNaN(api.device.batteryPercent) ? false : showPercent
@@ -286,7 +311,9 @@ FocusScope {
                         antialiasing: true
                         cached: true
                     }
-                    function set() { batteryIcon.level = homeScreenContainer.batteryStatus; }
+                    function set() {
+                        batteryIcon.level = homeScreenContainer.batteryStatus;
+                    }
                     Timer {
                         interval: 60000
                         repeat: true
@@ -317,7 +344,9 @@ FocusScope {
                         antialiasing: true
                         cached: true
                     }
-                    function set() { chargingStatus = api.device.batteryCharging; }
+                    function set() {
+                        chargingStatus = api.device.batteryCharging;
+                    }
                     Timer {
                         interval: 10000
                         repeat: !isNaN(api.device.batteryPercent)
@@ -400,8 +429,11 @@ FocusScope {
                     label: "Feed"
                     visible: (api.memory.get("Feed Button Show") === "Yes")
                     icon: "../assets/images/navigation/info.svg"
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(0, "left")
                     Keys.onRightPressed: root.moveFocus(0, "right")
                     Keys.onPressed: {
@@ -425,15 +457,18 @@ FocusScope {
                     label: "Store"
                     icon: "../assets/images/navigation/Store.svg"
                     visible: (api.memory.get("Store Button Show") === "Yes")
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(1, "left")
                     Keys.onRightPressed: root.moveFocus(1, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
                             if (Qt.platform.os === "android")
-                                Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "intent:#Intent;action=android.intent.action.MAIN;package=com.aurora.store;end");
+                                Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "https://play.google.com/store");
                             else
                                 Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "steam://store");
                         }
@@ -443,7 +478,7 @@ FocusScope {
                         homeSwitcher.currentIndex = -1;
                         navSound.play();
                         if (Qt.platform.os === "android")
-                            Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "intent:#Intent;action=android.intent.action.MAIN;package=com.aurora.store;end");
+                            Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "https://play.google.com/store");
                         else
                             Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "steam://store");
                     }
@@ -456,8 +491,11 @@ FocusScope {
                     label: "Browser"
                     icon: "../assets/images/navigation/browser.svg"
                     visible: (api.memory.get("Browser Button Show") === "Yes")
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(2, "left")
                     Keys.onRightPressed: root.moveFocus(2, "right")
                     Keys.onPressed: {
@@ -481,21 +519,30 @@ FocusScope {
                     label: "Gallery"
                     icon: "../assets/images/navigation/Gallery.svg"
                     visible: (api.memory.get("Gallery Button Show") === "Yes")
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(3, "left")
                     Keys.onRightPressed: root.moveFocus(3, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO: showGalleryScreen();
+                            if (Qt.platform.os === "android")
+                                Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "android-app://com.google.android.apps.photos");
+                            else
+                                Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "");
                         }
                     }
                     onClicked: {
                         galleryButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         navSound.play();
-                        // TODO: showGalleryScreen();
+                        if (Qt.platform.os === "android")
+                            Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "android-app://com.google.android.apps.photos");
+                        else
+                            Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "");
                     }
                 }
 
@@ -506,8 +553,11 @@ FocusScope {
                     label: "Backlog"
                     icon: "../assets/images/navigation/backlog.svg"
                     visible: (api.memory.get("Backlog Button Show") === "Yes")
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(4, "left")
                     Keys.onRightPressed: root.moveFocus(4, "right")
                     Keys.onPressed: {
@@ -529,19 +579,30 @@ FocusScope {
                     label: "Files"
                     icon: "../assets/images/navigation/Controller.svg"
                     visible: (api.memory.get("Files Button Show") === "Yes")
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(5, "left")
                     Keys.onRightPressed: root.moveFocus(5, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            if (Qt.platform.os === "android")
+                                Qt.openUrlExternally((typeof (api.memory.get("Files URI")) != "undefined") ? api.memory.get("Files URI") : "content://com.android.externalstorage.documents/root/primary");
+                            else
+                                Qt.openUrlExternally((typeof (api.memory.get("Files URI")) != "undefined") ? api.memory.get("Files URI") : "");
                         }
                     }
                     onClicked: {
                         controllerButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         navSound.play();
+                        if (Qt.platform.os === "android")
+                            Qt.openUrlExternally((typeof (api.memory.get("Files URI")) != "undefined") ? api.memory.get("Files URI") : "content://com.android.externalstorage.documents/root/primary");
+                        else
+                            Qt.openUrlExternally((typeof (api.memory.get("Files URI")) != "undefined") ? api.memory.get("Files URI") : "");
                     }
                 }
 
@@ -552,7 +613,10 @@ FocusScope {
                     label: "Theme Settings"
                     icon: "../assets/images/navigation/Settings.png"
 
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(6, "left")
                     Keys.onRightPressed: root.moveFocus(6, "right")
                     Keys.onPressed: {
@@ -576,8 +640,11 @@ FocusScope {
                     label: "Suspend"
                     icon: "../assets/images/navigation/Suspend.svg"
                     visible: (api.memory.get("Suspend Button Show") === "Yes")
-                    
-                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                    }
                     Keys.onLeftPressed: root.moveFocus(7, "left")
                     Keys.onRightPressed: root.moveFocus(7, "right")
                     Keys.onPressed: {
