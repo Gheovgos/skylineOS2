@@ -4,10 +4,40 @@ import QtQuick.Layouts 1.11
 import "../utils.js" as Utils
 import "qrc:/qmlutils" as PegasusUtils
 
-//import QtQml 2.0
-
 FocusScope {
     id: root
+
+    // --- FUNZIONI DI NAVIGAZIONE INTELLIGENTE (Salvano il D-Pad dai pulsanti nascosti) ---
+    function moveFocus(currentIndex, direction) {
+        var buttons = [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton];
+        var step = (direction === "right") ? 1 : -1;
+        var n = buttons.length;
+        
+        // Calcola il prossimo indice teorico
+        var nextIndex = (currentIndex + step + n) % n;
+
+        // Cicla finché non trova il prossimo pulsante effettivamente visibile
+        for (var i = 0; i < n - 1; i++) {
+            if (buttons[nextIndex].visible) {
+                navSound.play();
+                buttons[nextIndex].focus = true;
+                return;
+            }
+            nextIndex = (nextIndex + step + n) % n;
+        }
+        borderSfx.play(); // Suono di blocco se non ci sono alternative valide
+    }
+
+    function focusFirstVisibleButton() {
+        var buttons = [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton];
+        for (var i = 0; i < buttons.length; i++) {
+            if (buttons[i].visible) {
+                buttons[i].focus = true;
+                return true;
+            }
+        }
+        return false;
+    }
 
     // Build the games list but with extra menu options at the start and end
     ListModel {
@@ -26,21 +56,9 @@ FocusScope {
         }
 
         function buildList() {
-            /*append({
-                "name":         "Explore",
-                "idx":          -1,
-                "icon":         "assets/images/navigation/Explore.png",
-                "background":   ""
-            })*/
             for (var i = 0; i < activeCollection.count; i++) {
                 append(createListElement(i));
-            }/*
-            append({
-                "name":         "Top Games",
-                "idx":          -2,
-                "icon":         "assets/images/navigation/Top Rated.png",
-                "background":   ""
-            })//*/
+            }
             append({
                 "name": "All Software",
                 "idx": -3,
@@ -79,7 +97,6 @@ FocusScope {
                 topMargin: Math.round(screenheight * 0.0472)
             }
 
-            // Top bar TODO with Exophase / RA
             Row {
                 spacing: vpx(10)
                 anchors {
@@ -95,7 +112,6 @@ FocusScope {
 
                     property bool selected: focus
 
-                    // Highlight DIETRO l'immagine (z negativo)
                     Rectangle {
                         anchors.centerIn: parent
                         width: parent.width + vpx(8)
@@ -105,35 +121,16 @@ FocusScope {
                         z: -1
                         opacity: profileButton.selected ? 1 : 0
                         Behavior on opacity {
-                            NumberAnimation {
-                                duration: 150
-                            }
+                            NumberAnimation { duration: 150 }
                         }
 
                         SequentialAnimation on opacity {
                             running: profileButton.selected
                             loops: Animation.Infinite
-                            NumberAnimation {
-                                to: 1.0
-                                duration: 0
-                            }
-                            NumberAnimation {
-                                to: 0.85
-                                duration: 400
-                                easing {
-                                    type: Easing.OutQuad
-                                }
-                            }
-                            NumberAnimation {
-                                to: 1.0
-                                duration: 500
-                                easing {
-                                    type: Easing.InQuad
-                                }
-                            }
-                            PauseAnimation {
-                                duration: 200
-                            }
+                            NumberAnimation { to: 1.0; duration: 0 }
+                            NumberAnimation { to: 0.85; duration: 400; easing { type: Easing.OutQuad } }
+                            NumberAnimation { to: 1.0; duration: 500; easing { type: Easing.InQuad } }
+                            PauseAnimation { duration: 200 }
                         }
                     }
 
@@ -146,7 +143,6 @@ FocusScope {
                             anchors.fill: parent
                             fillMode: Image.PreserveAspectCrop
                             visible: false
-
                             source: api.memory.get("RA_LoggedIn") === "Yes" ? "https://media.retroachievements.org/UserPic/" + api.memory.get("RA_Username") + ".png" : "../assets/images/profile_icon.png"
                         }
 
@@ -168,13 +164,9 @@ FocusScope {
                         anchors.fill: parent
                         hoverEnabled: true
                         onClicked: {
-                            if (profileButton.focus) {
-                                navSound.play();
-                            } else {
-                                profileButton.focus = true;
-                                navSound.play();
-                                homeSwitcher.currentIndex = -1;
-                            }
+                            profileButton.focus = true;
+                            navSound.play();
+                            homeSwitcher.currentIndex = -1;
                         }
                     }
 
@@ -187,15 +179,15 @@ FocusScope {
 
                     Keys.onRightPressed: {
                         navSound.play();
-                        infoButton.focus = true;
-                        profileButton.focus = false;
+                        if (!root.focusFirstVisibleButton()) {
+                            borderSfx.play();
+                        }
                     }
 
                     Keys.onDownPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = 0;
-                        profileButton.focus = false;
                     }
                 }
 
@@ -216,9 +208,7 @@ FocusScope {
                     visible: text !== ""
 
                     Behavior on color {
-                        ColorAnimation {
-                            duration: 150
-                        }
+                        ColorAnimation { duration: 150 }
                     }
                 }
             }
@@ -247,25 +237,16 @@ FocusScope {
 
                 Text {
                     id: sysTime
-
-                    //12HR-"h:mmap" 24HR-"hh:mm"
                     property var timeSetting: (settings.timeFormat === "12hr") ? "h:mmap  " : "hh:mm  "
-
-                    function set() {
-                        sysTime.text = Qt.formatTime(new Date(), timeSetting);
-                    }
-
+                    function set() { sysTime.text = Qt.formatTime(new Date(), timeSetting); }
                     Timer {
-                        id: textTimer
-                        interval: 60000 // Run the timer every minute
+                        interval: 60000
                         repeat: true
                         running: true
                         triggeredOnStart: true
                         onTriggered: sysTime.set()
                     }
-
                     onTimeSettingChanged: sysTime.set()
-
                     color: theme.text
                     font.family: titleFont.name
                     font.weight: Font.Bold
@@ -277,31 +258,21 @@ FocusScope {
 
                 Text {
                     id: batteryPercentage
-
-                    function set() {
-                        batteryPercentage.text = homeScreenContainer.batteryStatus + "%";
-                    }
-
+                    function set() { batteryPercentage.text = homeScreenContainer.batteryStatus + "%"; }
                     Timer {
-                        id: percentTimer
-                        interval: 60000 // Run the timer every minute
+                        interval: 60000
                         repeat: isNaN(api.device.batteryPercent) ? false : showPercent
                         running: isNaN(api.device.batteryPercent) ? false : showPercent
-                        triggeredOnStart: isNaN(api.device.batteryPercent) ? "" : showPercent
+                        triggeredOnStart: isNaN(api.device.batteryPercent) ? false : showPercent
                         onTriggered: batteryPercentage.set()
                     }
-
                     color: theme.text
                     font.family: titleFont.name
                     font.weight: Font.Bold
                     font.letterSpacing: 1
                     font.pixelSize: Math.round(screenheight * 0.0277)
-                    //horizontalAlignment: Text.Right
-
                     Component.onCompleted: font.capitalization = Font.SmallCaps
-                    anchors {
-                        verticalCenter: sysTime.verticalCenter
-                    }
+                    anchors.verticalCenter: sysTime.verticalCenter
                     visible: isNaN(api.device.batteryPercent) ? false : showPercent
                 }
 
@@ -315,31 +286,21 @@ FocusScope {
                         antialiasing: true
                         cached: true
                     }
-
-                    function set() {
-                        batteryIcon.level = homeScreenContainer.batteryStatus;
-                    }
-
+                    function set() { batteryIcon.level = homeScreenContainer.batteryStatus; }
                     Timer {
-                        id: iconTimer
-                        interval: 60000 // Run the timer every minute
+                        interval: 60000
                         repeat: true
                         running: true
                         triggeredOnStart: true
                         onTriggered: batteryIcon.set()
                     }
-
-                    anchors {
-                        verticalCenter: sysTime.verticalCenter
-                    }
-                    visible: isNaN(api.device.batteryPercent) ? false : true
+                    anchors.verticalCenter: sysTime.verticalCenter
+                    visible: !isNaN(api.device.batteryPercent)
                 }
 
                 Image {
                     id: chargingIcon
-
                     property bool chargingStatus: api.device.batteryCharging
-
                     width: Math.round(screenheight * 0.0433)
                     height: width
                     fillMode: Image.PreserveAspectFit
@@ -348,9 +309,7 @@ FocusScope {
                     sourceSize.height: vpx(15)
                     smooth: true
                     horizontalAlignment: Image.AlignLeft
-                    anchors {
-                        verticalCenter: sysTime.verticalCenter
-                    }
+                    anchors.verticalCenter: sysTime.verticalCenter
                     visible: chargingStatus && batteryIcon.level < 99
                     layer.enabled: true
                     layer.effect: ColorOverlay {
@@ -358,34 +317,24 @@ FocusScope {
                         antialiasing: true
                         cached: true
                     }
-
-                    function set() {
-                        chargingStatus = api.device.batteryCharging;
-                    }
-
+                    function set() { chargingStatus = api.device.batteryCharging; }
                     Timer {
-                        id: chargingIconTimer
-                        interval: 10000 // Run the timer every minute
-                        repeat: isNaN(api.device.batteryPercent) ? false : true
-                        running: isNaN(api.device.batteryPercent) ? false : true
-                        triggeredOnStart: isNaN(api.device.batteryPercent) ? false : true
+                        interval: 10000
+                        repeat: !isNaN(api.device.batteryPercent)
+                        running: !isNaN(api.device.batteryPercent)
+                        triggeredOnStart: !isNaN(api.device.batteryPercent)
                         onTriggered: chargingIcon.set()
                     }
                 }
 
                 Image {
                     id: wifiIcon
-
                     sourceSize.width: vpx(26)
                     sourceSize.height: vpx(26)
                     fillMode: Image.PreserveAspectFit
-
                     source: "../assets/images/navigation/wifi.svg"
-
                     anchors.verticalCenter: sysTime.verticalCenter
-
                     visible: (settings.showWifi === "Yes")
-
                     layer.enabled: true
                     layer.effect: ColorOverlay {
                         color: theme.text
@@ -444,47 +393,28 @@ FocusScope {
                 spacing: vpx(8)
                 anchors.centerIn: parent
 
-                Keys.onUpPressed: {
-                    navSound.play();
-                    homeSwitcher.focus = true;
-                    homeSwitcher.currentIndex = homeSwitcher._index;
-                }
-                Keys.onDownPressed: {
-                    borderSfx.play();
-                }
-
                 MenuButton {
                     id: infoButton
                     width: vpx(56)
                     height: vpx(56)
                     label: "Feed"
-                    visible: {
-                        return (api.memory.get("Feed Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Feed Button Show") === "Yes")
                     icon: "../assets/images/navigation/info.svg"
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(0, "left")
+                    Keys.onRightPressed: root.moveFocus(0, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
                             showButtonScreen("info");
                         }
                     }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        suspendButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        storeButton.focus = true;
-                    }
                     onClicked: {
-                        if (infoButton.focus) {
-                            event.accepted = true;
-                            showButtonScreen("info");
-                        } else {
-                            infoButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        infoButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
+                        showButtonScreen("info");
                     }
                 }
 
@@ -494,29 +424,28 @@ FocusScope {
                     height: vpx(56)
                     label: "Store"
                     icon: "../assets/images/navigation/Store.svg"
-                    visible: {
-                        return (api.memory.get("Store Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Store Button Show") === "Yes")
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(1, "left")
+                    Keys.onRightPressed: root.moveFocus(1, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO: showStoreScreen();
+                            if (Qt.platform.os === "android")
+                                Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "intent:#Intent;action=android.intent.action.MAIN;package=com.aurora.store;end");
+                            else
+                                Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "steam://store");
                         }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        infoButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        browserButton.focus = true;
                     }
                     onClicked: {
-                        if (storeButton.focus) { /* TODO */ } else {
-                            storeButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        storeButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
+                        if (Qt.platform.os === "android")
+                            Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "intent:#Intent;action=android.intent.action.MAIN;package=com.aurora.store;end");
+                        else
+                            Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "steam://store");
                     }
                 }
 
@@ -526,29 +455,22 @@ FocusScope {
                     height: vpx(56)
                     label: "Browser"
                     icon: "../assets/images/navigation/browser.svg"
-                    visible: {
-                        return (api.memory.get("Browser Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Browser Button Show") === "Yes")
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(2, "left")
+                    Keys.onRightPressed: root.moveFocus(2, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            Qt.openUrlExternally((typeof(api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browesr default link") : "https://" );
+                            Qt.openUrlExternally((typeof (api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
                         }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        storeButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        galleryButton.focus = true;
                     }
                     onClicked: {
-                        if (browserButton.focus) {Qt.openUrlExternally((typeof(api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browesr default link") : "https://" );} else {
-                            browserButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        browserButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
+                        Qt.openUrlExternally((typeof (api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
                     }
                 }
 
@@ -558,29 +480,22 @@ FocusScope {
                     height: vpx(56)
                     label: "Gallery"
                     icon: "../assets/images/navigation/Gallery.svg"
-                    visible: {
-                        return (api.memory.get("Gallery Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Gallery Button Show") === "Yes")
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(3, "left")
+                    Keys.onRightPressed: root.moveFocus(3, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
                             // TODO: showGalleryScreen();
                         }
                     }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        browserButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        backlogButton.focus = true;
-                    }
                     onClicked: {
-                        if (galleryButton.focus) { /* TODO */ } else {
-                            galleryButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        galleryButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
+                        // TODO: showGalleryScreen();
                     }
                 }
 
@@ -590,29 +505,20 @@ FocusScope {
                     height: vpx(56)
                     label: "Backlog"
                     icon: "../assets/images/navigation/backlog.svg"
-                    visible: {
-                        return (api.memory.get("Backlog Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Backlog Button Show") === "Yes")
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(4, "left")
+                    Keys.onRightPressed: root.moveFocus(4, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO
                         }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        galleryButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        controllerButton.focus = true;
                     }
                     onClicked: {
-                        if (backlogButton.focus) { /* TODO */ } else {
-                            backlogButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        backlogButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
                     }
                 }
 
@@ -620,31 +526,22 @@ FocusScope {
                     id: controllerButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Controller"
+                    label: "Files"
                     icon: "../assets/images/navigation/Controller.svg"
-                    visible: {
-                        return (api.memory.get("Controller Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Files Button Show") === "Yes")
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(5, "left")
+                    Keys.onRightPressed: root.moveFocus(5, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO: showControllerScreen();
                         }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        backlogButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        settingsButton.focus = true;
                     }
                     onClicked: {
-                        if (controllerButton.focus) { /* TODO */ } else {
-                            controllerButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        controllerButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
                     }
                 }
 
@@ -655,28 +552,20 @@ FocusScope {
                     label: "Theme Settings"
                     icon: "../assets/images/navigation/Settings.png"
 
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(6, "left")
+                    Keys.onRightPressed: root.moveFocus(6, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
                             showSettingsScreen();
                         }
                     }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        controllerButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        borderSfx.play();
-                        suspendButton.focus = true;
-                    }
                     onClicked: {
-                        if (settingsButton.focus) {
-                            showSettingsScreen();
-                        } else {
-                            settingsButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        settingsButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
+                        showSettingsScreen();
                     }
                 }
 
@@ -686,29 +575,20 @@ FocusScope {
                     height: vpx(56)
                     label: "Suspend"
                     icon: "../assets/images/navigation/Suspend.svg"
-                    visible: {
-                        return (api.memory.get("Suspend Button Show") === "Yes") ? true : false;
-                    }
+                    visible: (api.memory.get("Suspend Button Show") === "Yes")
+                    
+                    Keys.onUpPressed: { navSound.play(); homeSwitcher.focus = true; }
+                    Keys.onLeftPressed: root.moveFocus(7, "left")
+                    Keys.onRightPressed: root.moveFocus(7, "right")
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO: api.device.suspend() o simile
                         }
-                    }
-                    Keys.onLeftPressed: {
-                        navSound.play();
-                        settingsButton.focus = true;
-                    }
-                    Keys.onRightPressed: {
-                        borderSfx.play();
-                        infoButton.focus = true;
                     }
                     onClicked: {
-                        if (suspendButton.focus) { /* TODO */ } else {
-                            suspendButton.focus = true;
-                            navSound.play();
-                            homeSwitcher.currentIndex = -1;
-                        }
+                        suspendButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
                     }
                 }
             }

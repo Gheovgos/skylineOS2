@@ -116,6 +116,13 @@ FocusScope {
         }
 
         ListElement {
+            settingName: "Store URI"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+
+        ListElement {
             settingName: "Browser Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
@@ -123,7 +130,7 @@ FocusScope {
         }
 
         ListElement {
-            settingName: "Browesr default link"
+            settingName: "Browser default link"
             settingSubtitle: ""
             setting: ""
             type: "input"
@@ -137,6 +144,13 @@ FocusScope {
         }
 
         ListElement {
+            settingName: "Gallery URI"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+
+        ListElement {
             settingName: "Backlog Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
@@ -144,10 +158,17 @@ FocusScope {
         }
 
         ListElement {
-            settingName: "Controller Button Show"
+            settingName: "Files Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
             type: "toggle"
+        }
+
+        ListElement {
+            settingName: "Files URI"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
         }
 
         /*         ListElement {
