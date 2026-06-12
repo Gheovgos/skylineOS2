@@ -532,7 +532,7 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            // TODO: showStoreScreen();
+                            Qt.openUrlExternally((typeof(api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browesr default link") : "https://" );
                         }
                     }
                     Keys.onLeftPressed: {
@@ -544,7 +544,7 @@ FocusScope {
                         galleryButton.focus = true;
                     }
                     onClicked: {
-                        if (browserButton.focus) { /* TODO */ } else {
+                        if (browserButton.focus) {Qt.openUrlExternally((typeof(api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browesr default link") : "https://" );} else {
                             browserButton.focus = true;
                             navSound.play();
                             homeSwitcher.currentIndex = -1;

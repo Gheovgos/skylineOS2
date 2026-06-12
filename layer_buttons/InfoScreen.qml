@@ -348,7 +348,7 @@ FocusScope {
             }
             
             Text {
-                text: "Press B / ESC to close"
+                text: "Press B"
                 color: theme.icon
                 font.pixelSize: vpx(12)
                 anchors.bottom: parent.bottom

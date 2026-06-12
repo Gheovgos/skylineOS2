@@ -123,6 +123,13 @@ FocusScope {
         }
 
         ListElement {
+            settingName: "Browesr default link"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+
+        ListElement {
             settingName: "Gallery Button Show"
             settingSubtitle: ""
             setting: "Yes,No"
