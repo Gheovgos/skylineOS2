@@ -971,8 +971,9 @@ ListView {
                 anchors.centerIn: parent
             }
 
-            Image {
+            AnimatedImage {
                 id: gameImage
+                playing: true
 
                 width: isGame ? homeLayout.height : homeLayout.height * 0.7
                 height: width
@@ -984,10 +985,10 @@ ListView {
 
                 source: gameBG
 
-                sourceSize {
+                /* sourceSize {
                     width: 512
                     height: 512
-                }
+                } */
 
                 anchors.centerIn: parent
 
