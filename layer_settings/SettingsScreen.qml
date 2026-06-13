@@ -18,7 +18,7 @@ FocusScope {
         ListElement {
             settingName: "Game Background"
             settingSubtitle: ""
-            setting: "Screenshot,Fanart,Boxart"
+            setting: "Yes,No"
             type: "toggle"
         }
 
@@ -449,12 +449,8 @@ FocusScope {
                     if (type === "input") {
                         api.memory.set(settingName, currentInput);
                     } else {
-                        console.log("-----------------");
                         api.memory.set(settingName + 'Index', savedIndex);
                         api.memory.set(settingName, settingList[savedIndex]);
-                        console.log(settingList[savedIndex]);
-                        console.log(api.memory.get(settingName));
-                        console.log("-----------------");
                     }
                 }
 

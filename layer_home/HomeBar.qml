@@ -945,10 +945,22 @@ ListView {
                 anchors.centerIn: parent
             }
 
-            // Preference order for Game Backgrounds
-            property var gameBG: {
-                return getGameBackground(gameData, settings.gameBackground);
+            property var cardBG: {
+                if (!gameData || !isGame)
+                    return "";
+                switch (settings.gameBackground) {
+                case "Screenshot":
+                    return gameData.assets.screenshots[0] || gameData.assets.background || "";
+                case "Fanart":
+                    return gameData.assets.background || gameData.assets.screenshots[0] || "";
+                case "Boxart":
+                    return gameData.assets.background || gameData.assets.screenshots[0] || "";
+                default:
+                    return "";
+                }
             }
+
+            property var gameBG: gameData ? (gameData.assets.boxFront || gameData.assets.tile || "") : ""
 
             Rectangle {
                 id: imageMask
@@ -968,7 +980,7 @@ ListView {
                 smooth: true
                 asynchronous: true
 
-                fillMode: (gameBG == gameData.assets.boxFront) ? Image.PreserveAspectFit : Image.PreserveAspectCrop
+                fillMode: Image.PreserveAspectFit
 
                 source: gameBG
 

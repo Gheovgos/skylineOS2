@@ -7,7 +7,6 @@ import "qrc:/qmlutils" as PegasusUtils
 FocusScope {
     id: root
 
-    // --- FUNZIONI DI NAVIGAZIONE INTELLIGENTE (Salvano il D-Pad dai pulsanti nascosti) ---
     function moveFocus(currentIndex, direction) {
         var buttons = [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton];
         var step = (direction === "right") ? 1 : -1;
@@ -81,6 +80,44 @@ FocusScope {
         height: parent.height
 
         property var batteryStatus: isNaN(api.device.batteryPercent) ? "" : parseInt(api.device.batteryPercent * 100)
+
+        Image {
+            id: globalBackground
+            anchors.fill: parent
+            source: currentGame ? (currentGame.assets.background || currentGame.assets.screenshots[0] || "") : ""
+            fillMode: Image.PreserveAspectCrop
+            smooth: true
+            asynchronous: true
+            visible: {
+                if(typeof(api.memory.get("Game Background") != "undefined") && api.memory.get("Game Background") === "Yes") {
+                    return status === Image.Ready;
+                } else return false;
+            }
+
+            Behavior on source {
+                SequentialAnimation {
+                    NumberAnimation {
+                        target: globalBackground
+                        property: "opacity"
+                        to: 0
+                        duration: 200
+                    }
+                    PropertyAction {} 
+                    NumberAnimation {
+                        target: globalBackground
+                        property: "opacity"
+                        to: 1
+                        duration: 200
+                    }
+                }
+            }
+
+            Rectangle {
+                anchors.fill: parent
+                color: theme.main
+                opacity: 0.75
+            }
+        }
 
         Item {
             id: topbar
@@ -402,27 +439,26 @@ FocusScope {
                 width: buttonMenu.width + vpx(48)
                 height: vpx(64)
 
-                    Image {
-        id: buttonBarBg
-        source: "../assets/images/menuButtonBackground.png"
-        anchors.fill: parent
-        fillMode: Image.PreserveAspectCrop  
-        asynchronous: true
-        visible: status === Image.Ready
-        layer.enabled: true
-        layer.effect: OpacityMask {   
-            maskSource: buttonBarMask
-        }
-    }
+                Image {
+                    id: buttonBarBg
+                    source: "../assets/images/menuButtonBackground.png"
+                    anchors.fill: parent
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    visible: status === Image.Ready
+                    layer.enabled: true
+                    layer.effect: OpacityMask {
+                        maskSource: buttonBarMask
+                    }
+                }
 
-        Rectangle {
-        id: buttonBarMask
-        anchors.fill: parent
-        radius: parent.height / 2
-        color: theme.button
-        visible: buttonBarBg.status !== Image.Ready
-    }
-
+                Rectangle {
+                    id: buttonBarMask
+                    anchors.fill: parent
+                    radius: parent.height / 2
+                    color: theme.button
+                    visible: buttonBarBg.status !== Image.Ready
+                }
 
                 //radius: height / 2
                 //color: theme.button
@@ -454,6 +490,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 0;
                     }
                     Keys.onLeftPressed: root.moveFocus(0, "left")
                     Keys.onRightPressed: root.moveFocus(0, "right")
@@ -482,6 +519,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 1;
                     }
                     Keys.onLeftPressed: root.moveFocus(1, "left")
                     Keys.onRightPressed: root.moveFocus(1, "right")
@@ -516,6 +554,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 1;
                     }
                     Keys.onLeftPressed: root.moveFocus(2, "left")
                     Keys.onRightPressed: root.moveFocus(2, "right")
@@ -544,6 +583,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 2;
                     }
                     Keys.onLeftPressed: root.moveFocus(3, "left")
                     Keys.onRightPressed: root.moveFocus(3, "right")
@@ -578,6 +618,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 2;
                     }
                     Keys.onLeftPressed: root.moveFocus(4, "left")
                     Keys.onRightPressed: root.moveFocus(4, "right")
@@ -606,6 +647,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 2;
                     }
                     Keys.onLeftPressed: root.moveFocus(5, "left")
                     Keys.onRightPressed: root.moveFocus(5, "right")
@@ -639,6 +681,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 3;
                     }
                     Keys.onLeftPressed: root.moveFocus(6, "left")
                     Keys.onRightPressed: root.moveFocus(6, "right")
@@ -667,6 +710,7 @@ FocusScope {
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 3;
                     }
                     Keys.onLeftPressed: root.moveFocus(7, "left")
                     Keys.onRightPressed: root.moveFocus(7, "right")
