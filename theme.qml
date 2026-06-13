@@ -133,6 +133,9 @@ FocusScope {
             case "backlog":
                 backlogScreen.focus = true;
                 break;
+            case "suspend":
+                suspendScreen.focus = true;
+                break;
             default:
                 break;
         }
@@ -270,6 +273,10 @@ FocusScope {
         State {
             name: "backlogscreen"
             when: backlogScreen.focus == true
+        },
+        State {
+            name: "suspendscreen"
+            when: suspendScreen.focus == true
         },
         State {
             name: "playgame"
@@ -541,6 +548,62 @@ FocusScope {
             }
         },
         Transition {
+            from: "homescreen"
+            to: "suspendscreen"
+            SequentialAnimation {
+                PropertyAnimation {
+                    target: homeScreen
+                    property: "opacity"
+                    to: 0
+                    duration: 200
+                }
+                PropertyAction {
+                    target: homeScreen
+                    property: "visible"
+                    value: false
+                }
+                PropertyAction {
+                    target: suspendScreen
+                    property: "visible"
+                    value: true
+                }
+                PropertyAnimation {
+                    target: suspendScreen
+                    property: "opacity"
+                    to: 1
+                    duration: 200
+                }
+            }
+        },
+        Transition {
+            from: "suspendscreen"
+            to: "homescreen"
+            SequentialAnimation {
+                PropertyAnimation {
+                    target: suspendScreen
+                    property: "opacity"
+                    to: 0
+                    duration: 200
+                }
+                PropertyAction {
+                    target: suspendScreen
+                    property: "visible"
+                    value: false
+                }
+                PropertyAction {
+                    target: homeScreen
+                    property: "visible"
+                    value: true
+                }
+                PropertyAnimation {
+                    target: homeScreen
+                    property: "opacity"
+                    to: 1
+                    duration: 200
+                }
+            }
+        },
+        Transition {
             from: ""
             to: "homescreen"
             ParallelAnimation {
@@ -636,6 +699,20 @@ FocusScope {
 
     BacklogScreen {
         id: backlogScreen
+        opacity: 0
+        visible: false
+        anchors {
+            left: parent.left
+            leftMargin: screenmargin
+            right: parent.right
+            rightMargin: screenmargin
+            top: parent.top
+            bottom: helpBar.top
+        }
+    }
+
+    SuspendScreen {
+        id: suspendScreen
         opacity: 0
         visible: false
         anchors {

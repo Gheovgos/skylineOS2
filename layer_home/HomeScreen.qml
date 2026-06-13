@@ -13,10 +13,8 @@ FocusScope {
         var step = (direction === "right") ? 1 : -1;
         var n = buttons.length;
 
-        // Calcola il prossimo indice teorico
         var nextIndex = (currentIndex + step + n) % n;
 
-        // Cicla finché non trova il prossimo pulsante effettivamente visibile
         for (var i = 0; i < n - 1; i++) {
             if (buttons[nextIndex].visible) {
                 navSound.play();
@@ -25,7 +23,7 @@ FocusScope {
             }
             nextIndex = (nextIndex + step + n) % n;
         }
-        borderSfx.play(); // Suono di blocco se non ci sono alternative valide
+        borderSfx.play();
     }
 
     function focusFirstVisibleButton() {
@@ -398,13 +396,36 @@ FocusScope {
             width: buttonMenu.width + vpx(48)
             height: parent.bottom
 
-            Rectangle {
+            Item {
                 id: buttonBar
                 anchors.centerIn: parent
                 width: buttonMenu.width + vpx(48)
                 height: vpx(64)
-                radius: height / 2
-                color: theme.button
+
+                    Image {
+        id: buttonBarBg
+        source: "../assets/images/menuButtonBackground.png"
+        anchors.fill: parent
+        fillMode: Image.PreserveAspectCrop  
+        asynchronous: true
+        visible: status === Image.Ready
+        layer.enabled: true
+        layer.effect: OpacityMask {   
+            maskSource: buttonBarMask
+        }
+    }
+
+        Rectangle {
+        id: buttonBarMask
+        anchors.fill: parent
+        radius: parent.height / 2
+        color: theme.button
+        visible: buttonBarBg.status !== Image.Ready
+    }
+
+
+                //radius: height / 2
+                //color: theme.button
 
                 layer.enabled: enableDropShadows
                 layer.effect: DropShadow {
@@ -652,12 +673,14 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            showButtonScreen("suspend");
                         }
                     }
                     onClicked: {
                         suspendButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         navSound.play();
+                        showButtonScreen("suspend");
                     }
                 }
             }
