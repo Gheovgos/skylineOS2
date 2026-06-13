@@ -8,6 +8,7 @@ FocusScope {
   property bool showBack: true
   property bool showCollControls: false
   property bool showFav: true
+  property bool showDetails: false
   property var gameData: softwareList[sortByIndex].currentGame(currentScreenID)
   property string collectionShortName: Utils.processPlatformName(currentGame.collections.get(0).shortName)
 
@@ -87,16 +88,15 @@ FocusScope {
       }
 
       ControllerHelpButton {
-          id: buttonFavorite
-          button: processButtonArt(api.keys.details)
-          label: "Fav"
-          Layout.fillWidth: true
-          Layout.minimumWidth: vpx(50)
-          Layout.preferredWidth: vpx(50)
-
-          onClicked: {}
-          visible: showFav
-      }
+    id: buttonFavorite
+    button: processButtonArt(showDetails ? api.keys.filters : api.keys.details)
+    label: showDetails ? "Details" : "Fav"
+    Layout.fillWidth: true
+    Layout.minimumWidth: vpx(50)
+    Layout.preferredWidth: vpx(50)
+    onClicked: {}
+    visible: showFav
+}
 
       ControllerHelpButton {
         id: buttonNext

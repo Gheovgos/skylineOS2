@@ -185,8 +185,9 @@ ListView {
                 }
 
                 // Background screenshot
-                Image {
+                AnimatedImage {
                     parent: homeScreenContainer
+                    playing: true
                     anchors.fill: parent
                     source: gameData ? (gameData.assets.background || gameData.assets.screenshots[0] || "") : ""
                     fillMode: Image.PreserveAspectCrop
@@ -422,8 +423,9 @@ ListView {
                                             color: "#50000000"
                                         }
 
-                                        Image {
+                                        AnimatedImage {
                                             id: coverImage
+                                            playing: true
 
                                             anchors.fill: parent
 
