@@ -783,7 +783,7 @@ FocusScope {
             showBack: !homeScreen.focus
             showCollControls: softwareScreen.focus
             showFav: softwareScreen.focus || homeScreen.focus
-            showDetails: homeScreen.focus 
+            showDetails: homeScreen.focus || softwareScreen.focus
         }
     }
 
