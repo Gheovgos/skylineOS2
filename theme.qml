@@ -44,6 +44,9 @@ FocusScope {
     // number of games that appear on the homescreen, not including the All Software button
     property int softCount: settings.softCount
 
+    //Hidden apps
+    property var hiddenApps: api.memory.has("HiddenApps") ? api.memory.get("HiddenApps") : []
+
     ListLastPlayed {
         id: listRecent
         max: softCount
@@ -127,17 +130,17 @@ FocusScope {
 
     function showButtonScreen(menu) {
         switch (menu) {
-            case "info":
-                infoScreen.focus = true;
-                break;
-            case "backlog":
-                backlogScreen.focus = true;
-                break;
-            case "suspend":
-                suspendScreen.focus = true;
-                break;
-            default:
-                break;
+        case "info":
+            infoScreen.focus = true;
+            break;
+        case "backlog":
+            backlogScreen.focus = true;
+            break;
+        case "suspend":
+            suspendScreen.focus = true;
+            break;
+        default:
+            break;
         }
         settingsSfx.play();
     }
@@ -185,6 +188,144 @@ FocusScope {
         api.memory.unset("STACK_TIMER");
     }
 
+    function toggleHideApp(title) {
+        var list = api.memory.has("HiddenApps") ? api.memory.get("HiddenApps") : [];
+        var idx = list.indexOf(title);
+        console.log(list, title, idx);
+        if (idx >= 0)
+            list.splice(idx, 1);
+        else
+            list.push(title);
+
+        api.memory.set("HiddenApps", list);
+        console.log(api.memory.get("HiddenApps"));
+        hiddenApps = list;
+        console.log(hiddenApps);
+    }
+
+    function isAppHidden(title) {
+        var list = api.memory.has("HiddenApps") ? api.memory.get("HiddenApps") : [];
+        return list.indexOf(title) >= 0;
+    }
+
+    Rectangle {
+        id: hideConfirmPopup
+        visible: false
+        opacity: visible ? 1 : 0
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 150
+            }
+        }
+        property string pendingTitle: ""
+        property bool isReverse: false
+
+        anchors.centerIn: parent
+        z: 200
+
+        width: vpx(420)
+        height: vpx(200)
+        radius: vpx(24)
+        color: theme.button
+
+        layer.enabled: true
+        layer.effect: DropShadow {
+            transparentBorder: true
+            horizontalOffset: 0
+            verticalOffset: vpx(6)
+            radius: 20
+            samples: 32
+            color: "#60000000"
+        }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: vpx(20)
+
+            Text {
+                text: hideConfirmPopup.isReverse ? "Show \"" + hideConfirmPopup.pendingTitle + "\" again?" : "Hide \"" + hideConfirmPopup.pendingTitle + "\"?"
+                color: theme.text
+                font.family: titleFont.name
+                font.pixelSize: Math.round(screenheight * 0.028)
+                font.bold: true
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Text {
+                text: hideConfirmPopup.isReverse ? "It will appear on the home screen again" : "It won't appear on the home screen anymore"
+                color: theme.icon
+                font.family: titleFont.name
+                font.pixelSize: Math.round(screenheight * 0.020)
+                horizontalAlignment: Text.AlignHCenter
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+
+            Row {
+                spacing: vpx(16)
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Rectangle {
+                    width: vpx(130)
+                    height: vpx(44)
+                    radius: height / 2
+                    color: theme.main
+                    Text {
+                        text: "Cancel  B"
+                        color: theme.text
+                        font.family: titleFont.name
+                        font.pixelSize: Math.round(screenheight * 0.022)
+                        anchors.centerIn: parent
+                    }
+                }
+
+                Rectangle {
+                    width: vpx(130)
+                    height: vpx(44)
+                    radius: height / 2
+                    color: theme.accent
+                    Text {
+                        text: "A  Confirm"
+                        color: "white"
+                        font.family: titleFont.name
+                        font.pixelSize: Math.round(screenheight * 0.022)
+                        anchors.centerIn: parent
+                    }
+                }
+            }
+        }
+
+        Keys.onPressed: {
+    if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+        event.accepted = true;
+        toggleHideApp(pendingTitle);
+        hideConfirmPopup.isReverse ? turnOnSfx.play() : turnOffSfx.play();
+        hideConfirmPopup.visible = false;
+        pendingTitle = "";
+        if (softwareScreen.visible)
+            softwareScreen.focus = true;
+        else
+            homeScreen.focus = true;
+    }
+    if (api.keys.isCancel(event)) {
+        event.accepted = true;
+        backSfx.play();
+        hideConfirmPopup.visible = false;
+        pendingTitle = "";
+        if (softwareScreen.visible)
+            softwareScreen.focus = true;
+        else
+            homeScreen.focus = true;
+    }
+}
+    }
+
+    function requestHideApp(title) {
+        hideConfirmPopup.pendingTitle = title;
+        hideConfirmPopup.isReverse = isAppHidden(title) && api.memory.get("Show Hidden Apps") === "Yes";
+        hideConfirmPopup.visible = true;
+        hideConfirmPopup.forceActiveFocus();
+    }
     // Launch the current game from HomeBar
     function launchGame(game) {
         console.log("Launching Game: ", game.title);

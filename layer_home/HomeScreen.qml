@@ -25,8 +25,11 @@ FocusScope {
         }
 
         function buildList() {
+            var showHidden = api.memory.get("Show Hidden Apps") === "Yes";
             for (var i = 0; i < activeCollection.count; i++) {
-                append(createListElement(i));
+                var title = listRecent.games.get(i).title;
+                if (showHidden || !isAppHidden(title))
+                    append(createListElement(i));
             }
             append({
                 "name": "All Software",
@@ -45,6 +48,14 @@ FocusScope {
             };
         }
     }
+
+            Connections {
+            target: root
+            onHiddenAppsChanged: {
+                gamesListModel.clear();
+                gamesListModel.buildList();
+            }
+        }
 
     Item {
         id: homeScreenContainer
@@ -492,7 +503,7 @@ FocusScope {
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton
-KeyNavigation.left: infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton
+                    KeyNavigation.left: infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -529,7 +540,7 @@ KeyNavigation.left: infoButton.visible ? infoButton : suspendButton.visible ? su
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton
-KeyNavigation.left: storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton
+                    KeyNavigation.left: storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -560,7 +571,7 @@ KeyNavigation.left: storeButton.visible ? storeButton : infoButton.visible ? inf
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton
-KeyNavigation.left: browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton
+                    KeyNavigation.left: browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -597,7 +608,7 @@ KeyNavigation.left: browserButton.visible ? browserButton : storeButton.visible 
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton
-KeyNavigation.left: galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton
+                    KeyNavigation.left: galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -628,7 +639,7 @@ KeyNavigation.left: galleryButton.visible ? galleryButton : browserButton.visibl
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton
-KeyNavigation.left: backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton
+                    KeyNavigation.left: backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -664,7 +675,7 @@ KeyNavigation.left: backlogButton.visible ? backlogButton : galleryButton.visibl
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton
-KeyNavigation.left: controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton
+                    KeyNavigation.left: controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -695,7 +706,7 @@ KeyNavigation.left: controllerButton.visible ? controllerButton : backlogButton.
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
                     KeyNavigation.right: infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton
-KeyNavigation.left: settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton
+                    KeyNavigation.left: settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;

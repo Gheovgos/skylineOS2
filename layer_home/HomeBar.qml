@@ -1206,7 +1206,6 @@ ListView {
         showSoftwareScreen();
     }
 
-    //TODO Software screen is always at index 12, but would hopefully not exist/be visible if there are less than 12 titles
     Keys.onPressed: {
         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
             event.accepted = true;
@@ -1218,6 +1217,12 @@ ListView {
             }
         }
 
+        if (api.keys.isNextPage(event) && !event.isAutoRepeat) {
+            event.accepted = true;
+            if (currentGame && currentIndex !== softCount)
+                requestHideApp(currentGame.title);
+            return;
+        }
         if (api.keys.isDetails(event)) {
             event.accepted = true;
             if (currentGame.favorite) {

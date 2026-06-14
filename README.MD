@@ -38,6 +38,7 @@ Buttons:
 - To launch specific apps in bottom, put the URI path in the setting section. For example, if you are on android and want to launch MT insteand of default app Files, use "android-app://bin.mt.plus". If you dont like this feature, you can disable each button and/or replaced them, just change the text label and the svg icon
 - To add games in backlog, add entries inside the backlog.json file. For example: [{ "title": "Example title" }. { "title": "Example title2" }]
 - To customize the background of the button bar, place inside assets/images/, a file called menuButtonBackground.png. It will be loaded in the home screen
+- To hide an application, press R1\D on Home Screen. To unhide, set to Yes on Show Hidden Apps, and press again R1\D on hidden games\apps
 
 ## Planned features
 

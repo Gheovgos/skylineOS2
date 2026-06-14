@@ -23,6 +23,13 @@ FocusScope {
         }
 
         ListElement {
+            settingName: "Show Hidden Apps"
+            settingSubtitle: ""
+            setting: "Yes,No"
+            type: "toggle"
+        }
+
+        ListElement {
             settingName: "Background Music"
             settingSubtitle: "(Requires Reload)"
             setting: "No,Yes"

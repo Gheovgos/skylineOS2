@@ -1,5 +1,5 @@
 // gameOS theme
-// Copyright (C) 2018-2020 Seth Powell 
+// Copyright (C) 2018-2020 Seth Powell
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,36 +18,52 @@ import QtQuick 2.0
 import SortFilterProxyModel 0.2
 
 Item {
-id: root
+    id: root
 
     property alias games: gamesFiltered
     property int max: lastPlayedGames.count
+
     function currentGame(index) {
         if (currentCollection == -1)
-            return api.allGames.get(lastPlayedGames.mapToSource(index));
+            return api.allGames.get(lastPlayedGames.mapToSource(gamesHidden.mapToSource(index)));
         else
-            return api.collections.get(currentCollection).games.get(lastPlayedGames.mapToSource(index));
+            return api.collections.get(currentCollection).games.get(lastPlayedGames.mapToSource(gamesHidden.mapToSource(index)));
     }
 
     SortFilterProxyModel {
-    id: lastPlayedGames
-
+        id: lastPlayedGames
         sourceModel: (currentCollection == -1) ? api.allGames : api.collections.get(currentCollection).games
-        sorters: RoleSorter { roleName: "lastPlayed"; sortOrder: Qt.DescendingOrder }
+        sorters: RoleSorter {
+            roleName: "lastPlayed"
+            sortOrder: Qt.DescendingOrder
+        }
     }
 
     SortFilterProxyModel {
-    id: gamesFiltered
-
+        id: gamesHidden
         sourceModel: lastPlayedGames
-        filters: IndexFilter { maximumIndex: max - 1 }
+        filters: ExpressionFilter {
+            expression: {
+                hiddenApps;
+                var showHidden = api.memory.get("Show Hidden Apps") === "Yes";
+                return showHidden || !isAppHidden(model.title);
+            }
+        }
+    }
+
+    SortFilterProxyModel {
+        id: gamesFiltered
+        sourceModel: gamesHidden
+        filters: IndexFilter {
+            maximumIndex: max - 1
+        }
     }
 
     property var collection: {
         return {
-            name:       "All Software",
-            shortName:  "lastplayed",
-            games:      gamesFiltered
-        }
+            name: "All Software",
+            shortName: "lastplayed",
+            games: gamesFiltered
+        };
     }
 }

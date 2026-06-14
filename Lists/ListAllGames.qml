@@ -16,33 +16,43 @@
 
 import QtQuick 2.0
 import SortFilterProxyModel 0.2
-
 Item {
-id: root
-    
+    id: root
     readonly property alias games: gamesFiltered
     function currentGame(index) {
         if (currentCollection == -1)
-            return api.allGames.get(gamesFiltered.mapToSource(index));
+            return api.allGames.get(gamesSource.mapToSource(gamesHidden.mapToSource(index)));
         else
-            return api.collections.get(currentCollection).games.get(gamesFiltered.mapToSource(index));
+            return api.collections.get(currentCollection).games.get(gamesSource.mapToSource(gamesHidden.mapToSource(index)));
     }
     property int max: gamesFiltered.count
     property string searchTerm: ""
 
     SortFilterProxyModel {
-    id: gamesFiltered
-
+        id: gamesSource
         sourceModel: (currentCollection == -1) ? api.allGames : api.collections.get(currentCollection).games
         filters: RegExpFilter { roleName: "title"; pattern: searchTerm; caseSensitivity: Qt.CaseInsensitive; enabled: searchTerm != "" }
-        //filters: IndexFilter { maximumIndex: max - 1 }
     }
-
+    SortFilterProxyModel {
+        id: gamesHidden
+        sourceModel: gamesSource
+        filters: ExpressionFilter {
+            expression: {
+                hiddenApps;
+                var showHidden = api.memory.get("Show Hidden Apps") === "Yes";
+                return showHidden || !isAppHidden(model.title);
+            }
+        }
+    }
+    SortFilterProxyModel {
+        id: gamesFiltered
+        sourceModel: gamesHidden
+    }
     property var collection: {
         return {
-            name:       "All games",
-            shortName:  "allgames",
-            games:      gamesFiltered
-        }
+            name: "All games",
+            shortName: "allgames",
+            games: gamesFiltered
+        };
     }
 }

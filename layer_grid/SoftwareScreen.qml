@@ -322,6 +322,12 @@ FocusScope {
                     event.accepted = true;
                     softwareScreenContainer.expandedVisible = true;
                 }
+
+                if (api.keys.isNextPage(event) && !event.isAutoRepeat) {
+    event.accepted = true;
+    requestHideApp(currentGame.title);
+    return;
+}
             }
 
             Keys.onUpPressed: {
