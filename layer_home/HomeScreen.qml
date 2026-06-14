@@ -7,6 +7,7 @@ import "qrc:/qmlutils" as PegasusUtils
 FocusScope {
     id: root
     property int lastHomeSwitcherIndex: 0
+    property bool raProfileVisible: false
 
     // Build the games list but with extra menu options at the start and end
     ListModel {
@@ -48,14 +49,70 @@ FocusScope {
             };
         }
     }
+    function openRAPanel() {
+        raProfileVisible = true;
+        raPanel.open();
+        raPanel.forceActiveFocus();
+    }
 
-            Connections {
-            target: root
-            onHiddenAppsChanged: {
-                gamesListModel.clear();
-                gamesListModel.buildList();
+    // Loading RA data
+    function loadRAData() {
+        var username = api.memory.get("RA_Username");
+        var apiKey = api.memory.get("RetroAchievements API Key");
+
+        if (!username || !apiKey)
+            return;
+
+        // User summary
+        var xhrUser = new XMLHttpRequest();
+        xhrUser.onreadystatechange = function () {
+            if (xhrUser.readyState === XMLHttpRequest.DONE && xhrUser.status === 200) {
+                try {
+                    var data = JSON.parse(xhrUser.responseText);
+                    raPointsText.text = (data.TotalPoints || "0") + " pts";
+                    raRankText.text = "Rank " + (data.Rank || "—");
+                    raRatioText.text = "Ratio " + (data.TotalTruePoints && data.TotalPoints ? (data.TotalTruePoints / Math.max(data.TotalPoints, 1)).toFixed(2) : "—");
+                    if (data.RecentlyPlayed && data.RecentlyPlayed.length > 0)
+                        raLastGameText.text = "Last played: " + data.RecentlyPlayed[0].Title;
+                } catch (e) {}
             }
+        };
+        xhrUser.open("GET", "https://retroachievements.org/API/API_GetUserSummary.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&g=1&a=5");
+        console.log("https://retroachievements.org/API/API_GetUserSummary.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&g=1&a=5");
+        xhrUser.send();
+
+        raFriendsModel.clear();
+        var xhrGames = new XMLHttpRequest();
+        xhrGames.onreadystatechange = function () {
+            if (xhrGames.readyState === XMLHttpRequest.DONE && xhrGames.status === 200) {
+                try {
+                    var games = JSON.parse(xhrGames.responseText);
+                    for (var i = 0; i < games.length; i++) {
+                        var g = games[i];
+                        var total = g.AchievementsTotal || g.NumPossibleAchievements || 0;
+                        var earned = g.NumAchievedHardcore || g.NumAchieved || 0;
+                        raFriendsModel.append({
+                            title: g.Title || "",
+                            imageUrl: "https://retroachievements.org" + (g.ImageIcon || ""),
+                            earned: earned,
+                            total: total,
+                            percent: total > 0 ? Math.round(earned / total * 100) : 0,
+                            lastPlayed: g.LastPlayed ? Qt.formatDate(new Date(g.LastPlayed), "dd MMM yyyy") : ""
+                        });
+                    }
+                } catch (e) {}
+            }
+        };
+        xhrGames.open("GET", "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&c=10");
+        xhrGames.send();
+    }
+    Connections {
+        target: root
+        onHiddenAppsChanged: {
+            gamesListModel.clear();
+            gamesListModel.buildList();
         }
+    }
 
     Item {
         id: homeScreenContainer
@@ -211,7 +268,10 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            navSound.play();
+                            if (api.memory.get("RA_LoggedIn") === "Yes")
+                                openRAPanel();
+                            else
+                                navSound.play();
                         }
                     }
 
@@ -721,6 +781,375 @@ FocusScope {
                     }
                 }
             }
+        }
+
+        // Dim overlay RA
+        Rectangle {
+            id: raDim
+            anchors.fill: parent
+            color: "black"
+            opacity: raProfileVisible ? 0.5 : 0
+            visible: opacity > 0
+            z: 50
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 250
+                }
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: raPanel.close()
+            }
+        }
+
+        // RA Panel
+        Rectangle {
+            id: raPanel
+            width: parent.width
+            height: Math.round(screenheight * 0.78)
+            x: 0
+            y: -parent.height
+            z: 51
+            radius: vpx(24)
+            color: theme.button
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 0
+                verticalOffset: vpx(-4)
+                radius: 20
+                samples: 32
+                color: "#60000000"
+            }
+
+            property bool isOpen: false
+
+            function open() {
+                isOpen = true;
+                raProfileVisible = true;
+                slideIn.start();
+                loadRAData();
+            }
+
+            function close() {
+                isOpen = false;
+                slideOut.start();
+            }
+
+            NumberAnimation {
+                id: slideIn
+                target: raPanel
+                property: "y"
+                to: 0
+                duration: 300
+                easing.type: Easing.OutCubic
+            }
+
+            NumberAnimation {
+                id: slideOut
+                target: raPanel
+                property: "y"
+                to: -homeScreenContainer.height
+                duration: 250
+                easing.type: Easing.InCubic
+                onStopped: {
+                    raProfileVisible = false;
+                    profileButton.focus = true;
+                }
+            }
+
+            // Handle indicator
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.topMargin: vpx(12)
+                width: vpx(40)
+                height: vpx(4)
+                radius: height / 2
+                color: theme.icon
+                opacity: 0.4
+            }
+
+            // Content
+            Item {
+                anchors {
+                    fill: parent
+                    margins: vpx(32)
+                    topMargin: vpx(28)
+                }
+
+                // Header user
+                Item {
+                    id: raHeader
+                    width: parent.width
+                    height: vpx(80)
+
+                    // Avatar
+                    Item {
+                        id: raAvatarClip
+                        width: vpx(72)
+                        height: vpx(72)
+                        anchors.verticalCenter: parent.verticalCenter
+
+                        Image {
+                            id: raAvatar
+                            anchors.fill: parent
+                            fillMode: Image.PreserveAspectCrop
+                            visible: false
+                            source: api.memory.get("RA_LoggedIn") === "Yes" ? "https://media.retroachievements.org/UserPic/" + api.memory.get("RA_Username") + ".png" : ""
+                            asynchronous: true
+                        }
+
+                        Rectangle {
+                            id: raAvatarMask
+                            anchors.fill: parent
+                            radius: width / 2
+                            visible: false
+                        }
+
+                        OpacityMask {
+                            anchors.fill: parent
+                            source: raAvatar
+                            maskSource: raAvatarMask
+                        }
+
+                        // Border accent
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: vpx(-3)
+                            radius: width / 2
+                            color: "transparent"
+                            border.color: theme.accent
+                            border.width: vpx(3)
+                        }
+                    }
+
+                    // Info user
+                    Column {
+                        anchors {
+                            left: raAvatarClip.right
+                            leftMargin: vpx(16)
+                            verticalCenter: parent.verticalCenter
+                        }
+                        spacing: vpx(4)
+
+                        Text {
+                            text: api.memory.get("RA_Username") || ""
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.032)
+                            font.bold: true
+                        }
+
+                        Row {
+                            spacing: vpx(16)
+
+                            Text {
+                                id: raPointsText
+                                text: "— pts"
+                                color: theme.accent
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.020)
+                                font.bold: true
+                            }
+
+                            Text {
+                                id: raRankText
+                                text: "Rank —"
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.020)
+                            }
+
+                            Text {
+                                id: raRatioText
+                                text: "Ratio —"
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.020)
+                            }
+                        }
+
+                        Text {
+                            id: raLastGameText
+                            text: ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.017)
+                            opacity: 0.7
+                        }
+                    }
+                }
+
+                Rectangle {
+                    id: raSeparator
+                    anchors {
+                        top: raHeader.bottom
+                        topMargin: vpx(16)
+                        left: parent.left
+                        right: parent.right
+                    }
+                    height: 1
+                    color: theme.text
+                    opacity: 0.12
+                }
+
+                Text {
+                    id: raFriendsTitle
+                    anchors {
+                        top: raSeparator.bottom
+                        topMargin: vpx(16)
+                        left: parent.left
+                    }
+                    text: "RECENT ACHIEVEMENTS"
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.015)
+                    font.bold: true
+                    font.letterSpacing: 1.5
+                    opacity: 0.6
+                }
+
+                ListView {
+                    id: raFriendsList
+                    anchors {
+                        top: raFriendsTitle.bottom
+                        topMargin: vpx(12)
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                    }
+                    spacing: vpx(8)
+                    clip: true
+                    model: raFriendsModel
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Item {
+                        width: raFriendsList.width
+                        height: vpx(72)
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: vpx(12)
+                            color: theme.main
+                            opacity: 0.6
+                        }
+
+                        Item {
+                            id: gameIconClip
+                            width: vpx(52)
+                            height: vpx(52)
+                            anchors {
+                                left: parent.left
+                                leftMargin: vpx(8)
+                                verticalCenter: parent.verticalCenter
+                            }
+
+                            Image {
+                                id: gameIcon
+                                anchors.fill: parent
+                                fillMode: Image.PreserveAspectCrop
+                                visible: false
+                                source: imageUrl
+                                asynchronous: true
+                            }
+
+                            Rectangle {
+                                id: gameIconMask
+                                anchors.fill: parent
+                                radius: vpx(8)
+                                visible: false
+                            }
+
+                            OpacityMask {
+                                anchors.fill: parent
+                                source: gameIcon
+                                maskSource: gameIconMask
+                            }
+                        }
+
+                        Column {
+                            anchors {
+                                left: gameIconClip.right
+                                leftMargin: vpx(12)
+                                right: lastPlayedText.left
+                                rightMargin: vpx(8)
+                                verticalCenter: parent.verticalCenter
+                            }
+                            spacing: vpx(4)
+
+                            Text {
+                                width: parent.width
+                                text: title
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.020)
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+
+                            Item {
+                                width: parent.width
+                                height: vpx(6)
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: height / 2
+                                    color: theme.main
+                                    opacity: 0.4
+                                }
+
+                                Rectangle {
+                                    width: parent.width * (percent / 100)
+                                    height: parent.height
+                                    radius: height / 2
+                                    color: percent >= 100 ? "#F59E0B" : theme.accent
+                                    Behavior on width {
+                                        NumberAnimation {
+                                            duration: 400
+                                            easing.type: Easing.OutCubic
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: earned + " / " + total + " achievements  (" + percent + "%)"
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.015)
+                                opacity: 0.7
+                            }
+                        }
+
+                        Text {
+                            id: lastPlayedText
+                            anchors {
+                                right: parent.right
+                                rightMargin: vpx(16)
+                                verticalCenter: parent.verticalCenter
+                            }
+                            text: lastPlayed
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.014)
+                            opacity: 0.6
+                        }
+                    }
+                }
+            }
+
+            Keys.onPressed: {
+                if (api.keys.isCancel(event) || api.keys.isAccept(event)) {
+                    event.accepted = true;
+                    raPanel.close();
+                }
+            }
+        }
+
+        ListModel {
+            id: raFriendsModel
         }
     }
 }
