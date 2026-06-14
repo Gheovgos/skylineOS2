@@ -273,6 +273,7 @@ ListView {
 
                         property var pillColors: ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"]
 
+                        //Genres
                         Repeater {
                             model: gameData ? gameData.genreList : []
                             Rectangle {
@@ -291,6 +292,46 @@ ListView {
                                     font.pixelSize: Math.round(screenheight * 0.017)
                                     font.bold: true
                                 }
+                            }
+                        }
+
+                        // tags
+                        Repeater {
+                            model: gameData ? gameData.tagList : []
+                            Rectangle {
+                                height: vpx(22)
+                                width: genreTags.width + vpx(12)
+                                radius: height / 2
+                                color: panelSubtitle.pillColors[index % panelSubtitle.pillColors.length]
+                                opacity: 0.85
+
+                                Text {
+                                    id: genreTags
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    color: "white"
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.017)
+                                    font.bold: true
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            height: vpx(22)
+                            width: releasePillText.width + vpx(12)
+                            radius: height / 2
+                            color: theme.main
+                            visible: gameData && gameData.release && new Date(gameData.release).getFullYear() > 1970
+
+                            Text {
+                                id: releasePillText
+                                anchors.centerIn: parent
+                                text: gameData ? "Released on: " + Qt.formatDate(new Date(gameData.release), "dd MMM yyyy") : ""
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.017)
+                                font.bold: true
                             }
                         }
                     }
@@ -642,136 +683,202 @@ ListView {
                                 left: leftCol.right
                                 leftMargin: vpx(40)
                                 right: parent.right
+                                bottom: dateRow.top
+                                bottomMargin: vpx(12)
                             }
 
-                            // Rating && Completition Percentage
-                            Row {
-                                spacing: vpx(8)
-                                visible: gameData && gameData.rating > 0
+                            // Rating + Last Played
+Item {
+    width: parent.width
+    height: ratingRow.height
+    visible: (gameData && gameData.rating > 0) || lastPlayedCol.visible
 
-                                Text {
-                                    text: "★"
-                                    color: theme.accent
-                                    font.pixelSize: Math.round(screenheight * 0.022)
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                                Text {
+    Row {
+        id: ratingRow
+        spacing: vpx(8)
+        anchors.left: parent.left
+        anchors.verticalCenter: parent.verticalCenter
+        visible: gameData && gameData.rating > 0
 
-                                    text: gameData ? (gameData.rating * 10).toFixed(1) : ""
-                                    color: theme.text
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.022)
-                                    font.bold: true
-                                    anchors.verticalCenter: parent.verticalCenter
-                                }
-                            }
+        Text {
+            text: "★"
+            color: theme.accent
+            font.pixelSize: Math.round(screenheight * 0.022)
+            anchors.verticalCenter: parent.verticalCenter
+        }
+        Text {
+            text: gameData ? (gameData.rating * 10).toFixed(1) : ""
+            color: theme.text
+            font.family: titleFont.name
+            font.pixelSize: Math.round(screenheight * 0.022)
+            font.bold: true
+            anchors.verticalCenter: parent.verticalCenter
+        }
+    }
 
-                            //
+    Column {
+        id: lastPlayedCol
+        spacing: vpx(2)
+        anchors.right: parent.right
+        anchors.verticalCenter: parent.verticalCenter
+        visible: {
+            var d = new Date(gameData.lastPlayed);
+            return !isNaN(d.getTime()) && d.getFullYear() > 1970;
+        }
 
-                            Text {
-                                text: "Description"
-                                color: theme.text
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.022)
-                                font.bold: true
-                                opacity: 0.5
-                                font.letterSpacing: 1.5
-                            }
+        Text {
+            text: "LAST PLAYED"
+            color: theme.icon
+            opacity: 0.45
+            font.family: titleFont.name
+            font.pixelSize: Math.round(screenheight * 0.013)
+            font.letterSpacing: 1.5
+        }
 
+        Text {
+            text: {
+                var d = new Date(gameData.lastPlayed);
+                if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
+                    return "";
+                return Qt.formatDate(d, "dd MMM yyyy");
+            }
+            color: theme.text
+            font.family: titleFont.name
+            font.pixelSize: Math.round(screenheight * 0.020)
+            font.bold: true
+        }
+    }
+}
+
+                            // Summary + Description in unico Flickable
                             Flickable {
-                                id: descriptionFlick
+                                id: textFlick
                                 width: parent.width
-                                height: Math.round(screenheight * 0.18)
-
-                                contentHeight: descText.paintedHeight
+                                height: Math.min(textColumn.height, Math.round(screenheight * 0.32))
+                                contentHeight: textColumn.height
                                 clip: true
-                                interactive: true
+                                boundsBehavior: Flickable.StopAtBounds
 
-                                Text {
-                                    id: descText
+                                Column {
+                                    id: textColumn
+                                    width: textFlick.width - vpx(12)
+                                    spacing: vpx(16)
 
-                                    text: gameData ? (gameData.description || "No description available.") : ""
+                                    // Summary
+                                    Column {
+                                        width: parent.width
+                                        spacing: vpx(4)
+                                        visible: gameData && gameData.summary && gameData.summary !== ""
 
-                                    width: descriptionFlick.width - vpx(8)
+                                        Text {
+                                            text: "Summary"
+                                            color: theme.text
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.016)
+                                            font.bold: true
+                                            opacity: 0.5
+                                            font.letterSpacing: 1.5
+                                        }
 
-                                    color: theme.text
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.023)
+                                        Text {
+                                            width: parent.width
+                                            text: gameData ? (gameData.summary || "") : ""
+                                            color: theme.text
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.020)
+                                            wrapMode: Text.WordWrap
+                                            lineHeight: 1.3
+                                        }
+                                    }
 
-                                    wrapMode: Text.WordWrap
-                                    lineHeight: 1.4
+                                    // Description
+                                    Column {
+                                        width: parent.width
+                                        spacing: vpx(4)
+                                        visible: gameData && gameData.description && gameData.description !== ""
+
+                                        Text {
+                                            text: "Description"
+                                            color: theme.text
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.016)
+                                            font.bold: true
+                                            opacity: 0.5
+                                            font.letterSpacing: 1.5
+                                        }
+
+                                        Text {
+                                            width: parent.width
+                                            text: gameData ? (gameData.description || "") : ""
+                                            color: theme.text
+                                            font.family: titleFont.name
+                                            font.pixelSize: Math.round(screenheight * 0.020)
+                                            wrapMode: Text.WordWrap
+                                            lineHeight: 1.3
+                                        }
+                                    }
                                 }
 
-                                // Track
+                                // Scrollbar track
                                 Rectangle {
                                     anchors {
                                         top: parent.top
                                         bottom: parent.bottom
                                         right: parent.right
                                     }
-
                                     width: vpx(4)
                                     radius: width / 2
                                     color: "#20FFFFFF"
-
-                                    visible: descriptionFlick.contentHeight > descriptionFlick.height
+                                    visible: textFlick.contentHeight > textFlick.height
                                 }
 
-                                // Thumb
+                                // Scrollbar thumb
                                 Rectangle {
                                     anchors.right: parent.right
-
                                     width: vpx(4)
                                     radius: width / 2
-
                                     color: theme.accent
-
-                                    visible: descriptionFlick.contentHeight > descriptionFlick.height
-
-                                    height: Math.max(vpx(20), descriptionFlick.height * descriptionFlick.height / descriptionFlick.contentHeight)
-
-                                    y: descriptionFlick.visibleArea.yPosition * (descriptionFlick.height - height)
+                                    visible: textFlick.contentHeight > textFlick.height
+                                    height: Math.max(vpx(20), textFlick.height * textFlick.height / textFlick.contentHeight)
+                                    y: textFlick.visibleArea.yPosition * (textFlick.height - height)
+                                    opacity: textFlick.moving ? 1 : 0
+                                    Behavior on opacity {
+                                        NumberAnimation {
+                                            duration: 200
+                                        }
+                                    }
                                 }
+                            }
+                        }
+
+                        // Date info — ancorata in basso nella colonna destra
+                        Column {
+                            id: dateRow
+                            spacing: vpx(8)
+                            anchors {
+                                left: leftCol.right
+                                leftMargin: vpx(40)
+                                right: parent.right
+                                bottom: parent.bottom
                             }
 
                             // Last played
                             Column {
                                 spacing: vpx(2)
-
-                                Text {
-                                    text: "LAST PLAYED"
-                                    color: theme.icon
-                                    opacity: 0.45
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.013)
-                                    font.letterSpacing: 1.5
+                                visible: {
+                                    var d = new Date(gameData.lastPlayed);
+                                    return !isNaN(d.getTime()) && d.getFullYear() > 1970;
                                 }
 
-                                Text {
-                                    text: {
-                                        var d = new Date(gameData.lastPlayed);
-                                        if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
-                                            return "";
-                                        return Qt.formatDate(d, "dd MMM yyyy");
-                                    }
-
-                                    color: theme.text
-                                    font.family: titleFont.name
-                                    font.pixelSize: Math.round(screenheight * 0.020)
-                                    font.bold: true
-                                }
                             }
 
+                            // Play period
                             Column {
                                 spacing: vpx(2)
-
-                                property string startDate: (gameData && gameData.extra) ? gameData.extra.startdate : ""
-                                property string endDate: (gameData && gameData.extra) ? gameData.extra.enddate : ""
-
                                 visible: gameData && gameData.extra && (gameData.extra.startdate || gameData.extra.enddate)
 
                                 Text {
-                                    text: gameData.extra.enddate ? "PLAY PERIOD" : "STARTED"
+                                    text: gameData && gameData.extra && gameData.extra.enddate ? "PLAY PERIOD" : "STARTED"
                                     color: theme.icon
                                     opacity: 0.45
                                     font.family: titleFont.name
@@ -781,15 +888,14 @@ ListView {
 
                                 Text {
                                     text: {
+                                        if (!gameData || !gameData.extra)
+                                            return "";
                                         var start = gameData.extra.startdate || "";
                                         var end = gameData.extra.enddate || "";
-
                                         if (start && end)
-                                            return "Started: " + Qt.formatDate(new Date(start), "dd/MM/yyyy") + " Finished: " + Qt.formatDate(new Date(end), "dd/MM/yyyy");
-
+                                            return "Started: " + Qt.formatDate(new Date(start), "dd/MM/yyyy") + "  Finished: " + Qt.formatDate(new Date(end), "dd/MM/yyyy");
                                         return start;
                                     }
-
                                     color: theme.text
                                     font.family: titleFont.name
                                     font.pixelSize: Math.round(screenheight * 0.020)
