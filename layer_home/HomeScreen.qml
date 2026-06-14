@@ -6,35 +6,7 @@ import "qrc:/qmlutils" as PegasusUtils
 
 FocusScope {
     id: root
-
-    function moveFocus(currentIndex, direction) {
-        var buttons = [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton];
-        var step = (direction === "right") ? 1 : -1;
-        var n = buttons.length;
-
-        var nextIndex = (currentIndex + step + n) % n;
-
-        for (var i = 0; i < n - 1; i++) {
-            if (buttons[nextIndex].visible) {
-                navSound.play();
-                buttons[nextIndex].focus = true;
-                return;
-            }
-            nextIndex = (nextIndex + step + n) % n;
-        }
-        borderSfx.play();
-    }
-
-    function focusFirstVisibleButton() {
-        var buttons = [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton];
-        for (var i = 0; i < buttons.length; i++) {
-            if (buttons[i].visible) {
-                buttons[i].focus = true;
-                return true;
-            }
-        }
-        return false;
-    }
+    property int lastHomeSwitcherIndex: 0
 
     // Build the games list but with extra menu options at the start and end
     ListModel {
@@ -89,9 +61,10 @@ FocusScope {
             smooth: true
             asynchronous: true
             visible: {
-                if(typeof(api.memory.get("Game Background") != "undefined") && api.memory.get("Game Background") === "Yes") {
+                if (typeof (api.memory.get("Game Background") != "undefined") && api.memory.get("Game Background") === "Yes") {
                     return status === Image.Ready;
-                } else return false;
+                } else
+                    return false;
             }
 
             Behavior on source {
@@ -102,7 +75,7 @@ FocusScope {
                         to: 0
                         duration: 200
                     }
-                    PropertyAction {} 
+                    PropertyAction {}
                     NumberAnimation {
                         target: globalBackground
                         property: "opacity"
@@ -228,13 +201,6 @@ FocusScope {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
                             navSound.play();
-                        }
-                    }
-
-                    Keys.onRightPressed: {
-                        navSound.play();
-                        if (!root.focusFirstVisibleButton()) {
-                            borderSfx.play();
                         }
                     }
 
@@ -486,14 +452,16 @@ FocusScope {
                     label: "Feed"
                     visible: (api.memory.get("Feed Button Show") === "Yes")
                     icon: "../assets/images/navigation/info.svg"
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 0;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(0, "left")
-                    Keys.onRightPressed: root.moveFocus(0, "right")
+                    KeyNavigation.right: storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton
+                    KeyNavigation.left: suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -515,14 +483,16 @@ FocusScope {
                     label: "Store"
                     icon: "../assets/images/navigation/Store.svg"
                     visible: (api.memory.get("Store Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 1;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(1, "left")
-                    Keys.onRightPressed: root.moveFocus(1, "right")
+                    KeyNavigation.right: browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton
+KeyNavigation.left: infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -550,25 +520,27 @@ FocusScope {
                     label: "Browser"
                     icon: "../assets/images/navigation/browser.svg"
                     visible: (api.memory.get("Browser Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 1;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(2, "left")
-                    Keys.onRightPressed: root.moveFocus(2, "right")
+                    KeyNavigation.right: galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton
+KeyNavigation.left: storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
-                            Qt.openUrlExternally((typeof (api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
+                            Qt.openUrlExternally((typeof (api.memory.get("Browser default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
                         }
                     }
                     onClicked: {
                         browserButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         navSound.play();
-                        Qt.openUrlExternally((typeof (api.memory.get("Browesr default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
+                        Qt.openUrlExternally((typeof (api.memory.get("Browser default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
                     }
                 }
 
@@ -579,14 +551,16 @@ FocusScope {
                     label: "Gallery"
                     icon: "../assets/images/navigation/Gallery.svg"
                     visible: (api.memory.get("Gallery Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 2;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(3, "left")
-                    Keys.onRightPressed: root.moveFocus(3, "right")
+                    KeyNavigation.right: backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton
+KeyNavigation.left: browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -614,14 +588,16 @@ FocusScope {
                     label: "Backlog"
                     icon: "../assets/images/navigation/backlog.svg"
                     visible: (api.memory.get("Backlog Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 2;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(4, "left")
-                    Keys.onRightPressed: root.moveFocus(4, "right")
+                    KeyNavigation.right: controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton
+KeyNavigation.left: galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -643,14 +619,16 @@ FocusScope {
                     label: "Files"
                     icon: "../assets/images/navigation/Controller.svg"
                     visible: (api.memory.get("Files Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 2;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(5, "left")
-                    Keys.onRightPressed: root.moveFocus(5, "right")
+                    KeyNavigation.right: settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton
+KeyNavigation.left: backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -677,14 +655,16 @@ FocusScope {
                     height: vpx(56)
                     label: "Theme Settings"
                     icon: "../assets/images/navigation/Settings.png"
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 3;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(6, "left")
-                    Keys.onRightPressed: root.moveFocus(6, "right")
+                    KeyNavigation.right: suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton
+KeyNavigation.left: controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -706,14 +686,16 @@ FocusScope {
                     label: "Suspend"
                     icon: "../assets/images/navigation/Suspend.svg"
                     visible: (api.memory.get("Suspend Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
 
                     Keys.onUpPressed: {
                         navSound.play();
                         homeSwitcher.focus = true;
-                        homeSwitcher.currentIndex = 3;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    Keys.onLeftPressed: root.moveFocus(7, "left")
-                    Keys.onRightPressed: root.moveFocus(7, "right")
+                    KeyNavigation.right: infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton
+KeyNavigation.left: settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
