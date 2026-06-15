@@ -974,12 +974,11 @@ FocusScope {
         volume: 1.0
     }
 
-    /* This sound effect is broken on RetroPie on Raspberry Pi 4. Reason unknown.
     SoundEffect {
         id: menuNavSfx
         source: "assets/audio/Tick.wav"
         volume: 1.0
-    }*/
+    }
 
     SoundEffect {
         id: borderSfx

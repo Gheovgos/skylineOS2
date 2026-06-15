@@ -78,7 +78,6 @@ FocusScope {
             }
         };
         xhrUser.open("GET", "https://retroachievements.org/API/API_GetUserSummary.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&g=1&a=5");
-        console.log("https://retroachievements.org/API/API_GetUserSummary.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&g=1&a=5");
         xhrUser.send();
 
         raFriendsModel.clear();
@@ -97,7 +96,8 @@ FocusScope {
                             earned: earned,
                             total: total,
                             percent: total > 0 ? Math.round(earned / total * 100) : 0,
-                            lastPlayed: g.LastPlayed ? Qt.formatDate(new Date(g.LastPlayed), "dd MMM yyyy") : ""
+                            lastPlayed: g.LastPlayed ? Qt.formatDate(new Date(g.LastPlayed), "dd MMM yyyy") : "",
+                            gameId: g.GameID || 0
                         });
                     }
                 } catch (e) {}
@@ -106,6 +106,40 @@ FocusScope {
         xhrGames.open("GET", "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&c=10");
         xhrGames.send();
     }
+
+    function loadGameAchievements(gameId) {
+        var username = api.memory.get("RA_Username");
+        var apiKey = api.memory.get("RetroAchievements API Key");
+        raAchievementsModel.clear();
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    var achievements = data.Achievements;
+                    if (!achievements)
+                        return;
+                    for (var key in achievements) {
+                        var a = achievements[key];
+                        raAchievementsModel.append({
+                            title: a.Title || "",
+                            description: a.Description || "",
+                            points: a.Points || 0,
+                            badgeUrl: "https://media.retroachievements.org/Badge/" + (a.DateEarned ? a.BadgeName : a.BadgeName + "_lock") + ".png",
+                            earned: a.DateEarned ? true : false,
+                            dateEarned: a.DateEarned ? Qt.formatDate(new Date(a.DateEarned), "dd MMM yyyy") : ""
+                        });
+                    }
+                } catch (e) {
+                    console.log("Achievement parse error:", e);
+                }
+            }
+        };
+        xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
+        xhr.send();
+    }
+
     Connections {
         target: root
         onHiddenAppsChanged: {
@@ -531,8 +565,9 @@ FocusScope {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton
-                    KeyNavigation.left: suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton
+                    /* KeyNavigation.right: {navSound.play(); storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton}
+                    KeyNavigation.left: {navSound.play(); suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton}
+                     */
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -830,10 +865,14 @@ FocusScope {
                 raProfileVisible = true;
                 slideIn.start();
                 loadRAData();
+                Qt.callLater(function () {
+                    raFriendsList.forceActiveFocus();
+                });
             }
 
             function close() {
                 isOpen = false;
+                raGameDetail.visible = false;
                 slideOut.start();
             }
 
@@ -859,7 +898,6 @@ FocusScope {
                 }
             }
 
-            // Handle indicator
             Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: parent.top
@@ -871,21 +909,21 @@ FocusScope {
                 opacity: 0.4
             }
 
-            // Content
+            // Contenuto principale
             Item {
+                id: raPanelContent
                 anchors {
                     fill: parent
                     margins: vpx(32)
                     topMargin: vpx(28)
                 }
+                visible: !raGameDetail.visible
 
-                // Header user
                 Item {
                     id: raHeader
                     width: parent.width
                     height: vpx(80)
 
-                    // Avatar
                     Item {
                         id: raAvatarClip
                         width: vpx(72)
@@ -900,21 +938,17 @@ FocusScope {
                             source: api.memory.get("RA_LoggedIn") === "Yes" ? "https://media.retroachievements.org/UserPic/" + api.memory.get("RA_Username") + ".png" : ""
                             asynchronous: true
                         }
-
                         Rectangle {
                             id: raAvatarMask
                             anchors.fill: parent
                             radius: width / 2
                             visible: false
                         }
-
                         OpacityMask {
                             anchors.fill: parent
                             source: raAvatar
                             maskSource: raAvatarMask
                         }
-
-                        // Border accent
                         Rectangle {
                             anchors.fill: parent
                             anchors.margins: vpx(-3)
@@ -925,7 +959,6 @@ FocusScope {
                         }
                     }
 
-                    // Info user
                     Column {
                         anchors {
                             left: raAvatarClip.right
@@ -941,10 +974,8 @@ FocusScope {
                             font.pixelSize: Math.round(screenheight * 0.032)
                             font.bold: true
                         }
-
                         Row {
                             spacing: vpx(16)
-
                             Text {
                                 id: raPointsText
                                 text: "— pts"
@@ -953,7 +984,6 @@ FocusScope {
                                 font.pixelSize: Math.round(screenheight * 0.020)
                                 font.bold: true
                             }
-
                             Text {
                                 id: raRankText
                                 text: "Rank —"
@@ -961,7 +991,6 @@ FocusScope {
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.020)
                             }
-
                             Text {
                                 id: raRatioText
                                 text: "Ratio —"
@@ -970,7 +999,6 @@ FocusScope {
                                 font.pixelSize: Math.round(screenheight * 0.020)
                             }
                         }
-
                         Text {
                             id: raLastGameText
                             text: ""
@@ -1002,7 +1030,7 @@ FocusScope {
                         topMargin: vpx(16)
                         left: parent.left
                     }
-                    text: "RECENT ACHIEVEMENTS"
+                    text: "RECENTLY PLAYED"
                     color: theme.icon
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.015)
@@ -1024,16 +1052,28 @@ FocusScope {
                     clip: true
                     model: raFriendsModel
                     boundsBehavior: Flickable.StopAtBounds
+                    keyNavigationWraps: false
 
                     delegate: Item {
                         width: raFriendsList.width
                         height: vpx(72)
+                        property bool isSelected: ListView.isCurrentItem
 
                         Rectangle {
                             anchors.fill: parent
                             radius: vpx(12)
-                            color: theme.main
-                            opacity: 0.6
+                            color: isSelected ? theme.accent : theme.main
+                            opacity: isSelected ? 0.85 : 0.6
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 150
+                                }
+                            }
+                            Behavior on opacity {
+                                NumberAnimation {
+                                    duration: 150
+                                }
+                            }
                         }
 
                         Item {
@@ -1045,7 +1085,6 @@ FocusScope {
                                 leftMargin: vpx(8)
                                 verticalCenter: parent.verticalCenter
                             }
-
                             Image {
                                 id: gameIcon
                                 anchors.fill: parent
@@ -1054,14 +1093,12 @@ FocusScope {
                                 source: imageUrl
                                 asynchronous: true
                             }
-
                             Rectangle {
                                 id: gameIconMask
                                 anchors.fill: parent
                                 radius: vpx(8)
                                 visible: false
                             }
-
                             OpacityMask {
                                 anchors.fill: parent
                                 source: gameIcon
@@ -1092,14 +1129,12 @@ FocusScope {
                             Item {
                                 width: parent.width
                                 height: vpx(6)
-
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: height / 2
                                     color: theme.main
                                     opacity: 0.4
                                 }
-
                                 Rectangle {
                                     width: parent.width * (percent / 100)
                                     height: parent.height
@@ -1115,7 +1150,7 @@ FocusScope {
                             }
 
                             Text {
-                                text: earned + " / " + total + " achievements  (" + percent + "%)"
+                                text: earned + " / " + total + " (" + percent + "%)"
                                 color: theme.icon
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.015)
@@ -1137,19 +1172,412 @@ FocusScope {
                             opacity: 0.6
                         }
                     }
+
+                    Keys.onUpPressed: {
+                        if (currentIndex > 0) {
+                            navSound.play();
+                            decrementCurrentIndex();
+                        }
+                    }
+                    Keys.onDownPressed: {
+                        if (currentIndex < count - 1) {
+                            navSound.play();
+                            incrementCurrentIndex();
+                        }
+                    }
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            var data = raFriendsModel.get(currentIndex);
+                            raGameDetail.open(data);
+                        }
+                        if (api.keys.isCancel(event)) {
+                            event.accepted = true;
+                            raPanel.close();
+                        }
+                    }
                 }
             }
 
-            Keys.onPressed: {
-                if (api.keys.isCancel(event) || api.keys.isAccept(event)) {
-                    event.accepted = true;
-                    raPanel.close();
+            // Detail panel
+            Rectangle {
+                id: raGameDetail
+                anchors.fill: parent
+                radius: vpx(24)
+                color: theme.button
+                visible: false
+                z: 10
+
+                property var gameData: null
+
+                function open(data) {
+                    gameData = data;
+                    visible = true;
+                    loadGameAchievements(data.gameId);
+                    Qt.callLater(function () {
+                        achievementsList.forceActiveFocus();
+                    });
+                }
+
+                function close() {
+                    visible = false;
+                    raFriendsList.forceActiveFocus();
+                }
+
+                Image {
+                    anchors.fill: parent
+                    source: raGameDetail.gameData ? raGameDetail.gameData.imageUrl : ""
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    opacity: 0.1
+                    layer.enabled: true
+                    layer.effect: FastBlur {
+                        radius: 32
+                    }
+                }
+
+                Item {
+                    anchors {
+                        fill: parent
+                        margins: vpx(32)
+                    }
+
+                    Item {
+                        id: detailIconClip
+                        width: vpx(80)
+                        height: vpx(80)
+                        anchors.top: parent.top
+
+                        Image {
+                            id: detailIcon
+                            anchors.fill: parent
+                            fillMode: Image.PreserveAspectCrop
+                            visible: false
+                            source: raGameDetail.gameData ? raGameDetail.gameData.imageUrl : ""
+                            asynchronous: true
+                        }
+                        Rectangle {
+                            id: detailIconMask
+                            anchors.fill: parent
+                            radius: vpx(12)
+                            visible: false
+                        }
+                        OpacityMask {
+                            anchors.fill: parent
+                            source: detailIcon
+                            maskSource: detailIconMask
+                        }
+                    }
+
+                    Column {
+                        anchors {
+                            left: detailIconClip.right
+                            leftMargin: vpx(16)
+                            verticalCenter: detailIconClip.verticalCenter
+                        }
+                        spacing: vpx(4)
+                        Text {
+                            text: raGameDetail.gameData ? raGameDetail.gameData.title : ""
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.032)
+                            font.bold: true
+                        }
+                        Text {
+                            text: raGameDetail.gameData ? raGameDetail.gameData.lastPlayed : ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.018)
+                            opacity: 0.7
+                        }
+                    }
+
+                    Rectangle {
+                        id: detailDivider
+                        anchors {
+                            top: detailIconClip.bottom
+                            topMargin: vpx(20)
+                            left: parent.left
+                            right: parent.right
+                        }
+                        height: 1
+                        color: theme.text
+                        opacity: 0.12
+                    }
+
+                    // Progress bar
+
+                    Column {
+                        id: progressSection
+
+                        anchors {
+                            top: detailDivider.bottom
+                            topMargin: vpx(16)
+                            left: parent.left
+                            right: parent.right
+                        }
+
+                        spacing: vpx(16)
+
+                        RowLayout {
+                            width: parent.width
+
+                            Text {
+                                text: raGameDetail.gameData ? raGameDetail.gameData.earned + " / " + raGameDetail.gameData.total : ""
+
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.020)
+                                font.bold: true
+                            }
+
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            Text {
+                                text: raGameDetail.gameData ? raGameDetail.gameData.percent + "%" : ""
+
+                                color: raGameDetail.gameData && raGameDetail.gameData.percent >= 100 ? "#F59E0B" : theme.accent
+
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.020)
+                                font.bold: true
+                            }
+                        }
+
+                        Item {
+                            width: parent.width
+                            height: vpx(8)
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: height / 2
+                                color: theme.main
+                                opacity: 0.4
+                            }
+
+                            Rectangle {
+                                width: raGameDetail.gameData ? parent.width * (raGameDetail.gameData.percent / 100) : 0
+
+                                height: parent.height
+                                radius: height / 2
+
+                                color: raGameDetail.gameData && raGameDetail.gameData.percent >= 100 ? "#F59E0B" : theme.accent
+
+                                Behavior on width {
+                                    NumberAnimation {
+                                        duration: 600
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // List achievement
+                    ListView {
+                        id: achievementsList
+                        anchors {
+                            top: progressSection.bottom
+                            topMargin: vpx(16)
+                            left: parent.left
+                            right: parent.right
+                            bottom: backHint.top
+                            bottomMargin: vpx(12)
+                        }
+                        spacing: vpx(6)
+                        clip: true
+                        model: raAchievementsModel
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        delegate: Item {
+                            width: achievementsList.width
+                            height: vpx(64)
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: vpx(10)
+                                color: earned ? theme.main : "#1A000000"
+                                opacity: earned ? 0.8 : 0.5
+                                border.color: earned ? theme.accent : "transparent"
+                                border.width: earned ? vpx(1) : 0
+                            }
+
+                            // Badge
+                            Item {
+                                id: badgeClip
+                                width: vpx(48)
+                                height: vpx(48)
+                                anchors {
+                                    left: parent.left
+                                    leftMargin: vpx(8)
+                                    verticalCenter: parent.verticalCenter
+                                }
+                                opacity: earned ? 1.0 : 0.35
+
+                                Image {
+                                    id: badgeImg
+                                    anchors.fill: parent
+                                    fillMode: Image.PreserveAspectFit
+                                    visible: false
+                                    source: badgeUrl
+                                    asynchronous: true
+                                }
+                                Rectangle {
+                                    id: badgeMask
+                                    anchors.fill: parent
+                                    radius: vpx(6)
+                                    visible: false
+                                }
+                                OpacityMask {
+                                    anchors.fill: parent
+                                    source: badgeImg
+                                    maskSource: badgeMask
+                                }
+                            }
+
+                            Column {
+                                anchors {
+                                    left: badgeClip.right
+                                    leftMargin: vpx(10)
+                                    right: pointsBadge.left
+                                    rightMargin: vpx(8)
+                                    verticalCenter: parent.verticalCenter
+                                }
+                                spacing: vpx(2)
+
+                                Text {
+                                    width: parent.width
+                                    text: title
+                                    color: earned ? theme.text : theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.018)
+                                    font.bold: earned
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    width: parent.width
+                                    text: description
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.014)
+                                    opacity: 0.7
+                                    elide: Text.ElideRight
+                                }
+                                Text {
+                                    visible: earned && dateEarned !== ""
+                                    text: "Unlocked: " + dateEarned
+                                    color: theme.accent
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                    opacity: 0.8
+                                }
+                            }
+
+                            // Points badge
+                            Rectangle {
+                                id: pointsBadge
+                                anchors {
+                                    right: parent.right
+                                    rightMargin: vpx(10)
+                                    verticalCenter: parent.verticalCenter
+                                }
+                                width: vpx(44)
+                                height: vpx(24)
+                                radius: height / 2
+                                color: earned ? theme.accent : theme.main
+                                opacity: earned ? 1.0 : 0.5
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: points + "p"
+                                    color: earned ? "white" : theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.015)
+                                    font.bold: true
+                                }
+                            }
+                        }
+                    }
+
+                    Row {
+                        id: backHint
+                        anchors {
+                            bottom: parent.bottom
+                            left: parent.left
+                        }
+                        spacing: vpx(12)
+                        Rectangle {
+                            width: vpx(32)
+                            height: vpx(32)
+                            radius: width / 2
+                            color: theme.main
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                text: "B"
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: vpx(16)
+                                font.bold: true
+                                anchors.centerIn: parent
+                            }
+                        }
+                        Text {
+                            text: "Back"
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.020)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    Row {
+                        anchors {
+                            bottom: parent.bottom
+                            left: parent.left
+                        }
+                        spacing: vpx(12)
+                        Rectangle {
+                            width: vpx(32)
+                            height: vpx(32)
+                            radius: width / 2
+                            color: theme.main
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                text: "B"
+                                color: theme.text
+                                font.family: titleFont.name
+                                font.pixelSize: vpx(16)
+                                font.bold: true
+                                anchors.centerIn: parent
+                            }
+                        }
+                        Text {
+                            text: "Back"
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.020)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+
+                Keys.onPressed: {
+                    if (api.keys.isCancel(event)) {
+                        event.accepted = true;
+                        raGameDetail.close();
+                    }
                 }
             }
         }
 
         ListModel {
             id: raFriendsModel
+        }
+
+        ListModel {
+            id: raAchievementsModel
         }
     }
 }
