@@ -62,91 +62,6 @@ FocusScope {
         raPanel.forceActiveFocus();
     }
 
-    // Loading RA data
-    function loadRAData() {
-        var username = api.memory.get("RA_Username");
-        var apiKey = api.memory.get("RetroAchievements API Key");
-
-        if (!username || !apiKey)
-            return;
-
-        // User summary
-        var xhrUser = new XMLHttpRequest();
-        xhrUser.onreadystatechange = function () {
-            if (xhrUser.readyState === XMLHttpRequest.DONE && xhrUser.status === 200) {
-                try {
-                    var data = JSON.parse(xhrUser.responseText);
-                    raPointsText.text = (data.TotalPoints || "0") + " pts";
-                    raRankText.text = "Rank " + (data.Rank || "—");
-                    raRatioText.text = "Ratio " + (data.TotalTruePoints && data.TotalPoints ? (data.TotalTruePoints / Math.max(data.TotalPoints, 1)).toFixed(2) : "—");
-                    if (data.RecentlyPlayed && data.RecentlyPlayed.length > 0)
-                        raLastGameText.text = "Last played: " + data.RecentlyPlayed[0].Title;
-                } catch (e) {}
-            }
-        };
-        xhrUser.open("GET", "https://retroachievements.org/API/API_GetUserSummary.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&g=1&a=5");
-        xhrUser.send();
-
-        raFriendsModel.clear();
-        var xhrGames = new XMLHttpRequest();
-        xhrGames.onreadystatechange = function () {
-            if (xhrGames.readyState === XMLHttpRequest.DONE && xhrGames.status === 200) {
-                try {
-                    var games = JSON.parse(xhrGames.responseText);
-                    for (var i = 0; i < games.length; i++) {
-                        var g = games[i];
-                        var total = g.AchievementsTotal || g.NumPossibleAchievements || 0;
-                        var earned = g.NumAchievedHardcore || g.NumAchieved || 0;
-                        raFriendsModel.append({
-                            title: g.Title || "",
-                            imageUrl: "https://retroachievements.org" + (g.ImageIcon || ""),
-                            earned: earned,
-                            total: total,
-                            percent: total > 0 ? Math.round(earned / total * 100) : 0,
-                            lastPlayed: g.LastPlayed ? Qt.formatDate(new Date(g.LastPlayed), "dd MMM yyyy") : "",
-                            gameId: g.GameID || 0
-                        });
-                    }
-                } catch (e) {}
-            }
-        };
-        xhrGames.open("GET", "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&c=10");
-        xhrGames.send();
-    }
-
-    function loadGameAchievements(gameId) {
-        var username = api.memory.get("RA_Username");
-        var apiKey = api.memory.get("RetroAchievements API Key");
-        raAchievementsModel.clear();
-
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    var achievements = data.Achievements;
-                    if (!achievements)
-                        return;
-                    for (var key in achievements) {
-                        var a = achievements[key];
-                        raAchievementsModel.append({
-                            title: a.Title || "",
-                            description: a.Description || "",
-                            points: a.Points || 0,
-                            badgeUrl: "https://media.retroachievements.org/Badge/" + (a.DateEarned ? a.BadgeName : a.BadgeName + "_lock") + ".png",
-                            earned: a.DateEarned ? true : false,
-                            dateEarned: a.DateEarned ? Qt.formatDate(new Date(a.DateEarned), "dd MMM yyyy") : ""
-                        });
-                    }
-                } catch (e) {
-                    console.log("Achievement parse error:", e);
-                }
-            }
-        };
-        xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
-        xhr.send();
-    }
-
     Item {
         id: homeScreenContainer
         width: parent.width
@@ -863,7 +778,7 @@ FocusScope {
                 isOpen = true;
                 raProfileVisible = true;
                 slideIn.start();
-                loadRAData();
+                Utils.loadRAData();
                 Qt.callLater(function () {
                     raFriendsList.forceActiveFocus();
                 });
@@ -1212,7 +1127,7 @@ FocusScope {
                 function open(data) {
                     gameData = data;
                     visible = true;
-                    loadGameAchievements(data.gameId);
+                    Utils.loadGameAchievements(data.gameId);
                     Qt.callLater(function () {
                         achievementsList.forceActiveFocus();
                     });

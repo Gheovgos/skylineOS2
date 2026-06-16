@@ -19,36 +19,36 @@
 
 // For multiplayer games, show the player count as '1-N'
 function formatPlayers(playerCount) {
-    if (playerCount === 1)
-        return playerCount
+  if (playerCount === 1)
+    return playerCount
 
-    return "1-" + playerCount;
+  return "1-" + playerCount;
 }
 
 
 // Show dates in Y-M-D format
 function formatDate(date) {
-    return Qt.formatDate(date, "yyyy-MM-dd");
+  return Qt.formatDate(date, "yyyy-MM-dd");
 }
 
 
 // Show last played time as text. Based on the code of the default Pegasus theme.
 // Note to self: I should probably move this into the API.
 function formatLastPlayed(lastPlayed) {
-    if (isNaN(lastPlayed))
-        return "never";
+  if (isNaN(lastPlayed))
+    return "never";
 
-    var now = new Date();
+  var now = new Date();
 
-    var elapsedHours = (now.getTime() - lastPlayed.getTime()) / 1000 / 60 / 60;
-    if (elapsedHours < 24 && now.getDate() === lastPlayed.getDate())
-        return "today";
+  var elapsedHours = (now.getTime() - lastPlayed.getTime()) / 1000 / 60 / 60;
+  if (elapsedHours < 24 && now.getDate() === lastPlayed.getDate())
+    return "today";
 
-    var elapsedDays = Math.round(elapsedHours / 24);
-    if (elapsedDays <= 1)
-        return "yesterday";
+  var elapsedDays = Math.round(elapsedHours / 24);
+  if (elapsedDays <= 1)
+    return "yesterday";
 
-    return elapsedDays + " days ago"
+  return elapsedDays + " days ago"
 }
 
 
@@ -56,11 +56,11 @@ function formatLastPlayed(lastPlayed) {
 // Based on the code of the default Pegasus theme.
 // Note to self: I should probably move this into the API.
 function formatPlayTime(playTime) {
-    var minutes = Math.ceil(playTime / 60)
-    if (minutes <= 90)
-        return Math.round(minutes) + " minutes";
+  var minutes = Math.ceil(playTime / 60)
+  if (minutes <= 90)
+    return Math.round(minutes) + " minutes";
 
-    return parseFloat((minutes / 60).toFixed(1)) + " hours"
+  return parseFloat((minutes / 60).toFixed(1)) + " hours"
 }
 
 // Process the platform name to make it friendly for the logo
@@ -261,9 +261,9 @@ function processButtonArt(button) {
     case "pageUp":
       buttonModel = api.keys.pageUp;
       break;
-      case "pageDown":
-        buttonModel = api.keys.pageDown;
-        break;
+    case "pageDown":
+      buttonModel = api.keys.pageDown;
+      break;
     default:
       buttonModel = api.keys.accept;
   }
@@ -272,12 +272,12 @@ function processButtonArt(button) {
   for (i = 0; buttonModel.length; i++) {
     if (buttonModel[i].name().includes("Gamepad")) {
       var buttonValue = buttonModel[i].key.toString(16)
-      return buttonValue.substring(buttonValue.length-1, buttonValue.length);
+      return buttonValue.substring(buttonValue.length - 1, buttonValue.length);
     }
   }
 }
 
-function steamAppID (gameData) {
+function steamAppID(gameData) {
   var str = gameData.assets.boxFront.split("header");
   return str[0];
 }
@@ -301,7 +301,7 @@ function steamHeader(gameData) {
 
 function boxArt(data) {
   if (data != null) {
-    if (data.assets.boxFront.includes("/header.jpg")) 
+    if (data.assets.boxFront.includes("/header.jpg"))
       return steamBoxArt(data);
     else {
       if (data.assets.boxFront != "")
@@ -323,7 +323,7 @@ function boxArt(data) {
 
 function logo(data) {
   if (data != null) {
-    if (data.assets.boxFront.includes("/header.jpg")) 
+    if (data.assets.boxFront.includes("/header.jpg"))
       return steamLogo(data);
     else {
       if (data.assets.logo != "")
@@ -335,7 +335,7 @@ function logo(data) {
 
 function fanArt(data) {
   if (data != null) {
-    if (data.assets.boxFront.includes("/header.jpg")) 
+    if (data.assets.boxFront.includes("/header.jpg"))
       return steamHero(data);
     else {
       if (data.assets.background != "")
@@ -349,9 +349,9 @@ function fanArt(data) {
 
 // Place Steam collections at the beginning of the list
 function reorderCollection(model) {
-  for(var i=0; i<model.count; i++) {
+  for (var i = 0; i < model.count; i++) {
     if (model.get(i).name == "Steam") {
-      model.move(i,0);
+      model.move(i, 0);
       return model;
     }
   }
@@ -362,29 +362,29 @@ function reorderCollection(model) {
 
 
 // Shuffle function
-function shuffle(model){
+function shuffle(model) {
   var currentIndex = model.count, temporaryValue, randomIndex;
 
   // While there remain elements to shuffle...
   while (0 !== currentIndex) {
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex)
-      currentIndex -= 1
-      // And swap it with the current element.
-      // the dictionaries maintain their reference so a copy should be made
-      // https://stackoverflow.com/a/36645492/6622587
-      temporaryValue = JSON.parse(JSON.stringify(model.get(currentIndex)))
-      model.set(currentIndex, model.get(randomIndex))
-      model.set(randomIndex, temporaryValue);
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex)
+    currentIndex -= 1
+    // And swap it with the current element.
+    // the dictionaries maintain their reference so a copy should be made
+    // https://stackoverflow.com/a/36645492/6622587
+    temporaryValue = JSON.parse(JSON.stringify(model.get(currentIndex)))
+    model.set(currentIndex, model.get(randomIndex))
+    model.set(randomIndex, temporaryValue);
   }
-  
+
   return model;
 }
 
 function uniqueGameValues(fieldName) {
   const set = new Set();
   api.allGames.toVarArray().forEach(game => {
-      game[fieldName].forEach(v => set.add(v));
+    game[fieldName].forEach(v => set.add(v));
   });
   return [...set.values()].sort();
 }
@@ -392,7 +392,7 @@ function uniqueGameValues(fieldName) {
 function uniqueValuesArray(fieldName) {
   let arr = [];
   var allGames = api.allGames.toVarArray();
-  for(var i=0;i<allGames.length;i++) {
+  for (var i = 0; i < allGames.length; i++) {
     arr.push(allGames[i][fieldName]);
   }
   return arr;
@@ -404,14 +404,14 @@ function shuffleArray(array) {
   // While there remain elements to shuffle...
   while (0 !== currentIndex) {
 
-      // Pick a remaining element...
-      randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex -= 1;
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
 
-      // And swap it with the current element.
-      temporaryValue = array[currentIndex];
-      array[currentIndex] = array[randomIndex];
-      array[randomIndex] = temporaryValue;
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
   }
 
   return array;
@@ -420,3 +420,88 @@ function shuffleArray(array) {
 function returnRandom(array) {
   return array[Math.floor(Math.random() * array.length)];
 }
+
+// Loading RA data
+function loadRAData() {
+  var username = api.memory.get("RA_Username");
+  var apiKey = api.memory.get("RetroAchievements API Key");
+
+  if (!username || !apiKey)
+    return;
+
+  // User summary
+  var xhrUser = new XMLHttpRequest();
+  xhrUser.onreadystatechange = function () {
+    if (xhrUser.readyState === XMLHttpRequest.DONE && xhrUser.status === 200) {
+      try {
+        var data = JSON.parse(xhrUser.responseText);
+        raPointsText.text = (data.TotalPoints || "0") + " pts";
+        raRankText.text = "Rank " + (data.Rank || "—");
+        raRatioText.text = "Ratio " + (data.TotalTruePoints && data.TotalPoints ? (data.TotalTruePoints / Math.max(data.TotalPoints, 1)).toFixed(2) : "—");
+        if (data.RecentlyPlayed && data.RecentlyPlayed.length > 0)
+          raLastGameText.text = "Last played: " + data.RecentlyPlayed[0].Title;
+      } catch (e) { }
+    }
+  };
+  xhrUser.open("GET", "https://retroachievements.org/API/API_GetUserSummary.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&g=1&a=5");
+  xhrUser.send();
+
+  raFriendsModel.clear();
+  var xhrGames = new XMLHttpRequest();
+  xhrGames.onreadystatechange = function () {
+    if (xhrGames.readyState === XMLHttpRequest.DONE && xhrGames.status === 200) {
+      try {
+        var games = JSON.parse(xhrGames.responseText);
+        for (var i = 0; i < games.length; i++) {
+          var g = games[i];
+          var total = g.AchievementsTotal || g.NumPossibleAchievements || 0;
+          var earned = g.NumAchievedHardcore || g.NumAchieved || 0;
+          raFriendsModel.append({
+            title: g.Title || "",
+            imageUrl: "https://retroachievements.org" + (g.ImageIcon || ""),
+            earned: earned,
+            total: total,
+            percent: total > 0 ? Math.round(earned / total * 100) : 0,
+            lastPlayed: g.LastPlayed ? Qt.formatDate(new Date(g.LastPlayed), "dd MMM yyyy") : "",
+            gameId: g.GameID || 0
+          });
+        }
+      } catch (e) { }
+    }
+  };
+  xhrGames.open("GET", "https://retroachievements.org/API/API_GetUserRecentlyPlayedGames.php?z=" + username + "&y=" + apiKey + "&u=" + username + "&c=10");
+  xhrGames.send();
+}
+
+    function loadGameAchievements(gameId) {
+        var username = api.memory.get("RA_Username");
+        var apiKey = api.memory.get("RetroAchievements API Key");
+        raAchievementsModel.clear();
+
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    var achievements = data.Achievements;
+                    if (!achievements)
+                        return;
+                    for (var key in achievements) {
+                        var a = achievements[key];
+                        raAchievementsModel.append({
+                            title: a.Title || "",
+                            description: a.Description || "",
+                            points: a.Points || 0,
+                            badgeUrl: "https://media.retroachievements.org/Badge/" + (a.DateEarned ? a.BadgeName : a.BadgeName + "_lock") + ".png",
+                            earned: a.DateEarned ? true : false,
+                            dateEarned: a.DateEarned ? Qt.formatDate(new Date(a.DateEarned), "dd MMM yyyy") : ""
+                        });
+                    }
+                } catch (e) {
+                    console.log("Achievement parse error:", e);
+                }
+            }
+        };
+        xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
+        xhr.send();
+    }
