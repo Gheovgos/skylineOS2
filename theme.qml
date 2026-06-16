@@ -165,9 +165,10 @@ FocusScope {
     }
 
     function pushToStackTimer(game) {
-        api.memory.set("STACK_TIMER", [game.title, Math.floor(Date.now() / 1000)]);
-        api.memory.set("LAST_STACK_ITEM", game.title);
-        console.log("Timer started for:", game.title, "at:", Math.floor(Date.now() / 1000));
+        if(game != null) {
+            api.memory.set("STACK_TIMER", [game.title, Math.floor(Date.now() / 1000)]);
+            api.memory.set("LAST_STACK_ITEM", game.title);
+        }
     }
 
     function popToStackTimer() {
@@ -176,12 +177,8 @@ FocusScope {
             var startTime = api.memory.get("STACK_TIMER")[1];
             var elapsed = Math.floor(Date.now() / 1000) - startTime;
 
-            console.log("Elapsed seconds:", elapsed, "for game:", last);
-
             var prevTime = api.memory.has(last) ? parseInt(api.memory.get(last)) : 0;
             api.memory.set(last, prevTime + elapsed);
-
-            console.log("Nuovo totale per", last, ":", api.memory.get(last));
         }
 
         api.memory.unset("LAST_STACK_ITEM");
@@ -189,23 +186,19 @@ FocusScope {
     }
 
     function toggleHideApp(title) {
-        var list = api.memory.has("HiddenApps") ? api.memory.get("HiddenApps") : [];
+        var list = hiddenApps;
         var idx = list.indexOf(title);
-        console.log(list, title, idx);
         if (idx >= 0)
             list.splice(idx, 1);
         else
             list.push(title);
 
         api.memory.set("HiddenApps", list);
-        console.log(api.memory.get("HiddenApps"));
         hiddenApps = list;
-        console.log(hiddenApps);
     }
 
     function isAppHidden(title) {
-        var list = api.memory.has("HiddenApps") ? api.memory.get("HiddenApps") : [];
-        return list.indexOf(title) >= 0;
+        return typeof(hiddenApps.find((i) => i.includes(title))) != "undefined";
     }
 
     Rectangle {
@@ -296,28 +289,31 @@ FocusScope {
         }
 
         Keys.onPressed: {
-    if (api.keys.isAccept(event) && !event.isAutoRepeat) {
-        event.accepted = true;
-        toggleHideApp(pendingTitle);
-        hideConfirmPopup.isReverse ? turnOnSfx.play() : turnOffSfx.play();
-        hideConfirmPopup.visible = false;
-        pendingTitle = "";
-        if (softwareScreen.visible)
-            softwareScreen.focus = true;
-        else
-            homeScreen.focus = true;
-    }
-    if (api.keys.isCancel(event)) {
-        event.accepted = true;
-        backSfx.play();
-        hideConfirmPopup.visible = false;
-        pendingTitle = "";
-        if (softwareScreen.visible)
-            softwareScreen.focus = true;
-        else
-            homeScreen.focus = true;
-    }
-}
+            if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                event.accepted = true;
+                toggleHideApp(pendingTitle);
+                hideConfirmPopup.isReverse ? turnOnSfx.play() : turnOffSfx.play();
+                hideConfirmPopup.visible = false;
+                pendingTitle = "";
+                if (softwareScreen.visible) {
+                    softwareScreen.focus = true;
+                }
+                else {
+                    homeScreen.focus = true;
+                }
+                if(api.memory.get("Show Hidden Apps") === "No") softCount--;
+            }
+            if (api.keys.isCancel(event)) {
+                event.accepted = true;
+                backSfx.play();
+                hideConfirmPopup.visible = false;
+                pendingTitle = "";
+                if (softwareScreen.visible)
+                    softwareScreen.focus = true;
+                else
+                    homeScreen.focus = true;
+            }
+        }
     }
 
     function requestHideApp(title) {
@@ -328,7 +324,6 @@ FocusScope {
     }
     // Launch the current game from HomeBar
     function launchGame(game) {
-        console.log("Launching Game: ", game.title);
         pushToStackTimer(game);
 
         api.memory.set('Last Collection', currentCollection);
@@ -778,6 +773,7 @@ FocusScope {
     // Home screen
     HomeScreen {
         id: homeScreen
+        hiddenApps: root.hiddenApps
         focus: true
         anchors {
             left: parent.left

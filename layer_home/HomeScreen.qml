@@ -8,6 +8,7 @@ FocusScope {
     id: root
     property int lastHomeSwitcherIndex: 0
     property bool raProfileVisible: false
+    property var hiddenApps: []
 
     // Build the games list but with extra menu options at the start and end
     ListModel {
@@ -49,6 +50,12 @@ FocusScope {
             };
         }
     }
+
+    onHiddenAppsChanged: {
+        gamesListModel.clear();
+        gamesListModel.buildList();
+    }
+
     function openRAPanel() {
         raProfileVisible = true;
         raPanel.open();
@@ -138,14 +145,6 @@ FocusScope {
         };
         xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
         xhr.send();
-    }
-
-    Connections {
-        target: root
-        onHiddenAppsChanged: {
-            gamesListModel.clear();
-            gamesListModel.buildList();
-        }
     }
 
     Item {

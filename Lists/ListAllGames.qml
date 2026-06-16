@@ -40,6 +40,7 @@ Item {
             expression: {
                 hiddenApps;
                 var showHidden = api.memory.get("Show Hidden Apps") === "Yes";
+                //console.log("Dentro ListAllGames. Sorting: ", isAppHidden(model.title), model.title)
                 return showHidden || !isAppHidden(model.title);
             }
         }

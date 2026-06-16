@@ -688,67 +688,67 @@ ListView {
                             }
 
                             // Rating + Last Played
-Item {
-    width: parent.width
-    height: ratingRow.height
-    visible: (gameData && gameData.rating > 0) || lastPlayedCol.visible
+                            Item {
+                                width: parent.width
+                                height: ratingRow.height
+                                visible: (gameData && gameData.rating > 0) || lastPlayedCol.visible
 
-    Row {
-        id: ratingRow
-        spacing: vpx(8)
-        anchors.left: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        visible: gameData && gameData.rating > 0
+                                Row {
+                                    id: ratingRow
+                                    spacing: vpx(8)
+                                    anchors.left: parent.left
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: gameData && gameData.rating > 0
 
-        Text {
-            text: "★"
-            color: theme.accent
-            font.pixelSize: Math.round(screenheight * 0.022)
-            anchors.verticalCenter: parent.verticalCenter
-        }
-        Text {
-            text: gameData ? (gameData.rating * 10).toFixed(1) : ""
-            color: theme.text
-            font.family: titleFont.name
-            font.pixelSize: Math.round(screenheight * 0.022)
-            font.bold: true
-            anchors.verticalCenter: parent.verticalCenter
-        }
-    }
+                                    Text {
+                                        text: "★"
+                                        color: theme.accent
+                                        font.pixelSize: Math.round(screenheight * 0.022)
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                    Text {
+                                        text: gameData ? (gameData.rating * 10).toFixed(1) : ""
+                                        color: theme.text
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.022)
+                                        font.bold: true
+                                        anchors.verticalCenter: parent.verticalCenter
+                                    }
+                                }
 
-    Column {
-        id: lastPlayedCol
-        spacing: vpx(2)
-        anchors.right: parent.right
-        anchors.verticalCenter: parent.verticalCenter
-        visible: {
-            var d = new Date(gameData.lastPlayed);
-            return !isNaN(d.getTime()) && d.getFullYear() > 1970;
-        }
+                                Column {
+                                    id: lastPlayedCol
+                                    spacing: vpx(2)
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    visible: {
+                                        var d = new Date(gameData.lastPlayed);
+                                        return !isNaN(d.getTime()) && d.getFullYear() > 1970;
+                                    }
 
-        Text {
-            text: "LAST PLAYED"
-            color: theme.icon
-            opacity: 0.45
-            font.family: titleFont.name
-            font.pixelSize: Math.round(screenheight * 0.013)
-            font.letterSpacing: 1.5
-        }
+                                    Text {
+                                        text: "LAST PLAYED"
+                                        color: theme.icon
+                                        opacity: 0.45
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.013)
+                                        font.letterSpacing: 1.5
+                                    }
 
-        Text {
-            text: {
-                var d = new Date(gameData.lastPlayed);
-                if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
-                    return "";
-                return Qt.formatDate(d, "dd MMM yyyy");
-            }
-            color: theme.text
-            font.family: titleFont.name
-            font.pixelSize: Math.round(screenheight * 0.020)
-            font.bold: true
-        }
-    }
-}
+                                    Text {
+                                        text: {
+                                            var d = new Date(gameData.lastPlayed);
+                                            if (isNaN(d.getTime()) || d.getFullYear() <= 1970)
+                                                return "";
+                                            return Qt.formatDate(d, "dd MMM yyyy");
+                                        }
+                                        color: theme.text
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.020)
+                                        font.bold: true
+                                    }
+                                }
+                            }
 
                             // Summary + Description in unico Flickable
                             Flickable {
@@ -869,7 +869,6 @@ Item {
                                     var d = new Date(gameData.lastPlayed);
                                     return !isNaN(d.getTime()) && d.getFullYear() > 1970;
                                 }
-
                             }
 
                             // Play period
