@@ -9,6 +9,7 @@ FocusScope {
     property int lastHomeSwitcherIndex: 0
     property bool raProfileVisible: false
     property var hiddenApps: []
+    property bool expandedPanelOpen: homeSwitcher.anyExpanded 
 
     // Build the games list but with extra menu options at the start and end
     ListModel {

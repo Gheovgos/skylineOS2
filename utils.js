@@ -360,7 +360,6 @@ function reorderCollection(model) {
 }
 
 
-
 // Shuffle function
 function shuffle(model) {
   var currentIndex = model.count, temporaryValue, randomIndex;
@@ -473,35 +472,35 @@ function loadRAData() {
   xhrGames.send();
 }
 
-    function loadGameAchievements(gameId) {
-        var username = api.memory.get("RA_Username");
-        var apiKey = api.memory.get("RetroAchievements API Key");
-        raAchievementsModel.clear();
+function loadGameAchievements(gameId) {
+  var username = api.memory.get("RA_Username");
+  var apiKey = api.memory.get("RetroAchievements API Key");
+  raAchievementsModel.clear();
 
-        var xhr = new XMLHttpRequest();
-        xhr.onreadystatechange = function () {
-            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    var achievements = data.Achievements;
-                    if (!achievements)
-                        return;
-                    for (var key in achievements) {
-                        var a = achievements[key];
-                        raAchievementsModel.append({
-                            title: a.Title || "",
-                            description: a.Description || "",
-                            points: a.Points || 0,
-                            badgeUrl: "https://media.retroachievements.org/Badge/" + (a.DateEarned ? a.BadgeName : a.BadgeName + "_lock") + ".png",
-                            earned: a.DateEarned ? true : false,
-                            dateEarned: a.DateEarned ? Qt.formatDate(new Date(a.DateEarned), "dd MMM yyyy") : ""
-                        });
-                    }
-                } catch (e) {
-                    console.log("Achievement parse error:", e);
-                }
-            }
-        };
-        xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
-        xhr.send();
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var achievements = data.Achievements;
+        if (!achievements)
+          return;
+        for (var key in achievements) {
+          var a = achievements[key];
+          raAchievementsModel.append({
+            title: a.Title || "",
+            description: a.Description || "",
+            points: a.Points || 0,
+            badgeUrl: "https://media.retroachievements.org/Badge/" + (a.DateEarned ? a.BadgeName : a.BadgeName + "_lock") + ".png",
+            earned: a.DateEarned ? true : false,
+            dateEarned: a.DateEarned ? Qt.formatDate(new Date(a.DateEarned), "dd MMM yyyy") : ""
+          });
+        }
+      } catch (e) {
+        console.log("Achievement parse error:", e);
+      }
     }
+  };
+  xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
+  xhr.send();
+}

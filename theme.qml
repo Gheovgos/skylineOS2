@@ -165,7 +165,7 @@ FocusScope {
     }
 
     function pushToStackTimer(game) {
-        if(game != null) {
+        if (game != null) {
             api.memory.set("STACK_TIMER", [game.title, Math.floor(Date.now() / 1000)]);
             api.memory.set("LAST_STACK_ITEM", game.title);
         }
@@ -198,9 +198,10 @@ FocusScope {
     }
 
     function isAppHidden(title) {
-        return typeof(hiddenApps.find((i) => i.includes(title))) != "undefined";
+        return typeof (hiddenApps.find(i => i.includes(title))) != "undefined";
     }
 
+    //Hide Popup
     Rectangle {
         id: hideConfirmPopup
         visible: false
@@ -297,11 +298,11 @@ FocusScope {
                 pendingTitle = "";
                 if (softwareScreen.visible) {
                     softwareScreen.focus = true;
-                }
-                else {
+                } else {
                     homeScreen.focus = true;
                 }
-                if(api.memory.get("Show Hidden Apps") === "No") softCount--;
+                if (api.memory.get("Show Hidden Apps") === "No")
+                    softCount--;
             }
             if (api.keys.isCancel(event)) {
                 event.accepted = true;
@@ -761,10 +762,13 @@ FocusScope {
     }
 
     //starting collection is set here
+    //E' un casino tutto innestato, devi un attimo capire come fare la ricerca UNA VOLTA e non 10mila come sta facendo ora, per ottimizzare il tutto
     Component.onCompleted: {
         state: "homescreen";
         refreshSettings();
         popToStackTimer();
+        for (let i = 0; i < api.allGames.count; i++)
+            console.log(api.allGames.get(i).title);
         currentCollection = -1;
         api.memory.unset('Last Collection');
         homeSfx.play();
@@ -782,15 +786,6 @@ FocusScope {
             bottom: helpBar.top
         }
     }
-
-    // List specific input
-    /*Keys.onPressed: {
-        // disabled
-        /*if (api.keys.isFilters(event) && !event.isAutoRepeat) {
-            event.accepted = true;
-            toggleDarkMode();
-        }
-    }*/
 
     SettingsScreen {
         id: settingsScreen
@@ -882,6 +877,14 @@ FocusScope {
             bottom: parent.bottom
         }
         height: helpbarheight
+
+        opacity: homeScreen.expandedPanelOpen ? 0 : 1 
+        visible: opacity > 0                             
+        Behavior on opacity {                              
+            NumberAnimation {
+                duration: 200
+            }
+        }
 
         Rectangle {
 

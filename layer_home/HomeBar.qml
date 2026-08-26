@@ -9,6 +9,7 @@ import "qrc:/qmlutils" as PegasusUtils
 ListView {
     id: homeLayout
     //anchors.fill: parent
+    property bool anyExpanded: false
     property int _index: 0
     spacing: vpx(24)
     orientation: ListView.Horizontal
@@ -52,6 +53,7 @@ ListView {
             property real savedY: 0
 
             onExpandedChanged: {
+                homeLayout.anyExpanded = expanded;
                 if (expanded) {
                     var pos = wrapper.mapToItem(homeScreenContainer, 0, 0);
                     savedX = pos.x;
