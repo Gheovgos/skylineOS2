@@ -504,3 +504,71 @@ function loadGameAchievements(gameId) {
   xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
   xhr.send();
 }
+
+// === SteamGridDB scraping (background) ===
+var SGDB_BASE = "https://www.steamgriddb.com/api/v2";
+
+function sgdbSearchGame(title, callback) {
+  var key = api.memory.get("SteamGridDB API Key");
+  if (!key) { callback(null); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) { callback(null); return; }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data.success && data.data && data.data.length > 0)
+        callback(data.data[0].id);
+      else
+        callback(null);
+    } catch (e) { callback(null); }
+  };
+  xhr.open("GET", SGDB_BASE + "/search/autocomplete/" + encodeURIComponent(title));
+  xhr.setRequestHeader("Authorization", "Bearer " + key);
+  xhr.send();
+}
+
+function sgdbGetHero(gameId, callback) {
+  var key = api.memory.get("SteamGridDB API Key");
+  if (!key) { callback(null); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) { callback(null); return; }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data.success && data.data && data.data.length > 0)
+        callback(data.data[0].url);
+      else
+        callback(null);
+    } catch (e) { callback(null); }
+  };
+  xhr.open("GET", SGDB_BASE + "/heroes/game/" + gameId);
+  xhr.setRequestHeader("Authorization", "Bearer " + key);
+  xhr.send();
+}
+
+function fetchScrapedBackground(title, callback) {
+  if (!title) { callback(""); return; }
+
+  var cacheKey = "SGDB_BG::" + title;
+  if (api.memory.has(cacheKey)) {
+    callback(api.memory.get(cacheKey));
+    return;
+  }
+
+  sgdbSearchGame(title, function (gameId) {
+    if (!gameId) {
+      api.memory.set(cacheKey, "");
+      callback("");
+      return;
+    }
+    sgdbGetHero(gameId, function (url) {
+      var result = url || "";
+      api.memory.set(cacheKey, result);
+      callback(result);
+    });
+  });
+}

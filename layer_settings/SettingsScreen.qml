@@ -250,6 +250,12 @@ FocusScope {
             setting: "Reset"
             type: "button"
         }
+        ListElement {
+            settingName: "SteamGridDB API Key"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
     }
 
     property var performancePage: {

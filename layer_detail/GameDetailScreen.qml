@@ -9,25 +9,28 @@ import "../layer_home"
 
 FocusScope {
     id: root
-    property var game
+    property var currentGame
     property alias radius: bg.radius
-
-    property int detailIndex: 0
-    property var currentEntry: (gamesListModel.count > 0 && detailIndex >= 0 && detailIndex < gamesListModel.count) ? gamesListModel.get(detailIndex) : null
-    property bool onAllSoftware: currentEntry ? currentEntry.idx < 0 : false
+    property string scrapedBackground: ""
 
     clip: true
 
     onVisibleChanged: {
-        if (visible)
-            detailIndex = currentScreenID >= 0 ? currentScreenID : 0;
+        maybeScrapeBackground();
     }
 
-    onDetailIndexChanged: {
-        if (currentEntry && !onAllSoftware) {
-            currentGame = listRecent.currentGame(currentEntry.idx);
-            currentScreenID = currentEntry.idx;
-        }
+    function maybeScrapeBackground() {
+        scrapedBackground = "";
+        if (!currentGame)
+            return;
+        if (currentGame.assets.background || currentGame.assets.screenshots[0])
+            return;
+
+        var requestedTitle = currentGame.title;
+        Utils.fetchScrapedBackground(requestedTitle, function (url) {
+            if (currentGame && currentGame.title === requestedTitle)
+                root.scrapedBackground = url;
+        });
     }
 
     Rectangle {
@@ -41,7 +44,7 @@ FocusScope {
             id: bgImage
             anchors.fill: parent
             playing: true
-            source: (!root.onAllSoftware && currentGame) ? (currentGame.assets.background || currentGame.assets.screenshots[0] || "") : ""
+            source: currentGame ? (currentGame.assets.background || currentGame.assets.screenshots[0] || scrapedBackground || "") : ""
             visible: source !== ""
             fillMode: Image.PreserveAspectCrop
             asynchronous: true
@@ -271,9 +274,7 @@ FocusScope {
                     asynchronous: true
                     smooth: true
                     fillMode: Image.PreserveAspectCrop
-                    source: root.onAllSoftware
-                            ? (root.currentEntry ? root.currentEntry.icon : "")
-                            : (currentGame ? (currentGame.assets.boxFront || currentGame.assets.tile || "") : "")
+                    source: currentGame ? (currentGame.assets.boxFront || currentGame.assets.tile || "") : ""
                     visible: false
                 }
 
@@ -287,7 +288,7 @@ FocusScope {
                 Text {
                     anchors.centerIn: parent
                     visible: coverImage.source === "" || coverImage.status !== Image.Ready
-                    text: root.onAllSoftware ? "…" : (currentGame ? currentGame.title.charAt(0) : "?")
+                    text: currentGame ? currentGame.title.charAt(0) : "?"
                     color: theme.icon
                     font.family: titleFont.name
                     font.bold: true
@@ -297,7 +298,7 @@ FocusScope {
 
             // Titolo grande
             Text {
-                text: root.onAllSoftware ? (root.currentEntry ? root.currentEntry.name : "") : (currentGame ? currentGame.title : "")
+                text: currentGame ? currentGame.title : ""
                 color: "white"
                 font.family: titleFont.name
                 font.bold: true
@@ -308,7 +309,7 @@ FocusScope {
 
             // Tagline / riassunto breve
             Text {
-                text: (!root.onAllSoftware && currentGame) ? (currentGame.summary || currentGame.description || "") : ""
+                text: currentGame ? (currentGame.summary || currentGame.description || "") : ""
                 visible: text !== ""
                 color: "white"
                 opacity: 0.8
@@ -380,7 +381,7 @@ FocusScope {
                         spacing: vpx(10)
 
                         Image {
-                            source: root.onAllSoftware ? "../assets/images/allsoft_icon.svg" : "../assets/images/navigation/play.svg"
+                            source: "../assets/images/navigation/play.svg"
                             width: vpx(18)
                             height: vpx(18)
                             anchors.verticalCenter: parent.verticalCenter
@@ -390,7 +391,7 @@ FocusScope {
                             }
                         }
                         Text {
-                            text: root.onAllSoftware ? "All Software" : "Play Game"
+                            text: "Play Game"
                             color: "black"
                             font.family: titleFont.name
                             font.bold: true
@@ -403,12 +404,8 @@ FocusScope {
                         anchors.fill: parent
                         onClicked: {
                             closeGameDetail();
-                            if (root.onAllSoftware) {
-                                showSoftwareScreen();
-                            } else {
-                                anim.start();
-                                playGame();
-                            }
+                            anim.start();
+                            playGame();
                         }
                     }
                 }
@@ -418,7 +415,6 @@ FocusScope {
                     height: vpx(56)
                     radius: width / 2
                     color: "#33FFFFFF"
-                    visible: !root.onAllSoftware
 
                     Text {
                         anchors.centerIn: parent
@@ -444,7 +440,7 @@ FocusScope {
                     width: progRow.width + vpx(20)
                     radius: height / 2
                     color: "#33000000"
-                    visible: !root.onAllSoftware && currentGame && currentGame.extra && currentGame.extra.progress > 0
+                    visible: currentGame && currentGame.extra && currentGame.extra.progress > 0
 
                     Row {
                         id: progRow
@@ -476,7 +472,7 @@ FocusScope {
                     width: timeRow.width + vpx(20)
                     radius: height / 2
                     color: "#33000000"
-                    visible: !root.onAllSoftware && currentGame && (currentGame.playTime > 0 || (currentGame.extra && currentGame.extra.playtime > 0))
+                    visible: currentGame && (currentGame.playTime > 0 || (currentGame.extra && currentGame.extra.playtime > 0))
 
                     Row {
                         id: timeRow
@@ -536,12 +532,9 @@ FocusScope {
         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
             event.accepted = true;
             closeGameDetail();
-            if (root.onAllSoftware) {
-                showSoftwareScreen();
-            } else {
-                anim.start();
-                playGame();
-            }
+
+            anim.start();
+            playGame();
         }
     }
 }
