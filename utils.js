@@ -464,6 +464,8 @@ function loadRAData() {
             lastPlayed: g.LastPlayed ? Qt.formatDate(new Date(g.LastPlayed), "dd MMM yyyy") : "",
             gameId: g.GameID || 0
           });
+          if (g.Title)
+            api.memory.set("RA_GameID::" + g.Title, String(g.GameID || 0));
         }
       } catch (e) { }
     }
@@ -472,10 +474,10 @@ function loadRAData() {
   xhrGames.send();
 }
 
-function loadGameAchievements(gameId) {
+function loadGameAchievements(gameId, targetModel) {
   var username = api.memory.get("RA_Username");
   var apiKey = api.memory.get("RetroAchievements API Key");
-  raAchievementsModel.clear();
+  targetModel.clear();
 
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function () {
@@ -487,7 +489,7 @@ function loadGameAchievements(gameId) {
           return;
         for (var key in achievements) {
           var a = achievements[key];
-          raAchievementsModel.append({
+          targetModel.append({
             title: a.Title || "",
             description: a.Description || "",
             points: a.Points || 0,
@@ -550,6 +552,42 @@ function sgdbGetHero(gameId, callback) {
   xhr.send();
 }
 
+// Recupera TUTTE le hero image disponibili per un gameId (non solo la prima)
+function sgdbGetHeroes(gameId, callback) {
+  var key = api.memory.get("SteamGridDB API Key");
+  if (!key) { callback([]); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) { callback([]); return; }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data.success && data.data && data.data.length > 0) {
+        var urls = [];
+        for (var i = 0; i < data.data.length; i++)
+          urls.push(data.data[i].url);
+        callback(urls);
+      } else {
+        callback([]);
+      }
+    } catch (e) { callback([]); }
+  };
+  xhr.open("GET", SGDB_BASE + "/heroes/game/" + gameId);
+  xhr.setRequestHeader("Authorization", "Bearer " + key);
+  xhr.send();
+}
+
+function fetchScrapedBackgroundList(title, callback) {
+  if (!title) { callback([]); return; }
+  sgdbSearchGame(title, function (gameId) {
+    if (!gameId) { callback([]); return; }
+    sgdbGetHeroes(gameId, function (urls) {
+      callback(urls);
+    });
+  });
+}
+
 function fetchScrapedBackground(title, callback) {
   if (!title) { callback(""); return; }
 
@@ -574,11 +612,18 @@ function fetchScrapedBackground(title, callback) {
 }
 
 var ITALIAN_MONTHS = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-                       "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+  "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
 
 function formatDateItalian(dateInput) {
   var d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
   if (isNaN(d.getTime()))
     return "";
   return d.getDate() + " " + ITALIAN_MONTHS[d.getMonth()] + " " + d.getFullYear();
+}
+
+function raLookupGameId(title) {
+  if (!title)
+    return 0;
+  var key = "RA_GameID::" + title;
+  return api.memory.has(key) ? parseInt(api.memory.get(key)) : 0;
 }

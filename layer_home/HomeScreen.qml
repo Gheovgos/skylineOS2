@@ -1127,7 +1127,7 @@ FocusScope {
                 function open(data) {
                     gameData = data;
                     visible = true;
-                    Utils.loadGameAchievements(data.gameId);
+                    Utils.loadGameAchievements(data.gameId, raAchievementsModel);
                     Qt.callLater(function () {
                         achievementsList.forceActiveFocus();
                     });

@@ -13,11 +13,40 @@ FocusScope {
     property alias radius: bg.radius
     property string scrapedBackground: ""
     property bool showDescription: false
+    property string focusedButton: "play"   // "back" | "play" | "options" | "desc"
+    property bool showOptionsPanel: false
+    
 
     clip: true
 
     onVisibleChanged: {
+        if (visible)
+            focusedButton = "play";
         maybeScrapeBackground();
+    }
+
+    function activateFocusedButton() {
+        if (focusedButton === "back") {
+            goBack();
+        } else if (focusedButton === "play") {
+            closeGameDetail();
+            anim.start();
+            playGame();
+        } else if (focusedButton === "options") {
+            showOptionsPanel = !showOptionsPanel;
+        } else if (focusedButton === "desc") {
+            showDescription = !showDescription;
+        }
+    }
+
+    function goBack() {
+        if (showOptionsPanel) {
+            showOptionsPanel = false;
+        } else if (showDescription) {
+            showDescription = false;
+        } else {
+            closeGameDetail();
+        }
     }
 
     function maybeScrapeBackground() {
@@ -424,7 +453,15 @@ FocusScope {
                     height: vpx(56)
                     radius: width / 2
                     color: "#33FFFFFF"
+                    border.width: root.focusedButton === "back" ? vpx(3) : 0
+                    border.color: theme.accent
                     anchors.verticalCenter: parent.verticalCenter
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Image {
                         anchors.centerIn: parent
@@ -440,7 +477,10 @@ FocusScope {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: closeGameDetail()
+                        onClicked: {
+                            root.focusedButton = "back";
+                            root.goBack();
+                        }
                     }
                 }
 
@@ -450,6 +490,14 @@ FocusScope {
                     height: vpx(56)
                     radius: height / 2
                     color: "white"
+                    border.width: root.focusedButton === "play" ? vpx(3) : 0
+                    border.color: theme.accent
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Row {
                         id: playLabel
@@ -479,6 +527,7 @@ FocusScope {
                     MouseArea {
                         anchors.fill: parent
                         onClicked: {
+                            root.focusedButton = "play";
                             closeGameDetail();
                             anim.start();
                             playGame();
@@ -487,19 +536,40 @@ FocusScope {
                 }
 
                 Rectangle {
+                    id: optionsButton
                     width: vpx(56)
                     height: vpx(56)
                     radius: width / 2
-                    color: "#33FFFFFF"
+                    color: root.showOptionsPanel ? theme.accent : "#33FFFFFF"
+                    border.width: root.focusedButton === "options" ? vpx(3) : 0
+                    border.color: theme.accent
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
 
                     Text {
                         anchors.centerIn: parent
-                        text: "\u22EF" // ⋯
+                        text: "\u22EF"
                         color: "white"
                         font.pixelSize: Math.round(screenheight * 0.03)
                         font.bold: true
                     }
-                    // TODO: menu opzioni (preferiti, hide, ecc.) — step successivo
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            root.focusedButton = "options";
+                            root.showOptionsPanel = !root.showOptionsPanel;
+                        }
+                    }
                 }
             }
 
@@ -721,6 +791,8 @@ FocusScope {
             height: vpx(56)
             radius: width / 2
             color: root.showDescription ? theme.accent : "#33FFFFFF"
+            border.width: root.focusedButton === "desc" ? vpx(3) : 0
+            border.color: "white"
             anchors {
                 right: parent.right
                 verticalCenter: parent.verticalCenter
@@ -731,6 +803,11 @@ FocusScope {
             Behavior on color {
                 ColorAnimation {
                     duration: 150
+                }
+            }
+            Behavior on border.width {
+                NumberAnimation {
+                    duration: 120
                 }
             }
 
@@ -748,7 +825,10 @@ FocusScope {
 
             MouseArea {
                 anchors.fill: parent
-                onClicked: root.showDescription = !root.showDescription
+                onClicked: {
+                    root.focusedButton = "desc";
+                    root.showDescription = !root.showDescription;
+                }
             }
         }
 
@@ -961,33 +1041,27 @@ FocusScope {
     }
 
     Keys.onLeftPressed: {
-        if (gamesListModel.count === 0)
-            return;
         navSound.play();
-        detailIndex = (detailIndex - 1 + gamesListModel.count) % gamesListModel.count;
+        var order = ["back", "play", "options", "desc"];
+        var i = order.indexOf(focusedButton);
+        focusedButton = order[(i - 1 + order.length) % order.length];
     }
     Keys.onRightPressed: {
-        if (gamesListModel.count === 0)
-            return;
         navSound.play();
-        detailIndex = (detailIndex + 1) % gamesListModel.count;
+        var order = ["back", "play", "options", "desc"];
+        var i = order.indexOf(focusedButton);
+        focusedButton = order[(i + 1) % order.length];
     }
 
     Keys.onPressed: {
         if (api.keys.isCancel(event)) {
             event.accepted = true;
-            if (root.showDescription) {
-                root.showDescription = false;
-            } else {
-                closeGameDetail();
-            }
+            goBack();
             return;
         }
         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
             event.accepted = true;
-            closeGameDetail();
-            anim.start();
-            playGame();
+            activateFocusedButton();
         }
     }
 }
