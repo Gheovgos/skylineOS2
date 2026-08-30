@@ -572,3 +572,13 @@ function fetchScrapedBackground(title, callback) {
     });
   });
 }
+
+var ITALIAN_MONTHS = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+                       "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+
+function formatDateItalian(dateInput) {
+  var d = (dateInput instanceof Date) ? dateInput : new Date(dateInput);
+  if (isNaN(d.getTime()))
+    return "";
+  return d.getDate() + " " + ITALIAN_MONTHS[d.getMonth()] + " " + d.getFullYear();
+}

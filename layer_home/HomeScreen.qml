@@ -824,7 +824,6 @@ FocusScope {
                 opacity: 0.4
             }
 
-            // Contenuto principale
             Item {
                 id: raPanelContent
                 anchors {

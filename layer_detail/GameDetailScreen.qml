@@ -12,6 +12,7 @@ FocusScope {
     property var currentGame
     property alias radius: bg.radius
     property string scrapedBackground: ""
+    property bool showDescription: false
 
     clip: true
 
@@ -107,6 +108,7 @@ FocusScope {
         }
 
         // === TOP STATUS BAR (ora, profilo, batteria, wifi) ===
+        // === TOP STATUS BAR (ora, profilo, batteria, wifi) ===
         Item {
             id: topStatusBar
             anchors {
@@ -171,61 +173,70 @@ FocusScope {
                 }
             }
 
-            Row {
-                spacing: vpx(14)
+            Rectangle {
+                id: statusPill
+                height: vpx(40)
+                width: statusRow.width + vpx(28)
+                radius: height / 2
+                color: "#40000000"
                 anchors {
                     right: parent.right
                     verticalCenter: parent.verticalCenter
                 }
 
-                Text {
-                    text: Qt.formatTime(new Date(), settings.timeFormat === "12hr" ? "h:mmap" : "hh:mm")
-                    color: "white"
-                    font.family: titleFont.name
-                    font.bold: true
-                    font.pixelSize: Math.round(screenheight * 0.02)
-                    font.capitalization: Font.SmallCaps
-                    anchors.verticalCenter: parent.verticalCenter
-                }
+                Row {
+                    id: statusRow
+                    spacing: vpx(14)
+                    anchors.centerIn: parent
 
-                Text {
-                    text: isNaN(api.device.batteryPercent) ? "" : parseInt(api.device.batteryPercent * 100) + "%"
-                    visible: showPercent && !isNaN(api.device.batteryPercent)
-                    color: "white"
-                    font.family: titleFont.name
-                    font.bold: true
-                    font.pixelSize: Math.round(screenheight * 0.02)
-                    anchors.verticalCenter: parent.verticalCenter
-                }
-
-                BatteryIcon {
-                    width: Math.round(screenheight * 0.04)
-                    height: width / 1.5
-                    level: isNaN(api.device.batteryPercent) ? 0 : parseInt(api.device.batteryPercent * 100)
-                    visible: !isNaN(api.device.batteryPercent)
-                    anchors.verticalCenter: parent.verticalCenter
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
+                    Text {
+                        text: Qt.formatTime(new Date(), settings.timeFormat === "12hr" ? "h:mmap" : "hh:mm")
                         color: "white"
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.02)
+                        font.capitalization: Font.SmallCaps
+                        anchors.verticalCenter: parent.verticalCenter
                     }
-                }
 
-                Image {
-                    width: Math.round(screenheight * 0.04)
-                    height: width
-                    fillMode: Image.PreserveAspectFit
-                    source: "../assets/images/navigation/wifi.svg"
-                    visible: settings.showWifi === "Yes"
-                    anchors.verticalCenter: parent.verticalCenter
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
+                    Text {
+                        text: isNaN(api.device.batteryPercent) ? "" : parseInt(api.device.batteryPercent * 100) + "%"
+                        visible: showPercent && !isNaN(api.device.batteryPercent)
                         color: "white"
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.02)
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    BatteryIcon {
+                        width: Math.round(screenheight * 0.04)
+                        height: width / 1.5
+                        level: isNaN(api.device.batteryPercent) ? 0 : parseInt(api.device.batteryPercent * 100)
+                        visible: !isNaN(api.device.batteryPercent)
+                        anchors.verticalCenter: parent.verticalCenter
+                        layer.enabled: true
+                        layer.effect: ColorOverlay {
+                            color: "white"
+                        }
+                    }
+
+                    Image {
+                        width: Math.round(screenheight * 0.04)
+                        height: width
+                        fillMode: Image.PreserveAspectFit
+                        source: "../assets/images/navigation/wifi.svg"
+                        visible: settings.showWifi === "Yes"
+                        anchors.verticalCenter: parent.verticalCenter
+                        layer.enabled: true
+                        layer.effect: ColorOverlay {
+                            color: "white"
+                        }
                     }
                 }
             }
         }
 
-        // === INFO COLONNA: cover grande, titolo, tagline ===
         Column {
             id: infoColumn
             spacing: vpx(14)
@@ -238,61 +249,127 @@ FocusScope {
                 bottomMargin: vpx(28)
             }
 
-            // Cover grande, arrotondata, al posto della vecchia miniRow
-            Rectangle {
-                id: coverFrame
-                width: vpx(180)
-                height: vpx(180)
-                radius: vpx(28)
-                color: theme.button
-                clip: true
-                antialiasing: true
+            // Contenitore cover + badge piattaforma (necessario per un anchoring valido tra i due)
+            Item {
+                id: coverContainer
+                width: coverFrame.width
+                height: coverFrame.height
 
-                layer.enabled: true
-                layer.effect: DropShadow {
-                    transparentBorder: true
-                    horizontalOffset: 0
-                    verticalOffset: vpx(6)
-                    radius: 16
-                    samples: 32
-                    color: "#60000000"
-                }
-
-                // Maschera per garantire angoli smussati anche su immagini rettangolari
                 Rectangle {
-                    id: coverMask
-                    anchors.fill: parent
+                    id: coverFrame
+                    width: vpx(180)
+                    height: vpx(180)
                     radius: vpx(28)
-                    visible: false
+                    color: theme.button
+                    clip: true
                     antialiasing: true
+
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        transparentBorder: true
+                        horizontalOffset: 0
+                        verticalOffset: vpx(6)
+                        radius: 16
+                        samples: 32
+                        color: "#60000000"
+                    }
+
+                    Rectangle {
+                        id: coverMask
+                        anchors.fill: parent
+                        radius: vpx(28)
+                        visible: false
+                        antialiasing: true
+                    }
+
+                    AnimatedImage {
+                        id: coverImage
+                        anchors.fill: parent
+                        playing: true
+                        asynchronous: true
+                        smooth: true
+                        fillMode: Image.PreserveAspectCrop
+                        source: currentGame ? (currentGame.assets.boxFront || currentGame.assets.tile || "") : ""
+                        visible: false
+                    }
+
+                    OpacityMask {
+                        anchors.fill: coverImage
+                        source: coverImage
+                        maskSource: coverMask
+                        visible: coverImage.source !== "" && coverImage.status === Image.Ready
+                    }
+
+                    Text {
+                        anchors.centerIn: parent
+                        visible: coverImage.source === "" || coverImage.status !== Image.Ready
+                        text: currentGame ? currentGame.title.charAt(0) : "?"
+                        color: theme.icon
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.06)
+                    }
                 }
 
-                AnimatedImage {
-                    id: coverImage
-                    anchors.fill: parent
-                    playing: true
-                    asynchronous: true
-                    smooth: true
-                    fillMode: Image.PreserveAspectCrop
-                    source: currentGame ? (currentGame.assets.boxFront || currentGame.assets.tile || "") : ""
-                    visible: false
-                }
+                // Badge platform
+                Rectangle {
+                    id: platformBadge
+                    height: vpx(32)
+                    width: platformBadgeRow.width + vpx(20)
+                    radius: vpx(10)
+                    color: theme.button
+                    border.width: vpx(2)
+                    border.color: theme.main
+                    visible: currentGame && currentGame.collections && currentGame.collections.count > 0
+                    anchors {
+                        left: coverFrame.right
+                        bottom: coverFrame.bottom
+                        leftMargin: vpx(8)
+                    }
+                    z: 6
 
-                OpacityMask {
-                    anchors.fill: coverImage
-                    source: coverImage
-                    maskSource: coverMask
-                    visible: coverImage.source !== "" && coverImage.status === Image.Ready
-                }
+                    layer.enabled: true
+                    layer.effect: DropShadow {
+                        transparentBorder: true
+                        horizontalOffset: 0
+                        verticalOffset: vpx(2)
+                        radius: 6
+                        samples: 16
+                        color: "#60000000"
+                    }
 
-                Text {
-                    anchors.centerIn: parent
-                    visible: coverImage.source === "" || coverImage.status !== Image.Ready
-                    text: currentGame ? currentGame.title.charAt(0) : "?"
-                    color: theme.icon
-                    font.family: titleFont.name
-                    font.bold: true
-                    font.pixelSize: Math.round(screenheight * 0.06)
+                    Row {
+                        id: platformBadgeRow
+                        anchors.centerIn: parent
+                        spacing: vpx(6)
+
+                        Image {
+                            width: vpx(16)
+                            height: vpx(16)
+                            fillMode: Image.PreserveAspectFit
+                            anchors.verticalCenter: parent.verticalCenter
+                            source: {
+                                if (!currentGame || !currentGame.collections || currentGame.collections.count === 0)
+                                    return "";
+                                var p = currentGame.collections.get(0).shortName;
+                                return p ? "../assets/images/platforms/" + p + ".svg" : "";
+                            }
+                            visible: source !== ""
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: theme.icon
+                            }
+                        }
+
+                        Text {
+                            text: (currentGame && currentGame.collections && currentGame.collections.count > 0) ? currentGame.collections.get(0).name : ""
+                            color: theme.icon
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.016)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
                 }
             }
 
@@ -307,7 +384,6 @@ FocusScope {
                 wrapMode: Text.WordWrap
             }
 
-            // Tagline / riassunto breve
             Text {
                 text: currentGame ? (currentGame.summary || currentGame.description || "") : ""
                 visible: text !== ""
@@ -427,7 +503,7 @@ FocusScope {
                 }
             }
 
-            // Stats a destra: progress + playtime
+            // progress + playtime
             Row {
                 spacing: vpx(10)
                 anchors {
@@ -507,6 +583,379 @@ FocusScope {
                         }
                     }
                 }
+
+                Rectangle {
+                    height: vpx(36)
+                    width: playersRow.width + vpx(20)
+                    radius: height / 2
+                    color: "#33000000"
+                    visible: currentGame && currentGame.players > 0
+
+                    Row {
+                        id: playersRow
+                        anchors.centerIn: parent
+                        spacing: vpx(6)
+                        Image {
+                            source: "../assets/images/navigation/player.svg"
+                            width: vpx(16)
+                            height: vpx(16)
+                            anchors.verticalCenter: parent.verticalCenter
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: "white"
+                            }
+                        }
+                        Text {
+                            text: currentGame ? currentGame.players : ""
+                            color: "white"
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.018)
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+                }
+            }
+        }
+
+        // === CENTRO BASSO: rating + periodo di gioco ===
+        Row {
+            id: centerInfoRow
+            spacing: vpx(14)
+            anchors {
+                bottom: parent.bottom
+                horizontalCenter: parent.horizontalCenter
+                bottomMargin: vpx(32)
+            }
+
+            // Badge rating, colorato in base al punteggio
+            Rectangle {
+                id: ratingBadge
+                width: vpx(56)
+                height: vpx(56)
+                radius: vpx(14)
+                visible: currentGame && currentGame.rating > 0
+                color: {
+                    if (!currentGame)
+                        return "#33000000";
+                    var r = currentGame.rating * 10;
+                    if (r >= 8)
+                        return "#1DB954"; // verde
+                    if (r >= 5)
+                        return "#F5A623"; // ambra
+                    return "#E63946"; // rosso
+                }
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: vpx(1)
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: currentGame ? (currentGame.rating * 10).toFixed(1) : ""
+                        color: "white"
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.022)
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: "RATING"
+                        color: "white"
+                        opacity: 0.85
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.letterSpacing: 1
+                        font.pixelSize: Math.round(screenheight * 0.009)
+                    }
+                }
+            }
+
+            // Pill periodo di gioco (startDate / endDate)
+            Rectangle {
+                id: playPeriodPill
+                height: vpx(56)
+                width: playPeriodColumn.width + vpx(28)
+                radius: vpx(14)
+                color: "#33000000"
+                visible: currentGame && currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)
+
+                Column {
+                    id: playPeriodColumn
+                    anchors.centerIn: parent
+                    spacing: vpx(2)
+
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: (currentGame && currentGame.extra && currentGame.extra.enddate) ? "PLAY PERIOD" : "STARTED"
+                        color: "white"
+                        opacity: 0.5
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.letterSpacing: 1
+                        font.pixelSize: Math.round(screenheight * 0.011)
+                    }
+                    Text {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        text: {
+                            if (!currentGame || !currentGame.extra)
+                                return "";
+                            var start = currentGame.extra.startdate || "";
+                            var end = currentGame.extra.enddate || "";
+                            if (start && end)
+                                return Utils.formatDateItalian(start) + "  →  " + Utils.formatDateItalian(end);
+                            return start ? Utils.formatDateItalian(start) : "";
+                        }
+                        color: "white"
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.016)
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            id: descToggleButton
+            width: vpx(56)
+            height: vpx(56)
+            radius: width / 2
+            color: root.showDescription ? theme.accent : "#33FFFFFF"
+            anchors {
+                right: parent.right
+                verticalCenter: parent.verticalCenter
+                rightMargin: vpx(32)
+            }
+            z: 6
+
+            Behavior on color {
+                ColorAnimation {
+                    duration: 150
+                }
+            }
+
+            Image {
+                anchors.centerIn: parent
+                width: vpx(22)
+                height: vpx(22)
+                fillMode: Image.PreserveAspectFit
+                source: "../assets/images/navigation/desc.svg"
+                layer.enabled: true
+                layer.effect: ColorOverlay {
+                    color: "white"
+                }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.showDescription = !root.showDescription
+            }
+        }
+
+        Rectangle {
+            id: descriptionPanel
+            width: Math.round(screenwidth * 0.40)
+            height: Math.round(bg.height * 0.7)
+            radius: vpx(20)
+            color: "#DD1A1A1A"
+            anchors {
+                verticalCenter: parent.verticalCenter
+                right: parent.right
+                rightMargin: vpx(56)
+            }
+            x: root.showDescription ? bg.width - width - vpx(56) : bg.width
+            opacity: root.showDescription ? 1 : 0
+            visible: opacity > 0
+            z: 5
+            clip: true
+
+            Behavior on x {
+                NumberAnimation {
+                    duration: 220
+                    easing.type: Easing.OutCubic
+                }
+            }
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 180
+                }
+            }
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 0
+                verticalOffset: vpx(4)
+                radius: 20
+                samples: 32
+                color: "#80000000"
+            }
+
+            Flickable {
+                id: descFlick
+                anchors {
+                    fill: parent
+                    margins: vpx(28)
+                }
+                contentWidth: width
+                contentHeight: descContent.height
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+
+                Column {
+                    id: descContent
+                    width: descFlick.width
+                    spacing: vpx(18)
+
+                    Text {
+                        id: descText
+                        width: parent.width
+                        text: currentGame ? (currentGame.description || currentGame.summary || "") : ""
+                        color: "white"
+                        font.family: titleFont.name
+                        font.pixelSize: Math.round(screenheight * 0.019)
+                        wrapMode: Text.WordWrap
+                        lineHeight: 1.35
+                    }
+
+                    // Tag — sotto la descrizione, dentro lo stesso pannello scrollabile
+                    Column {
+                        width: parent.width
+                        spacing: vpx(8)
+                        visible: currentGame && currentGame.tagList && currentGame.tagList.length > 0
+
+                        Text {
+                            text: "TAGS"
+                            color: "white"
+                            opacity: 0.5
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.letterSpacing: 1.5
+                            font.pixelSize: Math.round(screenheight * 0.013)
+                        }
+
+                        Flow {
+                            width: parent.width
+                            spacing: vpx(8)
+
+                            property var pillColors: ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444"]
+
+                            Repeater {
+                                model: currentGame ? currentGame.tagList : []
+                                Rectangle {
+                                    height: vpx(26)
+                                    width: tagText.width + vpx(16)
+                                    radius: height / 2
+                                    color: parent.parent.pillColors[index % parent.parent.pillColors.length]
+                                    opacity: 0.85
+
+                                    Text {
+                                        id: tagText
+                                        anchors.centerIn: parent
+                                        text: modelData
+                                        color: "white"
+                                        font.family: titleFont.name
+                                        font.pixelSize: Math.round(screenheight * 0.016)
+                                        font.bold: true
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Box info: sviluppatore, genere, data di rilascio — ora DENTRO descContent
+                    Rectangle {
+                        id: infoBox
+                        width: parent.width
+                        radius: vpx(14)
+                        color: "#22FFFFFF"
+                        height: infoBoxColumn.height + vpx(24)
+                        visible: (currentGame && currentGame.developer !== "") || (currentGame && currentGame.genreList && currentGame.genreList.length > 0) || (currentGame && currentGame.release && new Date(currentGame.release).getFullYear() > 1970)
+
+                        Column {
+                            id: infoBoxColumn
+                            anchors {
+                                left: parent.left
+                                right: parent.right
+                                top: parent.top
+                                margins: vpx(16)
+                            }
+                            spacing: vpx(10)
+
+                            Row {
+                                width: parent.width
+                                spacing: vpx(8)
+                                visible: currentGame && currentGame.developer !== ""
+
+                                Text {
+                                    text: "Developer"
+                                    color: "white"
+                                    opacity: 0.5
+                                    font.family: titleFont.name
+                                    font.bold: true
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                    width: vpx(90)
+                                }
+                                Text {
+                                    text: currentGame ? (currentGame.developer || "") : ""
+                                    color: "white"
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.016)
+                                    width: parent.width - vpx(98)
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+
+                            Row {
+                                width: parent.width
+                                spacing: vpx(8)
+                                visible: currentGame && currentGame.genreList && currentGame.genreList.length > 0
+
+                                Text {
+                                    text: "Genre"
+                                    color: "white"
+                                    opacity: 0.5
+                                    font.family: titleFont.name
+                                    font.bold: true
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                    width: vpx(90)
+                                }
+                                Text {
+                                    text: (currentGame && currentGame.genreList) ? currentGame.genreList.join(", ") : ""
+                                    color: "white"
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.016)
+                                    width: parent.width - vpx(98)
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+
+                            // Data di rilascio — nuova riga, stesso schema etichetta/valore
+                            Row {
+                                width: parent.width
+                                spacing: vpx(8)
+                                visible: currentGame && currentGame.release && new Date(currentGame.release).getFullYear() > 1970
+
+                                Text {
+                                    text: "Released"
+                                    color: "white"
+                                    opacity: 0.5
+                                    font.family: titleFont.name
+                                    font.bold: true
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                    width: vpx(90)
+                                }
+                                Text {
+                                    text: currentGame ? Utils.formatDateItalian(currentGame.release) : ""
+                                    color: "white"
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.016)
+                                    width: parent.width - vpx(98)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -527,12 +976,16 @@ FocusScope {
     Keys.onPressed: {
         if (api.keys.isCancel(event)) {
             event.accepted = true;
-            closeGameDetail();
+            if (root.showDescription) {
+                root.showDescription = false;
+            } else {
+                closeGameDetail();
+            }
+            return;
         }
         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
             event.accepted = true;
             closeGameDetail();
-
             anim.start();
             playGame();
         }
