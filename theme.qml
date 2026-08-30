@@ -12,6 +12,7 @@ import "layer_grid"
 import "layer_settings"
 import "layer_help"
 import "layer_buttons"
+import "layer_detail"
 import "Lists"
 import "resources" as Resources
 
@@ -73,6 +74,11 @@ FocusScope {
     property int currentCollection: api.memory.has('Last Collection') ? api.memory.get('Last Collection') : -1
     property int nextCollection: api.memory.has('Last Collection') ? api.memory.get('Last Collection') : -1
     property var currentGame
+    property bool gameDetailOpen: false
+    property real detailOriginX: 0
+    property real detailOriginY: 0
+    property real detailOriginWidth: 100
+    property real detailOriginHeight: 100
     property var softwareList: [listByLastPlayed, listByMostPlayed, listByTitle, listByPublisher, listFavorites]
     property int sortByIndex: api.memory.has('sortIndex') ? api.memory.get('sortIndex') : 0
     property string searchtext
@@ -143,6 +149,26 @@ FocusScope {
             break;
         }
         settingsSfx.play();
+    }
+
+    function openGameDetail(originItem, game) {
+        if (!originItem || !game)
+            return;
+        var pos = originItem.mapToItem(root, 0, 0);
+        detailOriginX = pos.x;
+        detailOriginY = pos.y;
+        detailOriginWidth = originItem.width;
+        detailOriginHeight = originItem.height;
+        currentGame = game;
+        gameDetailOpen = true;
+        gameDetailScreen.forceActiveFocus();
+        selectSfx.play();
+    }
+
+    function closeGameDetail() {
+        gameDetailOpen = false;
+        backSfx.play();
+        homeScreen.focus = true;
     }
 
     function showHomeScreen() {
@@ -866,6 +892,70 @@ FocusScope {
         api.memory.set('sortIndex', sortByIndex);
     }
 
+    Rectangle {
+        id: gameDetailDim
+        anchors.fill: parent
+        color: "black"
+        opacity: gameDetailOpen ? 0.6 : 0
+        visible: opacity > 0
+        z: 99
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 250
+            }
+        }
+    }
+
+    GameDetailScreen {
+        id: gameDetailScreen
+        game: currentGame
+        z: 100
+
+        x: gameDetailOpen ? 0 : detailOriginX
+        y: gameDetailOpen ? 0 : detailOriginY
+        width: gameDetailOpen ? screenwidth : detailOriginWidth
+        height: gameDetailOpen ? screenheight : detailOriginHeight
+        radius: gameDetailOpen ? 0 : vpx(24)
+        opacity: gameDetailOpen ? 1 : 0
+        visible: opacity > 0.01
+
+        Behavior on x {
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on y {
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on width {
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on height {
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on radius {
+            NumberAnimation {
+                duration: 320
+                easing.type: Easing.OutCubic
+            }
+        }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 220
+            }
+        }
+    }
+
     // Help bar
     Item {
         id: helpBar
@@ -878,9 +968,9 @@ FocusScope {
         }
         height: helpbarheight
 
-        opacity: homeScreen.expandedPanelOpen ? 0 : 1 
-        visible: opacity > 0                             
-        Behavior on opacity {                              
+        opacity: (homeScreen.expandedPanelOpen || gameDetailOpen) ? 0 : 1
+        visible: opacity > 0
+        Behavior on opacity {
             NumberAnimation {
                 duration: 200
             }

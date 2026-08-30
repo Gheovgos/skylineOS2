@@ -1232,7 +1232,7 @@ ListView {
                 onPressAndHold: {
                     var item = homeLayout.currentItem;
                     if (item)
-                        item.expanded = !item.expanded;
+                        openGameDetail(item, item.gameData);
                 }
             }
 
@@ -1345,7 +1345,7 @@ ListView {
             event.accepted = true;
             var item = homeLayout.currentItem;
             if (item)
-                item.expanded = !item.expanded;
+                openGameDetail(item, item.gameData);
             return;
         }
     }
