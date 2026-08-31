@@ -699,18 +699,17 @@ FocusScope {
                     width: timeRow.width + vpx(20)
                     radius: height / 2
                     color: "#33000000"
-                    visible: currentGame && (currentGame.playTime > 0 || (currentGame.extra && currentGame.extra.playtime > 0))
+                    visible: {
+                        var pt = currentGame ? currentGame.playTime : 0;
+                        var manual = currentGame.extra.playtime ? currentGame.extra.playtime : 0;
+                        var stackTime = parseInt(api.memory.get(currentGame.title) || "0");
+                        return pt > 0 || manual > 0 || stackTime > 0;
+                    }
 
                     Row {
                         id: timeRow
                         anchors.centerIn: parent
                         spacing: vpx(6)
-                        visible: {
-                            var pt = currentGame ? currentGame.playTime : 0;
-                            var manual = (currentGame && currentGame.extra) ? (currentGame.extra.playtime || 0) : 0;
-                            var stackTime = parseInt(api.memory.get(currentGame.title) || "0");
-                            return pt > 0 || manual > 0 || stackTime > 0;
-                        }
                         Image {
                             source: "../assets/images/navigation/clock.svg"
                             width: vpx(14)
@@ -723,11 +722,9 @@ FocusScope {
                         }
                         Text {
                             text: {
-                                if (!currentGame)
-                                    return "00:00";
                                 var totalSeconds = 0;
 
-                                if (currentGame.extra && currentGame.extra.playtime) {
+                                if (currentGame.extra.playtime) {
                                     totalSeconds = currentGame.extra.playtime;
                                     // Free memory
                                     if (api.memory.has(currentGame.title))
