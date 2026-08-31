@@ -15,6 +15,16 @@ FocusScope {
     property bool showDescription: false
     property string focusedButton: "play"   // "back" | "play" | "options" | "desc"
     property bool showOptionsPanel: false
+    property var optionsMenuItems: [
+        {
+            id: "sgdb",
+            label: "SteamGridDB"
+        },
+        {
+            id: "ra",
+            label: "RetroAchievements"
+        }
+    ]
 
     clip: true
 
@@ -569,6 +579,81 @@ FocusScope {
                 }
             }
 
+            Rectangle {
+                id: optionsPanel
+
+                width: vpx(220)
+                height: optionsColumn.height + vpx(16)
+                radius: vpx(16)
+                color: "#EE1A1A1A"
+
+                visible: root.showOptionsPanel
+
+                x: playRow.x + optionsButton.x + (optionsButton.width - width) / 2 + vpx(20)
+
+                y: playRow.y + optionsButton.y - height - vpx(30)
+
+                z: 10
+
+                layer.enabled: true
+                layer.effect: DropShadow {
+                    transparentBorder: true
+                    horizontalOffset: 0
+                    verticalOffset: vpx(4)
+                    radius: 16
+                    samples: 32
+                    color: "#80000000"
+                }
+
+                Column {
+                    id: optionsColumn
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        right: parent.right
+                        margins: vpx(8)
+                    }
+
+                    Repeater {
+                        model: root.optionsMenuItems
+                        Rectangle {
+                            width: parent.width
+                            height: vpx(44)
+                            radius: vpx(10)
+                            color: "transparent"
+
+                            Text {
+                                anchors {
+                                    left: parent.left
+                                    verticalCenter: parent.verticalCenter
+                                    leftMargin: vpx(14)
+                                }
+                                text: modelData.label
+                                color: "white"
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.017)
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+
+                                onClicked: {
+                                    root.showOptionsPanel = false;
+
+                                    if (modelData.id === "sgdb") {
+                                        console.log("SteamGridDB cliccato");
+                                        // qui la tua azione
+                                    } else if (modelData.id === "ra") {
+                                        console.log("RetroAchievements cliccato");
+                                        // qui la tua azione
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
             // progress + playtime
             Row {
                 spacing: vpx(10)
@@ -624,7 +709,6 @@ FocusScope {
                             var pt = currentGame ? currentGame.playTime : 0;
                             var manual = (currentGame && currentGame.extra) ? (currentGame.extra.playtime || 0) : 0;
                             var stackTime = parseInt(api.memory.get(currentGame.title) || "0");
-                            console.log("++++++++++++++++++++++++++++++", stackTime)
                             return pt > 0 || manual > 0 || stackTime > 0;
                         }
                         Image {

@@ -32,11 +32,11 @@ FocusScope {
 
     Image {
       id: controllerIcon
-      width: vpx(80)
-      height: vpx(70)
+      width: vpx(35)
+      height: vpx(35)
       horizontalAlignment: Image.AlignLeft
       fillMode: Image.PreserveAspectFit
-      source: collectionShortName ? "../assets/images/controllers/" + collectionShortName + ".svg" : "../assets/images/controllers/switch.svg"
+      source: "../assets/images/platforms/" + collectionShortName + ".svg"
       visible: false
 
       anchors {
