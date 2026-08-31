@@ -15,7 +15,6 @@ FocusScope {
     property bool showDescription: false
     property string focusedButton: "play"   // "back" | "play" | "options" | "desc"
     property bool showOptionsPanel: false
-    
 
     clip: true
 
@@ -99,7 +98,6 @@ FocusScope {
             }
         }
 
-        // Scurimento graduale da sinistra per far risaltare titolo/testo
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
@@ -136,7 +134,6 @@ FocusScope {
             }
         }
 
-        // === TOP STATUS BAR (ora, profilo, batteria, wifi) ===
         // === TOP STATUS BAR (ora, profilo, batteria, wifi) ===
         Item {
             id: topStatusBar
@@ -515,7 +512,7 @@ FocusScope {
                             }
                         }
                         Text {
-                            text: "Play Game"
+                            text: "Play"
                             color: "black"
                             font.family: titleFont.name
                             font.bold: true
@@ -528,9 +525,8 @@ FocusScope {
                         anchors.fill: parent
                         onClicked: {
                             root.focusedButton = "play";
-                            closeGameDetail();
+                            launchGame(currentGame);
                             anim.start();
-                            playGame();
                         }
                     }
                 }
@@ -586,7 +582,7 @@ FocusScope {
                     width: progRow.width + vpx(20)
                     radius: height / 2
                     color: "#33000000"
-                    visible: currentGame && currentGame.extra && currentGame.extra.progress > 0
+                    visible: currentGame.extra.progress > 0
 
                     Row {
                         id: progRow
@@ -624,6 +620,13 @@ FocusScope {
                         id: timeRow
                         anchors.centerIn: parent
                         spacing: vpx(6)
+                        visible: {
+                            var pt = currentGame ? currentGame.playTime : 0;
+                            var manual = (currentGame && currentGame.extra) ? (currentGame.extra.playtime || 0) : 0;
+                            var stackTime = parseInt(api.memory.get(currentGame.title) || "0");
+                            console.log("++++++++++++++++++++++++++++++", stackTime)
+                            return pt > 0 || manual > 0 || stackTime > 0;
+                        }
                         Image {
                             source: "../assets/images/navigation/clock.svg"
                             width: vpx(14)
@@ -638,12 +641,25 @@ FocusScope {
                             text: {
                                 if (!currentGame)
                                     return "00:00";
-                                var total = (currentGame.extra && currentGame.extra.playtime) ? currentGame.extra.playtime : currentGame.playTime;
-                                if (!total || total <= 0)
+                                var totalSeconds = 0;
+
+                                if (currentGame.extra && currentGame.extra.playtime) {
+                                    totalSeconds = currentGame.extra.playtime;
+                                    // Free memory
+                                    if (api.memory.has(currentGame.title))
+                                        api.memory.unset(currentGame.title);
+                                } else if (api.memory.has(currentGame.title))
+                                    totalSeconds = api.memory.get(currentGame.title);
+                                else if (currentGame.playTime > 0)
+                                    totalSeconds = currentGame.playTime;
+
+                                if (totalSeconds <= 0)
                                     return "00:00";
-                                var h = Math.floor(total / 3600);
-                                var m = Math.floor((total % 3600) / 60);
-                                return h + "h " + (m < 10 ? "0" + m : m) + "m";
+
+                                var h = Math.floor(totalSeconds / 3600);
+                                var m = Math.floor((totalSeconds % 3600) / 60);
+
+                                return h + ":" + (m < 10 ? "0" + m : m);
                             }
                             color: "white"
                             font.family: titleFont.name
@@ -890,7 +906,7 @@ FocusScope {
                     Text {
                         id: descText
                         width: parent.width
-                        text: currentGame ? (currentGame.description || currentGame.summary || "") : ""
+                        text: currentGame.summary ? currentGame.summary : ""
                         color: "white"
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.019)
@@ -943,7 +959,7 @@ FocusScope {
                         }
                     }
 
-                    // Box info: sviluppatore, genere, data di rilascio — ora DENTRO descContent
+                    // Box info
                     Rectangle {
                         id: infoBox
                         width: parent.width
