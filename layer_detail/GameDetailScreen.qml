@@ -40,7 +40,11 @@ FocusScope {
         id: raAchievementsModelDetail
     }
 
-    property bool anyOverlayOpen: showSgdbInput || showAchievements || showRaInput
+    property bool anyOverlayOpen: showSgdbInput || showAchievements || showRaInput || showHltbPanel
+
+    property bool showHltbPanel: false
+    property bool hltbLoading: false
+    property var hltbData: null
 
     clip: true
 
@@ -66,7 +70,9 @@ FocusScope {
     }
 
     function goBack() {
-        if (showRaInput) {
+        if (showHltbPanel) {
+            showHltbPanel = false;
+        } else if (showRaInput) {
             showRaInput = false;
         } else if (showAchievements) {
             showAchievements = false;
@@ -192,6 +198,25 @@ FocusScope {
                 return;
             raAchievementsLoading = false;
             raAchievementsNotFound = !success;
+        });
+    }
+
+    function openHltbPanel() {
+        showOptionsPanel = false;
+        hltbData = null;
+        hltbLoading = true;
+        showHltbPanel = true;
+        hltbPanel.forceActiveFocus();
+
+        if (!currentGame)
+            return;
+
+        var requestedGame = currentGame;
+        Utils.fetchHltbData(currentGame.title, function (result) {
+            if (currentGame !== requestedGame)
+                return;
+            hltbLoading = false;
+            hltbData = result;
         });
     }
 
@@ -1011,6 +1036,32 @@ FocusScope {
                     }
                 }
             }
+
+            Rectangle {
+                id: hltbArrowButton
+                width: vpx(56)
+                height: vpx(56)
+                radius: width / 2
+                color: "#33000000"
+                visible: currentGame !== null
+
+                Image {
+                    anchors.centerIn: parent
+                    width: vpx(18)
+                    height: vpx(18)
+                    fillMode: Image.PreserveAspectFit
+                    source: "../assets/images/navigation/right.svg"
+                    layer.enabled: true
+                    layer.effect: ColorOverlay {
+                        color: "white"
+                    }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.openHltbPanel()
+                }
+            }
         }
 
         Rectangle {
@@ -1636,6 +1687,148 @@ FocusScope {
         }
 
         Rectangle {
+            id: hltbPanel
+            visible: root.showHltbPanel
+            anchors.centerIn: parent
+            width: Math.round(screenwidth * 0.32)
+            height: vpx(240)
+            radius: vpx(20)
+            color: theme.button
+            z: 100
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 0
+                verticalOffset: vpx(6)
+                radius: 20
+                samples: 32
+                color: "#60000000"
+            }
+
+            Item {
+                anchors {
+                    fill: parent
+                    margins: vpx(24)
+                }
+
+                Row {
+                    id: hltbHeader
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                        right: parent.right
+                    }
+
+                    Text {
+                        text: "How Long to Beat"
+                        color: theme.text
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.02)
+                    }
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    visible: root.hltbLoading
+                    text: "Loading..."
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.017)
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    visible: !root.hltbLoading && !root.hltbData
+                    text: "No data found on HowLongToBeat"
+                    color: theme.icon
+                    opacity: 0.6
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.017)
+                    width: parent.width * 0.8
+                    wrapMode: Text.WordWrap
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Column {
+                    anchors {
+                        top: hltbHeader.bottom
+                        topMargin: vpx(20)
+                        left: parent.left
+                        right: parent.right
+                    }
+                    spacing: vpx(14)
+                    visible: !root.hltbLoading && root.hltbData !== null
+
+                    Row {
+                        width: parent.width
+                        Text {
+                            text: "Main Story"
+                            color: theme.icon
+                            opacity: 0.6
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.016)
+                            width: parent.width * 0.6
+                        }
+                        Text {
+                            text: (root.hltbData && root.hltbData.main > 0) ? (root.hltbData.main.toFixed(1) + "h") : "—"
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.018)
+                        }
+                    }
+                    Row {
+                        width: parent.width
+                        Text {
+                            text: "Main + Extra"
+                            color: theme.icon
+                            opacity: 0.6
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.016)
+                            width: parent.width * 0.6
+                        }
+                        Text {
+                            text: (root.hltbData && root.hltbData.mainExtra > 0) ? (root.hltbData.mainExtra.toFixed(1) + "h") : "—"
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.018)
+                        }
+                    }
+                    Row {
+                        width: parent.width
+                        Text {
+                            text: "Completionist"
+                            color: theme.icon
+                            opacity: 0.6
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.016)
+                            width: parent.width * 0.6
+                        }
+                        Text {
+                            text: (root.hltbData && root.hltbData.completionist > 0) ? (root.hltbData.completionist.toFixed(1) + "h") : "—"
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.018)
+                        }
+                    }
+                }
+            }
+
+            Keys.onPressed: {
+                if (!visible)
+                    return;
+                event.accepted = true;
+                if (api.keys.isCancel(event)) {
+                    root.goBack();
+                }
+            }
+        }
+
+        Rectangle {
             id: raInputPanel
             visible: root.showRaInput
             anchors.centerIn: parent
@@ -1778,7 +1971,7 @@ FocusScope {
         Rectangle {
             anchors.fill: parent
             color: "black"
-            opacity: (root.showSgdbInput || root.showAchievements || root.showRaInput) ? 0.5 : 0
+            opacity: (root.showSgdbInput || root.showAchievements || root.showRaInput || root.showHltbPanel) ? 0.5 : 0
             visible: opacity > 0
             z: 99
             Behavior on opacity {

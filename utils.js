@@ -634,3 +634,57 @@ function raLookupGameId(title) {
   var key = "RA_GameID::" + title;
   return api.memory.has(key) ? parseInt(api.memory.get(key)) : 0;
 }
+
+//For HowLongToBeat
+
+function fetchHltbData(title, callback) {
+  if (!title) { callback(null); return; }
+
+  var cacheKey = "HLTB::" + title;
+  if (api.memory.has(cacheKey)) {
+    try {
+      callback(JSON.parse(api.memory.get(cacheKey)));
+      return;
+    } catch (e) { /* cache corrotta, ripeti la richiesta */ }
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) { callback(null); return; }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (!data.data || data.data.length === 0) { callback(null); return; }
+
+      var g = data.data[0];
+      // I campi comp_* sono espressi in secondi
+      var result = {
+        title: g.game_name || title,
+        main: g.comp_main > 0 ? (g.comp_main / 3600) : 0,
+        mainExtra: g.comp_plus > 0 ? (g.comp_plus / 3600) : 0,
+        completionist: g.comp_100 > 0 ? (g.comp_100 / 3600) : 0
+      };
+      api.memory.set(cacheKey, JSON.stringify(result));
+      callback(result);
+    } catch (e) {
+      callback(null);
+    }
+  };
+
+  xhr.open("POST", "https://howlongtobeat.com/api/search");
+  xhr.setRequestHeader("Content-Type", "application/json");
+  xhr.send(JSON.stringify({
+    searchType: "games",
+    searchTerms: title.split(" "),
+    searchPage: 1,
+    size: 1,
+    searchOptions: {
+      games: { userId: 0, platform: "", sortCategory: "popular", rangeCategory: "main", rangeTime: { min: 0, max: 0 }, gameplay: { perspective: "", flow: "", genre: "" }, modifier: "" },
+      users: { sortCategory: "postcount" },
+      lists: { sortCategory: "follows" },
+      filter: "",
+      sort: 0,
+      randomizer: 0
+    }
+  }));
+}
