@@ -24,10 +24,23 @@ FocusScope {
             label: "SteamGridDB"
         },
         {
-            id: "ra",
-            label: "RetroAchievements"
+            id: "trophy",
+            label: "Trophy"
         }
     ]
+
+    property string raDisplayId: ""
+    property bool showRaInput: false
+    property string raInputValue: ""
+
+    property bool showAchievements: false
+    property bool raAchievementsLoading: false
+    property bool raAchievementsNotFound: false
+    ListModel {
+        id: raAchievementsModelDetail
+    }
+
+    property bool anyOverlayOpen: showSgdbInput || showAchievements || showRaInput
 
     clip: true
 
@@ -35,6 +48,7 @@ FocusScope {
         if (visible) {
             focusedButton = "play";
             refreshSgdbDisplayId();
+            refreshRaDisplayId();
         }
         maybeScrapeBackground();
     }
@@ -52,7 +66,11 @@ FocusScope {
     }
 
     function goBack() {
-        if (showSgdbInput) {
+        if (showRaInput) {
+            showRaInput = false;
+        } else if (showAchievements) {
+            showAchievements = false;
+        } else if (showSgdbInput) {
             showSgdbInput = false;
         } else if (showOptionsPanel) {
             showOptionsPanel = false;
@@ -118,6 +136,63 @@ FocusScope {
     function cancelSgdbInput() {
         Qt.inputMethod.hide();
         showSgdbInput = false;
+    }
+
+    function raIdKey() {
+        return currentGame ? ("RA_ID::" + currentGame.title) : "";
+    }
+
+    function refreshRaDisplayId() {
+        var key = raIdKey();
+        raDisplayId = (key && api.memory.has(key)) ? api.memory.get(key) : "";
+    }
+
+    function openRaInput() {
+        showAchievements = false;
+        raInputValue = raDisplayId;
+        showRaInput = true;
+        Qt.inputMethod.show();
+    }
+
+    function saveRaInput() {
+        var key = raIdKey();
+        if (key)
+            api.memory.set(key, raInputValue);
+        Qt.inputMethod.hide();
+        showRaInput = false;
+        refreshRaDisplayId();
+        openAchievementsPanel();
+    }
+
+    function cancelRaInput() {
+        Qt.inputMethod.hide();
+        showRaInput = false;
+        showAchievements = true;
+    }
+
+    function openAchievementsPanel() {
+        showOptionsPanel = false;
+        var raId = raDisplayId;
+
+        if (!raId) {
+            raAchievementsNotFound = true;
+            raAchievementsModelDetail.clear();
+            showAchievements = true;
+            achievementsPanel.forceActiveFocus();
+            return;
+        }
+
+        raAchievementsNotFound = false;
+        raAchievementsLoading = true;
+        showAchievements = true;
+        achievementsPanel.forceActiveFocus();
+        var requestedGame = currentGame;
+        Utils.loadGameAchievements(raId, raAchievementsModelDetail, function (success) {
+            if (currentGame !== requestedGame)
+                return;
+            raAchievementsLoading = false;
+            raAchievementsNotFound = !success;
+        });
     }
 
     Rectangle {
@@ -700,9 +775,8 @@ FocusScope {
                                 onClicked: {
                                     if (modelData.id === "sgdb") {
                                         root.openSgdbInput();
-                                    } else if (modelData.id === "ra") {
-                                        root.showOptionsPanel = false;
-                                        console.log("RetroAchievements cliccato");
+                                    } else if (modelData.id === "trophy") {
+                                        root.openAchievementsPanel();
                                     }
                                 }
                             }
@@ -1333,11 +1407,378 @@ FocusScope {
             }
         }
 
-        // Overlay scurente per il pannello — anch'esso ora diretto figlio di bg
+        Rectangle {
+            id: achievementsPanel
+            visible: root.showAchievements
+            anchors.centerIn: parent
+            width: Math.round(screenwidth * 0.5)
+            height: Math.round(bg.height * 0.75)
+            radius: vpx(20)
+            color: theme.button
+            z: 100
+            clip: true
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 0
+                verticalOffset: vpx(6)
+                radius: 20
+                samples: 32
+                color: "#60000000"
+            }
+
+            Item {
+                anchors {
+                    fill: parent
+                    margins: vpx(28)
+                }
+
+                Text {
+                    id: achTitle
+                    anchors {
+                        top: parent.top
+                        left: parent.left
+                    }
+                    text: "Trophies"
+                    color: theme.text
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.026)
+                    font.bold: true
+                }
+
+                Text {
+                    anchors {
+                        top: parent.top
+                        right: parent.right
+                        verticalCenter: achTitle.verticalCenter
+                    }
+                    visible: root.raAchievementsLoading
+                    text: "Loading..."
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.017)
+                }
+
+                Column {
+                    anchors.centerIn: parent
+                    spacing: vpx(16)
+                    visible: !root.raAchievementsLoading && root.raAchievementsNotFound
+                    width: parent.width * 0.7
+
+                    Text {
+                        width: parent.width
+                        text: root.raDisplayId === "" ? "No RetroAchievements ID set for this game" : "No achievements found for this ID"
+                        color: theme.icon
+                        opacity: 0.6
+                        font.family: titleFont.name
+                        font.pixelSize: Math.round(screenheight * 0.018)
+                        wrapMode: Text.WordWrap
+                        horizontalAlignment: Text.AlignHCenter
+                    }
+
+                    Rectangle {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: setIdText.width + vpx(32)
+                        height: vpx(40)
+                        radius: height / 2
+                        color: theme.accent
+
+                        Text {
+                            id: setIdText
+                            anchors.centerIn: parent
+                            text: root.raDisplayId === "" ? "Set ID" : "Change ID"
+                            color: "white"
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.016)
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            onClicked: root.openRaInput()
+                        }
+                    }
+                }
+
+                ListView {
+                    id: achievementsListDetail
+                    anchors {
+                        top: achTitle.bottom
+                        topMargin: vpx(16)
+                        left: parent.left
+                        right: parent.right
+                        bottom: parent.bottom
+                    }
+                    visible: !root.raAchievementsLoading && !root.raAchievementsNotFound
+                    spacing: vpx(6)
+                    clip: true
+                    model: raAchievementsModelDetail
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    delegate: Item {
+                        width: achievementsListDetail.width
+                        height: vpx(64)
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: vpx(10)
+                            color: earned ? theme.main : "#1A000000"
+                            opacity: earned ? 0.8 : 0.5
+                            border.color: earned ? theme.accent : "transparent"
+                            border.width: earned ? vpx(1) : 0
+                        }
+
+                        Item {
+                            id: badgeClipDetail
+                            width: vpx(48)
+                            height: vpx(48)
+                            anchors {
+                                left: parent.left
+                                leftMargin: vpx(8)
+                                verticalCenter: parent.verticalCenter
+                            }
+                            opacity: earned ? 1.0 : 0.35
+
+                            Image {
+                                id: badgeImgDetail
+                                anchors.fill: parent
+                                fillMode: Image.PreserveAspectFit
+                                visible: false
+                                source: badgeUrl
+                                asynchronous: true
+                            }
+                            Rectangle {
+                                id: badgeMaskDetail
+                                anchors.fill: parent
+                                radius: vpx(6)
+                                visible: false
+                            }
+                            OpacityMask {
+                                anchors.fill: parent
+                                source: badgeImgDetail
+                                maskSource: badgeMaskDetail
+                            }
+                        }
+
+                        Column {
+                            anchors {
+                                left: badgeClipDetail.right
+                                leftMargin: vpx(10)
+                                right: pointsBadgeDetail.left
+                                rightMargin: vpx(8)
+                                verticalCenter: parent.verticalCenter
+                            }
+                            spacing: vpx(2)
+
+                            Text {
+                                width: parent.width
+                                text: title
+                                color: earned ? theme.text : theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.018)
+                                font.bold: earned
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                width: parent.width
+                                text: description
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.014)
+                                opacity: 0.7
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                visible: earned && dateEarned !== ""
+                                text: "Unlocked: " + dateEarned
+                                color: theme.accent
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.013)
+                                opacity: 0.8
+                            }
+                        }
+
+                        Rectangle {
+                            id: pointsBadgeDetail
+                            anchors {
+                                right: parent.right
+                                rightMargin: vpx(10)
+                                verticalCenter: parent.verticalCenter
+                            }
+                            width: vpx(44)
+                            height: vpx(24)
+                            radius: height / 2
+                            color: earned ? theme.accent : theme.main
+                            opacity: earned ? 1.0 : 0.5
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: points + "p"
+                                color: earned ? "white" : theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.015)
+                                font.bold: true
+                            }
+                        }
+                    }
+                }
+            }
+
+            Keys.onPressed: {
+                if (!visible)
+                    return;
+                event.accepted = true;
+                if (api.keys.isCancel(event)) {
+                    root.goBack();
+                }
+            }
+        }
+
+        Rectangle {
+            id: raInputPanel
+            visible: root.showRaInput
+            anchors.centerIn: parent
+            width: Math.round(screenwidth * 0.35)
+            height: vpx(180)
+            radius: vpx(20)
+            color: theme.button
+            z: 100
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 0
+                verticalOffset: vpx(6)
+                radius: 20
+                samples: 32
+                color: "#60000000"
+            }
+
+            TextInput {
+                id: raHiddenInput
+                visible: false
+                focus: root.showRaInput
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Backspace) {
+                        event.accepted = true;
+                        root.raInputValue = root.raInputValue.slice(0, -1);
+                        return;
+                    }
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        event.accepted = true;
+                        root.saveRaInput();
+                        return;
+                    }
+                    if (event.key === Qt.Key_Escape) {
+                        event.accepted = true;
+                        root.cancelRaInput();
+                        return;
+                    }
+                }
+                onTextChanged: {
+                    if (text !== "") {
+                        root.raInputValue += text;
+                        text = "";
+                    }
+                }
+            }
+
+            Column {
+                anchors {
+                    fill: parent
+                    margins: vpx(24)
+                }
+                spacing: vpx(16)
+
+                Text {
+                    text: "RetroAchievements ID"
+                    color: theme.text
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.022)
+                    font.bold: true
+                    opacity: 0.6
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: vpx(48)
+                    radius: vpx(10)
+                    color: theme.main
+
+                    Row {
+                        anchors {
+                            fill: parent
+                            leftMargin: vpx(12)
+                            rightMargin: vpx(12)
+                        }
+                        spacing: vpx(4)
+
+                        Text {
+                            text: root.raInputValue
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.028)
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Rectangle {
+                            width: vpx(2)
+                            height: vpx(24)
+                            color: theme.accent
+                            anchors.verticalCenter: parent.verticalCenter
+                            SequentialAnimation on opacity {
+                                running: root.showRaInput
+                                loops: Animation.Infinite
+                                NumberAnimation {
+                                    to: 0
+                                    duration: 500
+                                }
+                                NumberAnimation {
+                                    to: 1
+                                    duration: 500
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Enter to confirm • Esc to undo"
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.016)
+                    opacity: 0.5
+                }
+            }
+
+            Keys.onPressed: {
+                if (!visible)
+                    return;
+                event.accepted = true;
+                if (event.key === Qt.Key_Backspace) {
+                    root.raInputValue = root.raInputValue.slice(0, -1);
+                    return;
+                }
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || api.keys.isAccept(event)) {
+                    root.saveRaInput();
+                    return;
+                }
+                if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
+                    root.cancelRaInput();
+                    return;
+                }
+                var inputChar = event.text;
+                if (inputChar && inputChar.length === 1)
+                    root.raInputValue += inputChar;
+            }
+        }
+
         Rectangle {
             anchors.fill: parent
             color: "black"
-            opacity: root.showSgdbInput ? 0.5 : 0
+            opacity: (root.showSgdbInput || root.showAchievements || root.showRaInput) ? 0.5 : 0
             visible: opacity > 0
             z: 99
             Behavior on opacity {
@@ -1349,12 +1790,16 @@ FocusScope {
     }
 
     Keys.onLeftPressed: {
+        if (anyOverlayOpen)
+            return;
         navSound.play();
         var order = ["back", "play", "options", "desc"];
         var i = order.indexOf(focusedButton);
         focusedButton = order[(i - 1 + order.length) % order.length];
     }
     Keys.onRightPressed: {
+        if (anyOverlayOpen)
+            return;
         navSound.play();
         var order = ["back", "play", "options", "desc"];
         var i = order.indexOf(focusedButton);
@@ -1362,6 +1807,8 @@ FocusScope {
     }
 
     Keys.onPressed: {
+        if (anyOverlayOpen)
+            return;
         if (api.keys.isCancel(event)) {
             event.accepted = true;
             goBack();

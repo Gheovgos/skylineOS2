@@ -474,19 +474,22 @@ function loadRAData() {
   xhrGames.send();
 }
 
-function loadGameAchievements(gameId, targetModel) {
+function loadGameAchievements(gameId, targetModel, onDone) {
   var username = api.memory.get("RA_Username");
   var apiKey = api.memory.get("RetroAchievements API Key");
   targetModel.clear();
 
   var xhr = new XMLHttpRequest();
   xhr.onreadystatechange = function () {
-    if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status === 200) {
       try {
         var data = JSON.parse(xhr.responseText);
         var achievements = data.Achievements;
-        if (!achievements)
+        if (!achievements) {
+          if (onDone) onDone(false);
           return;
+        }
         for (var key in achievements) {
           var a = achievements[key];
           targetModel.append({
@@ -498,9 +501,13 @@ function loadGameAchievements(gameId, targetModel) {
             dateEarned: a.DateEarned ? Qt.formatDate(new Date(a.DateEarned), "dd MMM yyyy") : ""
           });
         }
+        if (onDone) onDone(true);
       } catch (e) {
         console.log("Achievement parse error:", e);
+        if (onDone) onDone(false);
       }
+    } else {
+      if (onDone) onDone(false);
     }
   };
   xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
