@@ -40,11 +40,13 @@ FocusScope {
         id: raAchievementsModelDetail
     }
 
-    property bool anyOverlayOpen: showSgdbInput || showAchievements || showRaInput || showHltbPanel
+    property bool anyOverlayOpen: showSgdbInput || showAchievements || showRaInput
 
-    property bool showHltbPanel: false
+    property bool showHltbInline: false
     property bool hltbLoading: false
     property var hltbData: null
+    property bool hltbFetchedForCurrentGame: false
+    readonly property bool hasRatingOrPeriod: currentGame && ((currentGame.rating > 0) || (currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)))
 
     clip: true
 
@@ -70,8 +72,8 @@ FocusScope {
     }
 
     function goBack() {
-        if (showHltbPanel) {
-            showHltbPanel = false;
+        if (showHltbInline) {
+            closeHltbInline();
         } else if (showRaInput) {
             showRaInput = false;
         } else if (showAchievements) {
@@ -201,24 +203,32 @@ FocusScope {
         });
     }
 
-    function openHltbPanel() {
-        showOptionsPanel = false;
-        hltbData = null;
-        hltbLoading = true;
-        showHltbPanel = true;
-        hltbPanel.forceActiveFocus();
+    function openHltbInline() {
+    showOptionsPanel = false;
+    showHltbInline = true;
 
-        if (!currentGame)
+    if (!currentGame)
+        return;
+
+    if (hltbFetchedForCurrentGame)
+        return;
+
+    hltbData = null;
+    hltbLoading = true;
+    hltbFetchedForCurrentGame = true;
+
+    var requestedGame = currentGame;
+    Utils.fetchHltbData(currentGame.title, function (result) {
+        if (currentGame !== requestedGame)
             return;
+        hltbLoading = false;
+        hltbData = result;
+    });
+}
 
-        var requestedGame = currentGame;
-        Utils.fetchHltbData(currentGame.title, function (result) {
-            if (currentGame !== requestedGame)
-                return;
-            hltbLoading = false;
-            hltbData = result;
-        });
-    }
+function closeHltbInline() {
+    showHltbInline = false;
+}
 
     Rectangle {
         id: bg
@@ -942,32 +952,220 @@ FocusScope {
         }
 
         // === CENTRO BASSO: rating + periodo di gioco ===
-        Row {
-            id: centerInfoRow
-            spacing: vpx(14)
-            anchors {
-                bottom: parent.bottom
-                horizontalCenter: parent.horizontalCenter
-                bottomMargin: vpx(32)
+        Item {
+    id: statsSwitcher
+    anchors {
+        bottom: parent.bottom
+        horizontalCenter: parent.horizontalCenter
+        bottomMargin: vpx(32)
+    }
+    width: Math.max(defaultStatsRow.width, hltbStatsRow.width)
+    height: vpx(56)
+    clip: true
+
+    // ===== Riga di default: rating + periodo di gioco + pulsante toggle =====
+    Row {
+        id: defaultStatsRow
+        spacing: vpx(14)
+        anchors.verticalCenter: parent.verticalCenter
+        x: root.showHltbInline ? -width - vpx(60) : (parent.width - width) / 2
+
+        Behavior on x {
+            NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+        }
+
+        Rectangle {
+            id: ratingBadge
+            width: vpx(56)
+            height: vpx(56)
+            radius: vpx(14)
+            visible: currentGame && currentGame.rating > 0
+            color: {
+                if (!currentGame)
+                    return "#33000000";
+                var r = currentGame.rating * 10;
+                if (r >= 8)
+                    return "#1DB954";
+                if (r >= 5)
+                    return "#F5A623";
+                return "#E63946";
             }
 
-            // Badge rating, colorato in base al punteggio
+            Column {
+                anchors.centerIn: parent
+                spacing: vpx(1)
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: currentGame ? (currentGame.rating * 10).toFixed(1) : ""
+                    color: "white"
+                    font.family: titleFont.name
+                    font.bold: true
+                    font.pixelSize: Math.round(screenheight * 0.022)
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: "RATING"
+                    color: "white"
+                    opacity: 0.85
+                    font.family: titleFont.name
+                    font.bold: true
+                    font.letterSpacing: 1
+                    font.pixelSize: Math.round(screenheight * 0.009)
+                }
+            }
+        }
+
+        Rectangle {
+            id: playPeriodPill
+            height: vpx(56)
+            width: playPeriodColumn.width + vpx(28)
+            radius: vpx(14)
+            color: "#33000000"
+            visible: currentGame && currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)
+
+            Column {
+                id: playPeriodColumn
+                anchors.centerIn: parent
+                spacing: vpx(2)
+
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: (currentGame && currentGame.extra && currentGame.extra.enddate) ? "PLAY PERIOD" : "STARTED"
+                    color: "white"
+                    opacity: 0.5
+                    font.family: titleFont.name
+                    font.bold: true
+                    font.letterSpacing: 1
+                    font.pixelSize: Math.round(screenheight * 0.011)
+                }
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: {
+                        if (!currentGame || !currentGame.extra)
+                            return "";
+                        var start = currentGame.extra.startdate || "";
+                        var end = currentGame.extra.enddate || "";
+                        if (start && end)
+                            return Utils.formatDateItalian(start) + "  →  " + Utils.formatDateItalian(end);
+                        return start ? Utils.formatDateItalian(start) : "";
+                    }
+                    color: "white"
+                    font.family: titleFont.name
+                    font.bold: true
+                    font.pixelSize: Math.round(screenheight * 0.016)
+                }
+            }
+        }
+
+        Rectangle {
+            id: statsToggleButton
+            width: vpx(56)
+            height: vpx(56)
+            radius: vpx(14)
+            color: "#33000000"
+            visible: currentGame !== null
+
+            Image {
+                anchors.centerIn: parent
+                width: vpx(18)
+                height: vpx(18)
+                fillMode: Image.PreserveAspectFit
+                source: root.hasRatingOrPeriod
+                    ? "../assets/images/navigation/right.svg"
+                    : "../assets/images/navigation/howlongtobeat.svg"
+                layer.enabled: true
+                layer.effect: ColorOverlay { color: "white" }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.openHltbInline()
+            }
+        }
+    }
+
+    // ===== Riga HLTB: pulsante indietro + quadratini con i tempi =====
+    Row {
+        id: hltbStatsRow
+        spacing: vpx(14)
+        anchors.verticalCenter: parent.verticalCenter
+        x: root.showHltbInline ? (parent.width - width) / 2 : parent.width + vpx(60)
+
+        Behavior on x {
+            NumberAnimation { duration: 260; easing.type: Easing.OutCubic }
+        }
+
+        Rectangle {
+            id: hltbBackButton
+            width: vpx(56)
+            height: vpx(56)
+            radius: vpx(14)
+            color: "#33000000"
+
+            Image {
+                anchors.centerIn: parent
+                width: vpx(18)
+                height: vpx(18)
+                fillMode: Image.PreserveAspectFit
+                source: "../assets/images/navigation/left.svg"
+                layer.enabled: true
+                layer.effect: ColorOverlay { color: "white" }
+            }
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.closeHltbInline()
+            }
+        }
+
+        Rectangle {
+            width: vpx(160)
+            height: vpx(56)
+            radius: vpx(14)
+            color: "#33000000"
+            visible: root.hltbLoading
+
+            Text {
+                anchors.centerIn: parent
+                text: "Loading..."
+                color: "white"
+                opacity: 0.7
+                font.family: titleFont.name
+                font.pixelSize: Math.round(screenheight * 0.016)
+            }
+        }
+
+        Rectangle {
+            width: vpx(220)
+            height: vpx(56)
+            radius: vpx(14)
+            color: "#33000000"
+            visible: !root.hltbLoading && !root.hltbData
+
+            Text {
+                anchors.centerIn: parent
+                text: "No HLTB data"
+                color: "white"
+                opacity: 0.6
+                font.family: titleFont.name
+                font.pixelSize: Math.round(screenheight * 0.015)
+            }
+        }
+
+        Repeater {
+            model: (!root.hltbLoading && root.hltbData) ? [
+                { value: root.hltbData.main, label: "MAIN" },
+                { value: root.hltbData.mainExtra, label: "EXTRA" },
+                { value: root.hltbData.completionist, label: "100%" }
+            ] : []
+
             Rectangle {
-                id: ratingBadge
-                width: vpx(56)
+                width: vpx(72)
                 height: vpx(56)
                 radius: vpx(14)
-                visible: currentGame && currentGame.rating > 0
-                color: {
-                    if (!currentGame)
-                        return "#33000000";
-                    var r = currentGame.rating * 10;
-                    if (r >= 8)
-                        return "#1DB954"; // verde
-                    if (r >= 5)
-                        return "#F5A623"; // ambra
-                    return "#E63946"; // rosso
-                }
+                color: "#33000000"
+                visible: modelData.value > 0
 
                 Column {
                     anchors.centerIn: parent
@@ -975,17 +1173,17 @@ FocusScope {
 
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: currentGame ? (currentGame.rating * 10).toFixed(1) : ""
+                        text: modelData.value.toFixed(1) + "h"
                         color: "white"
                         font.family: titleFont.name
                         font.bold: true
-                        font.pixelSize: Math.round(screenheight * 0.022)
+                        font.pixelSize: Math.round(screenheight * 0.02)
                     }
                     Text {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: "RATING"
+                        text: modelData.label
                         color: "white"
-                        opacity: 0.85
+                        opacity: 0.7
                         font.family: titleFont.name
                         font.bold: true
                         font.letterSpacing: 1
@@ -993,76 +1191,9 @@ FocusScope {
                     }
                 }
             }
-
-            // Pill periodo di gioco (startDate / endDate)
-            Rectangle {
-                id: playPeriodPill
-                height: vpx(56)
-                width: playPeriodColumn.width + vpx(28)
-                radius: vpx(14)
-                color: "#33000000"
-                visible: currentGame && currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)
-
-                Column {
-                    id: playPeriodColumn
-                    anchors.centerIn: parent
-                    spacing: vpx(2)
-
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: (currentGame && currentGame.extra && currentGame.extra.enddate) ? "PLAY PERIOD" : "STARTED"
-                        color: "white"
-                        opacity: 0.5
-                        font.family: titleFont.name
-                        font.bold: true
-                        font.letterSpacing: 1
-                        font.pixelSize: Math.round(screenheight * 0.011)
-                    }
-                    Text {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        text: {
-                            if (!currentGame || !currentGame.extra)
-                                return "";
-                            var start = currentGame.extra.startdate || "";
-                            var end = currentGame.extra.enddate || "";
-                            if (start && end)
-                                return Utils.formatDateItalian(start) + "  →  " + Utils.formatDateItalian(end);
-                            return start ? Utils.formatDateItalian(start) : "";
-                        }
-                        color: "white"
-                        font.family: titleFont.name
-                        font.bold: true
-                        font.pixelSize: Math.round(screenheight * 0.016)
-                    }
-                }
-            }
-
-            Rectangle {
-                id: hltbArrowButton
-                width: vpx(56)
-                height: vpx(56)
-                radius: width / 2
-                color: "#33000000"
-                visible: currentGame !== null
-
-                Image {
-                    anchors.centerIn: parent
-                    width: vpx(18)
-                    height: vpx(18)
-                    fillMode: Image.PreserveAspectFit
-                    source: "../assets/images/navigation/right.svg"
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
-                        color: "white"
-                    }
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: root.openHltbPanel()
-                }
-            }
         }
+    }
+}
 
         Rectangle {
             id: descToggleButton
@@ -1687,148 +1818,6 @@ FocusScope {
         }
 
         Rectangle {
-            id: hltbPanel
-            visible: root.showHltbPanel
-            anchors.centerIn: parent
-            width: Math.round(screenwidth * 0.32)
-            height: vpx(240)
-            radius: vpx(20)
-            color: theme.button
-            z: 100
-
-            layer.enabled: true
-            layer.effect: DropShadow {
-                transparentBorder: true
-                horizontalOffset: 0
-                verticalOffset: vpx(6)
-                radius: 20
-                samples: 32
-                color: "#60000000"
-            }
-
-            Item {
-                anchors {
-                    fill: parent
-                    margins: vpx(24)
-                }
-
-                Row {
-                    id: hltbHeader
-                    anchors {
-                        top: parent.top
-                        left: parent.left
-                        right: parent.right
-                    }
-
-                    Text {
-                        text: "How Long to Beat"
-                        color: theme.text
-                        font.family: titleFont.name
-                        font.bold: true
-                        font.pixelSize: Math.round(screenheight * 0.02)
-                    }
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: root.hltbLoading
-                    text: "Loading..."
-                    color: theme.icon
-                    font.family: titleFont.name
-                    font.pixelSize: Math.round(screenheight * 0.017)
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    visible: !root.hltbLoading && !root.hltbData
-                    text: "No data found on HowLongToBeat"
-                    color: theme.icon
-                    opacity: 0.6
-                    font.family: titleFont.name
-                    font.pixelSize: Math.round(screenheight * 0.017)
-                    width: parent.width * 0.8
-                    wrapMode: Text.WordWrap
-                    horizontalAlignment: Text.AlignHCenter
-                }
-
-                Column {
-                    anchors {
-                        top: hltbHeader.bottom
-                        topMargin: vpx(20)
-                        left: parent.left
-                        right: parent.right
-                    }
-                    spacing: vpx(14)
-                    visible: !root.hltbLoading && root.hltbData !== null
-
-                    Row {
-                        width: parent.width
-                        Text {
-                            text: "Main Story"
-                            color: theme.icon
-                            opacity: 0.6
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.016)
-                            width: parent.width * 0.6
-                        }
-                        Text {
-                            text: (root.hltbData && root.hltbData.main > 0) ? (root.hltbData.main.toFixed(1) + "h") : "—"
-                            color: theme.text
-                            font.family: titleFont.name
-                            font.bold: true
-                            font.pixelSize: Math.round(screenheight * 0.018)
-                        }
-                    }
-                    Row {
-                        width: parent.width
-                        Text {
-                            text: "Main + Extra"
-                            color: theme.icon
-                            opacity: 0.6
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.016)
-                            width: parent.width * 0.6
-                        }
-                        Text {
-                            text: (root.hltbData && root.hltbData.mainExtra > 0) ? (root.hltbData.mainExtra.toFixed(1) + "h") : "—"
-                            color: theme.text
-                            font.family: titleFont.name
-                            font.bold: true
-                            font.pixelSize: Math.round(screenheight * 0.018)
-                        }
-                    }
-                    Row {
-                        width: parent.width
-                        Text {
-                            text: "Completionist"
-                            color: theme.icon
-                            opacity: 0.6
-                            font.family: titleFont.name
-                            font.pixelSize: Math.round(screenheight * 0.016)
-                            width: parent.width * 0.6
-                        }
-                        Text {
-                            text: (root.hltbData && root.hltbData.completionist > 0) ? (root.hltbData.completionist.toFixed(1) + "h") : "—"
-                            color: theme.text
-                            font.family: titleFont.name
-                            font.bold: true
-                            font.pixelSize: Math.round(screenheight * 0.018)
-                        }
-                    }
-                }
-            }
-
-            Keys.onPressed: {
-                if (!visible)
-                    return;
-                event.accepted = true;
-                if (api.keys.isCancel(event)) {
-                    root.goBack();
-                }
-            }
-        }
-
-        Rectangle {
             id: raInputPanel
             visible: root.showRaInput
             anchors.centerIn: parent
@@ -1971,7 +1960,7 @@ FocusScope {
         Rectangle {
             anchors.fill: parent
             color: "black"
-            opacity: (root.showSgdbInput || root.showAchievements || root.showRaInput || root.showHltbPanel) ? 0.5 : 0
+            opacity: (root.showSgdbInput || root.showAchievements || root.showRaInput) ? 0.5 : 0
             visible: opacity > 0
             z: 99
             Behavior on opacity {
