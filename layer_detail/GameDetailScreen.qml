@@ -15,6 +15,9 @@ FocusScope {
     property bool showDescription: false
     property string focusedButton: "play"   // "back" | "play" | "options" | "desc"
     property bool showOptionsPanel: false
+    property bool showSgdbInput: false
+    property string sgdbInputValue: ""
+    property string sgdbDisplayId: ""
     property var optionsMenuItems: [
         {
             id: "sgdb",
@@ -29,8 +32,10 @@ FocusScope {
     clip: true
 
     onVisibleChanged: {
-        if (visible)
+        if (visible) {
             focusedButton = "play";
+            refreshSgdbDisplayId();
+        }
         maybeScrapeBackground();
     }
 
@@ -38,9 +43,7 @@ FocusScope {
         if (focusedButton === "back") {
             goBack();
         } else if (focusedButton === "play") {
-            closeGameDetail();
-            anim.start();
-            playGame();
+            launchGame(currentGame);
         } else if (focusedButton === "options") {
             showOptionsPanel = !showOptionsPanel;
         } else if (focusedButton === "desc") {
@@ -49,7 +52,9 @@ FocusScope {
     }
 
     function goBack() {
-        if (showOptionsPanel) {
+        if (showSgdbInput) {
+            showSgdbInput = false;
+        } else if (showOptionsPanel) {
             showOptionsPanel = false;
         } else if (showDescription) {
             showDescription = false;
@@ -65,11 +70,54 @@ FocusScope {
         if (currentGame.assets.background || currentGame.assets.screenshots[0])
             return;
 
+        var manualKey = sgdbIdKey();
+        var manualId = (manualKey && api.memory.has(manualKey)) ? api.memory.get(manualKey) : "";
+
+        if (manualId) {
+            var requestedGame = currentGame;
+            Utils.sgdbGetHero(manualId, function (url) {
+                if (currentGame && currentGame === requestedGame)
+                    root.scrapedBackground = url;
+            });
+            return;
+        }
+
         var requestedTitle = currentGame.title;
         Utils.fetchScrapedBackground(requestedTitle, function (url) {
             if (currentGame && currentGame.title === requestedTitle)
                 root.scrapedBackground = url;
         });
+    }
+
+    function sgdbIdKey() {
+        return currentGame ? ("SGDB_ID::" + currentGame.title) : "";
+    }
+
+    function refreshSgdbDisplayId() {
+        var key = sgdbIdKey();
+        sgdbDisplayId = (key && api.memory.has(key)) ? api.memory.get(key) : "";
+    }
+
+    function openSgdbInput() {
+        showOptionsPanel = false;
+        sgdbInputValue = sgdbDisplayId;
+        showSgdbInput = true;
+        Qt.inputMethod.show();
+    }
+
+    function saveSgdbInput() {
+        var key = sgdbIdKey();
+        if (key)
+            api.memory.set(key, sgdbInputValue);
+        Qt.inputMethod.hide();
+        showSgdbInput = false;
+        refreshSgdbDisplayId();
+        maybeScrapeBackground();
+    }
+
+    function cancelSgdbInput() {
+        Qt.inputMethod.hide();
+        showSgdbInput = false;
     }
 
     Rectangle {
@@ -618,34 +666,43 @@ FocusScope {
                         model: root.optionsMenuItems
                         Rectangle {
                             width: parent.width
-                            height: vpx(44)
+                            height: modelData.id === "sgdb" ? vpx(58) : vpx(44)
                             radius: vpx(10)
                             color: "transparent"
 
-                            Text {
+                            Column {
                                 anchors {
                                     left: parent.left
                                     verticalCenter: parent.verticalCenter
                                     leftMargin: vpx(14)
                                 }
-                                text: modelData.label
-                                color: "white"
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.017)
+                                spacing: vpx(2)
+
+                                Text {
+                                    text: modelData.label
+                                    color: "white"
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.017)
+                                }
+
+                                Text {
+                                    visible: modelData.id === "sgdb"
+                                    text: root.sgdbDisplayId !== "" ? ("ID: " + root.sgdbDisplayId) : "Not set — tap to add"
+                                    color: "white"
+                                    opacity: 0.5
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.013)
+                                }
                             }
 
                             MouseArea {
                                 anchors.fill: parent
-
                                 onClicked: {
-                                    root.showOptionsPanel = false;
-
                                     if (modelData.id === "sgdb") {
-                                        console.log("SteamGridDB cliccato");
-                                        // qui la tua azione
+                                        root.openSgdbInput();
                                     } else if (modelData.id === "ra") {
+                                        root.showOptionsPanel = false;
                                         console.log("RetroAchievements cliccato");
-                                        // qui la tua azione
                                     }
                                 }
                             }
@@ -1132,6 +1189,160 @@ FocusScope {
                             }
                         }
                     }
+                }
+            }
+        }
+
+        Rectangle {
+            id: sgdbInputPanel
+            visible: root.showSgdbInput
+            anchors.centerIn: parent
+            width: Math.round(screenwidth * 0.35)
+            height: vpx(180)
+            radius: vpx(20)
+            color: theme.button
+            z: 100
+
+            layer.enabled: true
+            layer.effect: DropShadow {
+                transparentBorder: true
+                horizontalOffset: 0
+                verticalOffset: vpx(6)
+                radius: 20
+                samples: 32
+                color: "#60000000"
+            }
+
+            TextInput {
+                id: sgdbHiddenInput
+                visible: false
+                focus: root.showSgdbInput
+                Keys.onPressed: {
+                    if (event.key === Qt.Key_Backspace) {
+                        event.accepted = true;
+                        root.sgdbInputValue = root.sgdbInputValue.slice(0, -1);
+                        return;
+                    }
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        event.accepted = true;
+                        root.saveSgdbInput();
+                        return;
+                    }
+                    if (event.key === Qt.Key_Escape) {
+                        event.accepted = true;
+                        root.cancelSgdbInput();
+                        return;
+                    }
+                }
+                onTextChanged: {
+                    if (text !== "") {
+                        root.sgdbInputValue += text;
+                        text = "";
+                    }
+                }
+            }
+
+            Column {
+                anchors {
+                    fill: parent
+                    margins: vpx(24)
+                }
+                spacing: vpx(16)
+
+                Text {
+                    text: "SteamGridDB ID"
+                    color: theme.text
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.022)
+                    font.bold: true
+                    opacity: 0.6
+                }
+
+                Rectangle {
+                    width: parent.width
+                    height: vpx(48)
+                    radius: vpx(10)
+                    color: theme.main
+
+                    Row {
+                        anchors {
+                            fill: parent
+                            leftMargin: vpx(12)
+                            rightMargin: vpx(12)
+                        }
+                        spacing: vpx(4)
+
+                        Text {
+                            text: root.sgdbInputValue
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.028)
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+
+                        Rectangle {
+                            width: vpx(2)
+                            height: vpx(24)
+                            color: theme.accent
+                            anchors.verticalCenter: parent.verticalCenter
+                            SequentialAnimation on opacity {
+                                running: root.showSgdbInput
+                                loops: Animation.Infinite
+                                NumberAnimation {
+                                    to: 0
+                                    duration: 500
+                                }
+                                NumberAnimation {
+                                    to: 1
+                                    duration: 500
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Enter to confirm • Esc to undo"
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.016)
+                    opacity: 0.5
+                }
+            }
+
+            Keys.onPressed: {
+                if (!visible)
+                    return;
+                event.accepted = true;
+                if (event.key === Qt.Key_Backspace) {
+                    root.sgdbInputValue = root.sgdbInputValue.slice(0, -1);
+                    return;
+                }
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || api.keys.isAccept(event)) {
+                    root.saveSgdbInput();
+                    return;
+                }
+                if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
+                    root.cancelSgdbInput();
+                    return;
+                }
+                var inputChar = event.text;
+                if (inputChar && inputChar.length === 1)
+                    root.sgdbInputValue += inputChar;
+            }
+        }
+
+        // Overlay scurente per il pannello — anch'esso ora diretto figlio di bg
+        Rectangle {
+            anchors.fill: parent
+            color: "black"
+            opacity: root.showSgdbInput ? 0.5 : 0
+            visible: opacity > 0
+            z: 99
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 150
                 }
             }
         }
