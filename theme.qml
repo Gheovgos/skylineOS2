@@ -39,7 +39,8 @@ FocusScope {
             showController: api.memory.has("Controller Button Show") ? api.memory.get("Controller Button Show") : "Yes",
             showSettings: api.memory.has("Settings Button Show") ? api.memory.get("Settings Button Show") : "Yes",
             showSuspend: api.memory.has("Suspend Button Show") ? api.memory.get("Suspend Button Show") : "Yes",
-            steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : ""
+            steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
+            RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : ""
         };
     }
 
@@ -119,7 +120,8 @@ FocusScope {
             playBGM: api.memory.has("Background Music") ? api.memory.get("Background Music") : "No",
             showWifi: api.memory.has("Display Wifi Icon") ? api.memory.get("Display Wifi Icon") : "No",
             homeCardSize: api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
-            steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : ""
+            steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
+            RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : ""
         };
     }
 

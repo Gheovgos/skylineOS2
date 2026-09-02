@@ -39,13 +39,12 @@ Buttons:
 - To add games in backlog, add entries inside the backlog.json file. For example: [{ "title": "Example title" }. { "title": "Example title2" }]
 - To customize the background of the button bar, place inside assets/images/, a file called menuButtonBackground.png. It will be loaded in the home screen
 - To hide an application, press R1\D on Home Screen. To unhide, set to Yes on Show Hidden Apps, and press again R1\D on hidden games\apps
+- RAWG Support! Use your API KEY to fetch data from RAWG databases
 
 ## Planned features
 
 In order of priority
 
-- Better RA integration
-- More customization! And use all data from metadata
 - Exophase support
 - More and better visual effects
 - Redesign of All games list

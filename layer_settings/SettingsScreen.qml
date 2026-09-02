@@ -256,6 +256,12 @@ FocusScope {
             setting: ""
             type: "input"
         }
+        ListElement {
+            settingName: "RAWG API Key"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
     }
 
     property var performancePage: {

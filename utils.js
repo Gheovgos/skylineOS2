@@ -635,56 +635,72 @@ function raLookupGameId(title) {
   return api.memory.has(key) ? parseInt(api.memory.get(key)) : 0;
 }
 
-//For HowLongToBeat
+//For RAWG
 
-function fetchHltbData(title, callback) {
+function fetchRawgData(title, callback) {
   if (!title) { callback(null); return; }
 
-  var cacheKey = "HLTB::" + title;
-  if (api.memory.has(cacheKey)) {
-    try {
-      callback(JSON.parse(api.memory.get(cacheKey)));
-      return;
-    } catch (e) { /* cache corrotta, ripeti la richiesta */ }
+  var apiKey = api.memory.get("RAWG API Key");
+  if (!apiKey) {
+    console.log("RAWG: 'RAWG API Key' non impostata in api.memory");
+    callback(null);
+    return;
   }
 
-  var xhr = new XMLHttpRequest();
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState !== XMLHttpRequest.DONE) return;
-    if (xhr.status !== 200) { callback(null); return; }
-    try {
-      var data = JSON.parse(xhr.responseText);
-      if (!data.data || data.data.length === 0) { callback(null); return; }
+  var cleanTitle = title
+    .replace(/\s*[\(\[][^\)\]]*[\)\]]/g, "") // rimuove (USA), [Rev 1], ecc.
+    .trim();
 
-      var g = data.data[0];
-      // I campi comp_* sono espressi in secondi
-      var result = {
-        title: g.game_name || title,
-        main: g.comp_main > 0 ? (g.comp_main / 3600) : 0,
-        mainExtra: g.comp_plus > 0 ? (g.comp_plus / 3600) : 0,
-        completionist: g.comp_100 > 0 ? (g.comp_100 / 3600) : 0
+  var searchXhr = new XMLHttpRequest();
+  searchXhr.onreadystatechange = function () {
+    if (searchXhr.readyState !== XMLHttpRequest.DONE) return;
+    if (searchXhr.status !== 200) {
+      console.log("RAWG search HTTP error:", searchXhr.status, searchXhr.responseText);
+      callback(null);
+      return;
+    }
+    try {
+      var searchData = JSON.parse(searchXhr.responseText);
+      console.log("RAWG search '" + cleanTitle + "' -> " + (searchData.results ? searchData.results.length : 0) + " risultati. Primo:", searchData.results && searchData.results[0] ? searchData.results[0].name : "nessuno");
+
+      if (!searchData.results || searchData.results.length === 0) {
+        callback(null);
+        return;
+      }
+
+      var gameId = searchData.results[0].id;
+
+      var detailXhr = new XMLHttpRequest();
+      detailXhr.onreadystatechange = function () {
+        if (detailXhr.readyState !== XMLHttpRequest.DONE) return;
+        if (detailXhr.status !== 200) {
+          console.log("RAWG detail HTTP error:", detailXhr.status, detailXhr.responseText);
+          callback(null);
+          return;
+        }
+        try {
+          var g = JSON.parse(detailXhr.responseText);
+          console.log("RAWG detail '" + g.name + "' -> playtime:", g.playtime);
+
+          var playtime = g.playtime > 0 ? g.playtime : 0;
+          if (playtime === 0) { callback(null); return; }
+
+          callback({
+            title: g.name || title,
+            playtime: playtime
+          });
+        } catch (e) {
+          console.log("RAWG detail parse error:", e);
+          callback(null);
+        }
       };
-      api.memory.set(cacheKey, JSON.stringify(result));
-      callback(result);
+      detailXhr.open("GET", "https://api.rawg.io/api/games/" + gameId + "?key=" + apiKey);
+      detailXhr.send();
     } catch (e) {
+      console.log("RAWG search parse error:", e);
       callback(null);
     }
   };
-
-  xhr.open("POST", "https://howlongtobeat.com/api/search");
-  xhr.setRequestHeader("Content-Type", "application/json");
-  xhr.send(JSON.stringify({
-    searchType: "games",
-    searchTerms: title.split(" "),
-    searchPage: 1,
-    size: 1,
-    searchOptions: {
-      games: { userId: 0, platform: "", sortCategory: "popular", rangeCategory: "main", rangeTime: { min: 0, max: 0 }, gameplay: { perspective: "", flow: "", genre: "" }, modifier: "" },
-      users: { sortCategory: "postcount" },
-      lists: { sortCategory: "follows" },
-      filter: "",
-      sort: 0,
-      randomizer: 0
-    }
-  }));
+  searchXhr.open("GET", "https://api.rawg.io/api/games?search=" + encodeURIComponent(cleanTitle) + "&key=" + apiKey);
+  searchXhr.send();
 }
