@@ -47,6 +47,14 @@ FocusScope {
     property var hltbData: null
     property bool hltbFetchedForCurrentGame: false
     readonly property bool hasRatingOrPeriod: currentGame && ((currentGame.rating > 0) || (currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)))
+    readonly property string displayDeveloper: (currentGame && currentGame.developer !== "") ? currentGame.developer : (hltbData && hltbData.developers && hltbData.developers.length > 0 ? hltbData.developers.join(", ") : "")
+
+    readonly property var displayGenreList: (currentGame && currentGame.genreList && currentGame.genreList.length > 0) ? currentGame.genreList : (hltbData && hltbData.genres ? hltbData.genres : [])
+
+    readonly property string displayRelease: (currentGame && currentGame.release && new Date(currentGame.release).getFullYear() > 1970) ? currentGame.release : (hltbData && hltbData.released ? hltbData.released : "")
+
+    property var bgPalette: ["#3B82F6", "#8B5CF6", "#F5A623"]
+    property var _paletteCache: ({})
 
     clip: true
 
@@ -62,7 +70,40 @@ FocusScope {
     onCurrentGameChanged: {
         showHltbInline = false;
         hltbData = null;
+        hltbLoading = false;
         hltbFetchedForCurrentGame = false;
+
+        if (metadataNeedsRawgFallback())
+            fetchRawgIfNeeded();
+    }
+
+    function fetchRawgIfNeeded() {
+        if (!currentGame || hltbFetchedForCurrentGame)
+            return;
+
+        hltbFetchedForCurrentGame = true;
+        hltbLoading = true;
+        var requestedGame = currentGame;
+        Utils.fetchRawgData(currentGame.title, function (result) {
+            if (currentGame !== requestedGame)
+                return;
+            hltbLoading = false;
+            hltbData = result;
+        });
+    }
+
+    function metadataNeedsRawgFallback() {
+        if (!currentGame)
+            return false;
+        if (!currentGame.developer || currentGame.developer === "")
+            return true;
+        if (!currentGame.genreList || currentGame.genreList.length === 0)
+            return true;
+        if (!currentGame.players || currentGame.players <= 0)
+            return true;
+        if (!currentGame.release || new Date(currentGame.release).getFullYear() <= 1970)
+            return true;
+        return false;
     }
 
     function activateFocusedButton() {
@@ -211,26 +252,8 @@ FocusScope {
     function openHltbInline() {
         showOptionsPanel = false;
         showHltbInline = true;
-
-        if (!currentGame)
-            return;
-
-        if (hltbFetchedForCurrentGame)
-            return;
-
-        hltbData = null;
-        hltbLoading = true;
-        hltbFetchedForCurrentGame = true;
-
-        var requestedGame = currentGame;
-        Utils.fetchRawgData(currentGame.title, function (result) {
-            if (currentGame !== requestedGame)
-                return;
-            hltbLoading = false;
-            hltbData = result;
-        });
+        fetchRawgIfNeeded();
     }
-
     function closeHltbInline() {
         showHltbInline = false;
     }
@@ -267,6 +290,46 @@ FocusScope {
                         to: 1
                         duration: 200
                     }
+                }
+            }
+        }
+
+        Canvas {
+            id: colorSampler
+            width: 32
+            height: 32
+            opacity: 0
+            renderStrategy: Canvas.Immediate
+
+            onPaint: {
+                var ctx = getContext("2d");
+                ctx.clearRect(0, 0, width, height);
+                if (bgImage.status !== Image.Ready)
+                    return;
+                ctx.drawImage(bgImage, 0, 0, width, height);
+                try {
+                    var imageData = ctx.getImageData(0, 0, width, height);
+                    var colors = Utils.extractDominantColors(imageData, 3);
+                    if (colors && colors.length === 3) {
+                        root.bgPalette = colors;
+                        if (bgImage.source)
+                            root._paletteCache[bgImage.source.toString()] = colors;
+                    }
+                } catch (e) {
+                    console.log("Palette extraction error:", e);
+                }
+            }
+        }
+
+        Connections {
+            target: bgImage
+            function onStatusChanged() {
+                if (bgImage.status === Image.Ready) {
+                    var key = bgImage.source.toString();
+                    if (root._paletteCache[key])
+                        root.bgPalette = root._paletteCache[key];
+                    else
+                        colorSampler.requestPaint();
                 }
             }
         }
@@ -584,7 +647,7 @@ FocusScope {
             }
 
             Text {
-                text: currentGame ? (currentGame.summary || currentGame.description || "") : ""
+                text: currentGame ? (currentGame.summary || "") : ""
                 visible: text !== ""
                 color: "white"
                 opacity: 0.8
@@ -1153,8 +1216,8 @@ FocusScope {
                     width: vpx(220)
                     height: vpx(56)
                     radius: vpx(14)
-                    color: "#33000000"
-                    visible: !root.hltbLoading && !root.hltbData
+                    color: '#33414296'
+                    visible: !root.hltbLoading && (!root.hltbData || (root.hltbData.playtime === 0 && root.hltbData.added === 0 && root.hltbData.achievementsCount === 0))
 
                     Text {
                         anchors.centerIn: parent
@@ -1167,16 +1230,15 @@ FocusScope {
                 }
 
                 Rectangle {
-                    width: vpx(100)
+                    width: vpx(90)
                     height: vpx(56)
                     radius: vpx(14)
-                    color: "#33000000"
-                    visible: !root.hltbLoading && root.hltbData
+                    color: Utils.colorWithAlpha(root.bgPalette[0], "4D")
+                    visible: !root.hltbLoading && root.hltbData && root.hltbData.playtime > 0
 
                     Column {
                         anchors.centerIn: parent
                         spacing: vpx(1)
-
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: root.hltbData ? root.hltbData.playtime + "h" : ""
@@ -1188,6 +1250,68 @@ FocusScope {
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
                             text: "AVG PLAYTIME"
+                            color: "white"
+                            opacity: 0.7
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.letterSpacing: 1
+                            font.pixelSize: Math.round(screenheight * 0.008)
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: vpx(80)
+                    height: vpx(56)
+                    radius: vpx(14)
+                    color: Utils.colorWithAlpha(root.bgPalette[1], "4D")
+                    visible: !root.hltbLoading && root.hltbData && root.hltbData.added > 0
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: vpx(1)
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: root.hltbData ? Utils.formatCompactNumber(root.hltbData.added) : ""
+                            color: "white"
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.02)
+                        }
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "PLAYERS"
+                            color: "white"
+                            opacity: 0.7
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.letterSpacing: 1
+                            font.pixelSize: Math.round(screenheight * 0.008)
+                        }
+                    }
+                }
+
+                Rectangle {
+                    width: vpx(80)
+                    height: vpx(56)
+                    radius: vpx(14)
+                    color: Utils.colorWithAlpha(root.bgPalette[2], "4D")
+                    visible: !root.hltbLoading && root.hltbData && root.hltbData.achievementsCount > 0
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: vpx(1)
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: root.hltbData ? root.hltbData.achievementsCount : ""
+                            color: "white"
+                            font.family: titleFont.name
+                            font.bold: true
+                            font.pixelSize: Math.round(screenheight * 0.02)
+                        }
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "TROPHIES"
                             color: "white"
                             opacity: 0.7
                             font.family: titleFont.name
@@ -1305,7 +1429,7 @@ FocusScope {
                     Text {
                         id: descText
                         width: parent.width
-                        text: currentGame.summary ? currentGame.summary : ""
+                        text: currentGame.description ? currentGame.description : ""
                         color: "white"
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.019)
@@ -1365,7 +1489,7 @@ FocusScope {
                         radius: vpx(14)
                         color: "#22FFFFFF"
                         height: infoBoxColumn.height + vpx(24)
-                        visible: (currentGame && currentGame.developer !== "") || (currentGame && currentGame.genreList && currentGame.genreList.length > 0) || (currentGame && currentGame.release && new Date(currentGame.release).getFullYear() > 1970)
+                        visible: root.displayDeveloper !== "" || root.displayGenreList.length > 0 || (root.displayRelease && new Date(root.displayRelease).getFullYear() > 1950)
 
                         Column {
                             id: infoBoxColumn
@@ -1380,7 +1504,7 @@ FocusScope {
                             Row {
                                 width: parent.width
                                 spacing: vpx(8)
-                                visible: currentGame && currentGame.developer !== ""
+                                visible: root.displayDeveloper !== ""
 
                                 Text {
                                     text: "Developer"
@@ -1392,7 +1516,7 @@ FocusScope {
                                     width: vpx(90)
                                 }
                                 Text {
-                                    text: currentGame ? (currentGame.developer || "") : ""
+                                    text: root.displayDeveloper
                                     color: "white"
                                     font.family: titleFont.name
                                     font.pixelSize: Math.round(screenheight * 0.016)
@@ -1404,7 +1528,7 @@ FocusScope {
                             Row {
                                 width: parent.width
                                 spacing: vpx(8)
-                                visible: currentGame && currentGame.genreList && currentGame.genreList.length > 0
+                                visible: root.displayGenreList.length > 0
 
                                 Text {
                                     text: "Genre"
@@ -1416,7 +1540,7 @@ FocusScope {
                                     width: vpx(90)
                                 }
                                 Text {
-                                    text: (currentGame && currentGame.genreList) ? currentGame.genreList.join(", ") : ""
+                                    text: root.displayGenreList.join(", ")
                                     color: "white"
                                     font.family: titleFont.name
                                     font.pixelSize: Math.round(screenheight * 0.016)
@@ -1429,7 +1553,7 @@ FocusScope {
                             Row {
                                 width: parent.width
                                 spacing: vpx(8)
-                                visible: currentGame && currentGame.release && new Date(currentGame.release).getFullYear() > 1970
+                                visible: root.displayRelease && new Date(root.displayRelease).getFullYear() > 1950
 
                                 Text {
                                     text: "Released"
@@ -1441,7 +1565,7 @@ FocusScope {
                                     width: vpx(90)
                                 }
                                 Text {
-                                    text: currentGame ? Utils.formatDateItalian(currentGame.release) : ""
+                                    text: Utils.formatDateItalian(root.displayRelease)
                                     color: "white"
                                     font.family: titleFont.name
                                     font.pixelSize: Math.round(screenheight * 0.016)

@@ -637,8 +637,30 @@ function raLookupGameId(title) {
 
 //For RAWG
 
+var _rawgCache = { title: null, data: null, pending: false, callbacks: [] };
+
+function _rawgCleanTitle(title) {
+  return title.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, "").trim();
+}
+
+function formatCompactNumber(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
+  if (n >= 1000) return (n / 1000).toFixed(1) + "K";
+  return String(n);
+}
+
 function fetchRawgData(title, callback) {
   if (!title) { callback(null); return; }
+
+  // Cache/dedupe in-memoria per la sessione corrente (nessuna scrittura su disco)
+  if (_rawgCache.title === title) {
+    if (_rawgCache.pending) {
+      _rawgCache.callbacks.push(callback);
+      return;
+    }
+    callback(_rawgCache.data);
+    return;
+  }
 
   var apiKey = api.memory.get("RAWG API Key");
   if (!apiKey) {
@@ -647,24 +669,33 @@ function fetchRawgData(title, callback) {
     return;
   }
 
-  var cleanTitle = title
-    .replace(/\s*[\(\[][^\)\]]*[\)\]]/g, "") // rimuove (USA), [Rev 1], ecc.
-    .trim();
+  _rawgCache.title = title;
+  _rawgCache.pending = true;
+  _rawgCache.callbacks = [callback];
+
+  function resolveAll(result) {
+    _rawgCache.pending = false;
+    _rawgCache.data = result;
+    var cbs = _rawgCache.callbacks;
+    _rawgCache.callbacks = [];
+    for (var i = 0; i < cbs.length; i++)
+      cbs[i](result);
+  }
+
+  var cleanTitle = _rawgCleanTitle(title);
 
   var searchXhr = new XMLHttpRequest();
   searchXhr.onreadystatechange = function () {
     if (searchXhr.readyState !== XMLHttpRequest.DONE) return;
     if (searchXhr.status !== 200) {
-      console.log("RAWG search HTTP error:", searchXhr.status, searchXhr.responseText);
-      callback(null);
+      console.log("RAWG search HTTP error:", searchXhr.status);
+      resolveAll(null);
       return;
     }
     try {
       var searchData = JSON.parse(searchXhr.responseText);
-      console.log("RAWG search '" + cleanTitle + "' -> " + (searchData.results ? searchData.results.length : 0) + " risultati. Primo:", searchData.results && searchData.results[0] ? searchData.results[0].name : "nessuno");
-
       if (!searchData.results || searchData.results.length === 0) {
-        callback(null);
+        resolveAll(null);
         return;
       }
 
@@ -674,33 +705,105 @@ function fetchRawgData(title, callback) {
       detailXhr.onreadystatechange = function () {
         if (detailXhr.readyState !== XMLHttpRequest.DONE) return;
         if (detailXhr.status !== 200) {
-          console.log("RAWG detail HTTP error:", detailXhr.status, detailXhr.responseText);
-          callback(null);
+          console.log("RAWG detail HTTP error:", detailXhr.status);
+          resolveAll(null);
           return;
         }
         try {
           var g = JSON.parse(detailXhr.responseText);
-          console.log("RAWG detail '" + g.name + "' -> playtime:", g.playtime);
 
-          var playtime = g.playtime > 0 ? g.playtime : 0;
-          if (playtime === 0) { callback(null); return; }
+          var tags = (g.tags || []).map(function (t) { return t.name; });
 
-          callback({
+          resolveAll({
             title: g.name || title,
-            playtime: playtime
+            playtime: g.playtime > 0 ? g.playtime : 0,
+            added: g.added > 0 ? g.added : 0,
+            achievementsCount: g.achievements_count > 0 ? g.achievements_count : 0,
+            developers: (g.developers || []).map(function (d) { return d.name; }),
+            genres: (g.genres || []).map(function (gn) { return gn.name; }),
+            released: g.released || "",
+            tags: tags
+            // Euristica opzionale per "players" (NON un dato reale RAWG, disattivata):
+            // playersGuess: tags.indexOf("Multiplayer") !== -1 ? 2 : (tags.indexOf("Singleplayer") !== -1 ? 1 : 0)
           });
         } catch (e) {
           console.log("RAWG detail parse error:", e);
-          callback(null);
+          resolveAll(null);
         }
       };
       detailXhr.open("GET", "https://api.rawg.io/api/games/" + gameId + "?key=" + apiKey);
       detailXhr.send();
     } catch (e) {
       console.log("RAWG search parse error:", e);
-      callback(null);
+      resolveAll(null);
     }
   };
   searchXhr.open("GET", "https://api.rawg.io/api/games?search=" + encodeURIComponent(cleanTitle) + "&key=" + apiKey);
   searchXhr.send();
+}
+
+// Estrae i colori dominanti da un ImageData (Canvas.getImageData)
+function extractDominantColors(imageData, count) {
+  var data = imageData.data;
+  var buckets = {};
+
+  for (var i = 0; i < data.length; i += 4) {
+    var r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+    if (a < 200) continue;
+
+    var lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (lum < 0.12 || lum > 0.92) continue; // scarta pixel troppo scuri/chiari
+
+    var key = (r >> 4) + "_" + (g >> 4) + "_" + (b >> 4); // quantizza a 4 bit/canale
+    if (!buckets[key])
+      buckets[key] = { count: 0, r: 0, g: 0, b: 0 };
+    buckets[key].count++;
+    buckets[key].r += r;
+    buckets[key].g += g;
+    buckets[key].b += b;
+  }
+
+  var sorted = Object.keys(buckets).map(function (key) {
+    var b = buckets[key];
+    return {
+      count: b.count,
+      r: Math.round(b.r / b.count),
+      g: Math.round(b.g / b.count),
+      b: Math.round(b.b / b.count)
+    };
+  }).sort(function (a, b) { return b.count - a.count; });
+
+  var result = [];
+  var minDistance = 60;
+
+  for (var j = 0; j < sorted.length && result.length < count; j++) {
+    var candidate = sorted[j];
+    var tooClose = false;
+    for (var k = 0; k < result.length; k++) {
+      var dr = candidate.r - result[k].r;
+      var dg = candidate.g - result[k].g;
+      var db = candidate.b - result[k].b;
+      if (Math.sqrt(dr * dr + dg * dg + db * db) < minDistance) {
+        tooClose = true;
+        break;
+      }
+    }
+    if (!tooClose)
+      result.push(candidate);
+  }
+
+  while (result.length < count && sorted.length > 0)
+    result.push(sorted[result.length % sorted.length]);
+
+  return result.map(function (c) {
+    return "#" + [c.r, c.g, c.b].map(function (v) {
+      var h = v.toString(16);
+      return h.length === 1 ? "0" + h : h;
+    }).join("");
+  });
+}
+
+// Antepone un byte di alpha (2 caratteri hex) a un colore "#RRGGBB"
+function colorWithAlpha(hex, alphaByte) {
+  return "#" + alphaByte + hex.substring(1);
 }
