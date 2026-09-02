@@ -33,6 +33,11 @@ FocusScope {
     property bool showRaInput: false
     property string raInputValue: ""
 
+    property int raProgress: 0
+    property bool raProgressLoading: false
+    property bool raProgressFetchedForCurrentGame: false
+    readonly property int displayProgress: (currentGame.extra.progress) ? currentGame.extra.progress[0] : raProgress
+
     property bool showAchievements: false
     property bool raAchievementsLoading: false
     property bool raAchievementsNotFound: false
@@ -72,9 +77,16 @@ FocusScope {
         hltbData = null;
         hltbLoading = false;
         hltbFetchedForCurrentGame = false;
+        bgPalette = ["#3B82F6", "#8B5CF6", "#F5A623"];
+
+        raProgress = 0;
+        raProgressLoading = false;
+        raProgressFetchedForCurrentGame = false;
 
         if (metadataNeedsRawgFallback())
             fetchRawgIfNeeded();
+
+        fetchRaProgressIfNeeded();
     }
 
     function fetchRawgIfNeeded() {
@@ -89,6 +101,28 @@ FocusScope {
                 return;
             hltbLoading = false;
             hltbData = result;
+        });
+    }
+
+    function fetchRaProgressIfNeeded() {
+        if (!currentGame || raProgressFetchedForCurrentGame)
+            return;
+        console.log("++++++++++++++++++++++", currentGame.extra.progress)
+        if (currentGame.extra && currentGame.extra.progress)
+            return;
+
+        refreshRaDisplayId(); 
+        if (!raDisplayId)
+            return; 
+
+        raProgressFetchedForCurrentGame = true;
+        raProgressLoading = true;
+        var requestedGame = currentGame;
+        Utils.fetchRaProgress(raDisplayId, function (percent) {
+            if (currentGame !== requestedGame)
+                return;
+            raProgressLoading = false;
+            raProgress = percent;
         });
     }
 
@@ -215,6 +249,8 @@ FocusScope {
         Qt.inputMethod.hide();
         showRaInput = false;
         refreshRaDisplayId();
+        raProgressFetchedForCurrentGame = false;
+        fetchRaProgressIfNeeded();
         openAchievementsPanel();
     }
 
@@ -901,7 +937,7 @@ FocusScope {
                     width: progRow.width + vpx(20)
                     radius: height / 2
                     color: "#33000000"
-                    visible: currentGame.extra.progress > 0
+                    visible: root.displayProgress > 0
 
                     Row {
                         id: progRow
@@ -918,7 +954,7 @@ FocusScope {
                             }
                         }
                         Text {
-                            text: currentGame && currentGame.extra ? currentGame.extra.progress + "%" : ""
+                            text: root.displayProgress > 0 ? root.displayProgress + "%" : ""
                             color: "white"
                             font.family: titleFont.name
                             font.bold: true

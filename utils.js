@@ -514,6 +514,39 @@ function loadGameAchievements(gameId, targetModel, onDone) {
   xhr.send();
 }
 
+function fetchRaProgress(gameId, callback) {
+  var username = api.memory.get("RA_Username");
+  var apiKey = api.memory.get("RetroAchievements API Key");
+
+  if (!username || !apiKey || !gameId) { callback(0); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) { callback(0); return; }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      var achievements = data.Achievements;
+      if (!achievements) { callback(0); return; }
+
+      var total = 0, earned = 0;
+      for (var key in achievements) {
+        total++;
+        if (achievements[key].DateEarned)
+          earned++;
+      }
+
+      if (total === 0) { callback(0); return; }
+      callback(Math.round((earned / total) * 100));
+    } catch (e) {
+      console.log("RA progress parse error:", e);
+      callback(0);
+    }
+  };
+  xhr.open("GET", "https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?g=" + gameId + "&u=" + username + "&y=" + apiKey);
+  xhr.send();
+}
+
 // === SteamGridDB scraping (background) ===
 var SGDB_BASE = "https://www.steamgriddb.com/api/v2";
 
