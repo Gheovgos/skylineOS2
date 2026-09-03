@@ -382,7 +382,7 @@ FocusScope {
         return {
             main: "#EBEBEB",
             secondary: "#2D2D2D",
-            accent: "#10AEBE",
+            accent: api.memory.has("Accent Light Mode") ? api.memory.get("Accent Light Mode") :  "#10AEBE",
             highlight: "white",
             text: "#2C2C2C",
             button: "white",
@@ -395,7 +395,7 @@ FocusScope {
         return {
             main: "#2D2D2D",
             secondary: "#EBEBEB",
-            accent: "#1d9bf3",
+            accent: api.memory.has("Accent Dark Mode") ? api.memory.get("Accent Dark Mode") :  "#1d9bf3",
             highlight: "black",
             text: "white",
             button: "#515151",

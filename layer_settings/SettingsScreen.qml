@@ -60,6 +60,18 @@ FocusScope {
             type: "toggle"
         }
         ListElement {
+            settingName: "Accent Dark Mode"
+            settingSubtitle: ""
+            setting: "#1d9bf3"
+            type: "input"
+        }
+        ListElement {
+            settingName: "Accent Light Mode"
+            settingSubtitle: ""
+            setting: "#10AEBE"
+            type: "input"
+        }
+        ListElement {
             settingName: "Time Format"
             settingSubtitle: ""
             setting: "12hr,24hr"
