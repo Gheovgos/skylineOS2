@@ -26,6 +26,8 @@ ListView {
     keyNavigationWraps: true
     property real cardScale: parseFloat(settings.homeCardSize) / 35.0
 
+    signal userInteracted
+
     NumberAnimation {
         id: anim
         property: "scale"
@@ -339,10 +341,12 @@ ListView {
     Keys.onLeftPressed: {
         navSound.play();
         decrementCurrentIndex();
+        userInteracted();
     }
     Keys.onRightPressed: {
         navSound.play();
         incrementCurrentIndex();
+        userInteracted();
     }
 
     Keys.onUpPressed: {

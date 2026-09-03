@@ -9,7 +9,7 @@ FocusScope {
     property int lastHomeSwitcherIndex: 0
     property bool raProfileVisible: false
     property var hiddenApps: []
-    property bool expandedPanelOpen: homeSwitcher.anyExpanded 
+    property bool expandedPanelOpen: homeSwitcher.anyExpanded
 
     // Build the games list but with extra menu options at the start and end
     ListModel {
@@ -302,16 +302,7 @@ FocusScope {
 
                 Text {
                     id: batteryPercentage
-                    function set() {
-                        batteryPercentage.text = homeScreenContainer.batteryStatus + "%";
-                    }
-                    Timer {
-                        interval: 60000
-                        repeat: isNaN(api.device.batteryPercent) ? false : showPercent
-                        running: isNaN(api.device.batteryPercent) ? false : showPercent
-                        triggeredOnStart: isNaN(api.device.batteryPercent) ? false : showPercent
-                        onTriggered: batteryPercentage.set()
-                    }
+                    text: homeScreenContainer.batteryStatus + "%"
                     color: theme.text
                     font.family: titleFont.name
                     font.weight: Font.Bold
@@ -332,23 +323,13 @@ FocusScope {
                         antialiasing: true
                         cached: true
                     }
-                    function set() {
-                        batteryIcon.level = homeScreenContainer.batteryStatus;
-                    }
-                    Timer {
-                        interval: 60000
-                        repeat: true
-                        running: true
-                        triggeredOnStart: true
-                        onTriggered: batteryIcon.set()
-                    }
+                    level: homeScreenContainer.batteryStatus
                     anchors.verticalCenter: sysTime.verticalCenter
                     visible: !isNaN(api.device.batteryPercent)
                 }
 
                 Image {
                     id: chargingIcon
-                    property bool chargingStatus: api.device.batteryCharging
                     width: Math.round(screenheight * 0.0433)
                     height: width
                     fillMode: Image.PreserveAspectFit
@@ -358,22 +339,12 @@ FocusScope {
                     smooth: true
                     horizontalAlignment: Image.AlignLeft
                     anchors.verticalCenter: sysTime.verticalCenter
-                    visible: chargingStatus && batteryIcon.level < 99
+                    visible: api.device.batteryCharging && batteryIcon.level < 99
                     layer.enabled: true
                     layer.effect: ColorOverlay {
                         color: theme.text
                         antialiasing: true
                         cached: true
-                    }
-                    function set() {
-                        chargingStatus = api.device.batteryCharging;
-                    }
-                    Timer {
-                        interval: 10000
-                        repeat: !isNaN(api.device.batteryPercent)
-                        running: !isNaN(api.device.batteryPercent)
-                        triggeredOnStart: !isNaN(api.device.batteryPercent)
-                        onTriggered: chargingIcon.set()
                     }
                 }
 
@@ -406,6 +377,7 @@ FocusScope {
             }
             height: Math.round(screenheight * (parseFloat(settings.homeCardSize) / 100))
             focus: true
+            onUserInteracted: sysTime.set()
         }
 
         // Button menu
