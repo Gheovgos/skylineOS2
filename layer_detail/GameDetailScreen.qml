@@ -107,13 +107,13 @@ FocusScope {
     function fetchRaProgressIfNeeded() {
         if (!currentGame || raProgressFetchedForCurrentGame)
             return;
-        console.log("++++++++++++++++++++++", currentGame.extra.progress)
+        console.log("++++++++++++++++++++++", currentGame.extra.progress);
         if (currentGame.extra && currentGame.extra.progress)
             return;
 
-        refreshRaDisplayId(); 
+        refreshRaDisplayId();
         if (!raDisplayId)
-            return; 
+            return;
 
         raProgressFetchedForCurrentGame = true;
         raProgressLoading = true;
@@ -144,9 +144,17 @@ FocusScope {
         if (focusedButton === "back") {
             goBack();
         } else if (focusedButton === "play") {
+            root.focusedButton = "play";
             launchGame(currentGame);
+            anim.start();
+            navSound.play();
         } else if (focusedButton === "options") {
             showOptionsPanel = !showOptionsPanel;
+        } else if (focusedButton === "stats") {
+            if (showHltbInline)
+                closeHltbInline();
+            else
+                openHltbInline();
         } else if (focusedButton === "desc") {
             showDescription = !showDescription;
         }
@@ -797,6 +805,7 @@ FocusScope {
                         anchors.fill: parent
                         onClicked: {
                             root.focusedButton = "play";
+                            launchSfx.play();
                             launchGame(currentGame);
                             anim.start();
                         }
@@ -1172,6 +1181,14 @@ FocusScope {
                     radius: vpx(14)
                     color: "#33000000"
                     visible: currentGame !== null
+                    border.width: (root.focusedButton === "stats" && !root.showHltbInline) ? vpx(3) : 0
+                    border.color: theme.accent
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Image {
                         anchors.centerIn: parent
@@ -1187,7 +1204,10 @@ FocusScope {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: root.openHltbInline()
+                        onClicked: {
+                            root.focusedButton = "stats";
+                            root.openHltbInline();
+                        }
                     }
                 }
             }
@@ -1212,6 +1232,14 @@ FocusScope {
                     height: vpx(56)
                     radius: vpx(14)
                     color: "#33000000"
+                    border.width: (root.focusedButton === "stats" && root.showHltbInline) ? vpx(3) : 0
+                    border.color: theme.accent
+
+                    Behavior on border.width {
+                        NumberAnimation {
+                            duration: 120
+                        }
+                    }
 
                     Image {
                         anchors.centerIn: parent
@@ -1227,7 +1255,10 @@ FocusScope {
 
                     MouseArea {
                         anchors.fill: parent
-                        onClicked: root.closeHltbInline()
+                        onClicked: {
+                            root.focusedButton = "stats";
+                            root.closeHltbInline();
+                        }
                     }
                 }
 
@@ -2140,7 +2171,7 @@ FocusScope {
         if (anyOverlayOpen)
             return;
         navSound.play();
-        var order = ["back", "play", "options", "desc"];
+        var order = ["back", "play", "options", "stats", "desc"];
         var i = order.indexOf(focusedButton);
         focusedButton = order[(i - 1 + order.length) % order.length];
     }
@@ -2148,7 +2179,7 @@ FocusScope {
         if (anyOverlayOpen)
             return;
         navSound.play();
-        var order = ["back", "play", "options", "desc"];
+        var order = ["back", "play", "options", "stats", "desc"];
         var i = order.indexOf(focusedButton);
         focusedButton = order[(i + 1) % order.length];
     }
