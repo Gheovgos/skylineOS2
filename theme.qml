@@ -1009,6 +1009,22 @@ FocusScope {
         }
     }
 
+    Timer {
+        id: launchRecoveryTimer
+        interval: 3
+        running: root.state === "playgame" || root.state === "playsoftware"
+        repeat: false
+        onTriggered: {
+            if (root.state === "playgame") {
+                homeScreen.opacity = 1;
+                root.state = "homescreen";
+            } else if (root.state === "playsoftware") {
+                softwareScreen.opacity = 1;
+                root.state = "softwarescreen";
+            }
+        }
+    }
+
     SoundEffect {
         id: navSound
         source: "assets/audio/Klick.wav"

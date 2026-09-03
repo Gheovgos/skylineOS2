@@ -81,7 +81,7 @@ ListView {
             height: width
             color: "transparent"
 
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.verticalCenter: parent ? parent.verticalCenter : undefined
 
             scale: selected && !expanded ? 1.08 : expanded ? 0 : 1.0
             Behavior on scale {
