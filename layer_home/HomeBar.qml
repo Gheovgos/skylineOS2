@@ -27,6 +27,7 @@ ListView {
     property real cardScale: parseFloat(settings.homeCardSize) / 35.0
 
     signal userInteracted
+    signal downPressed()
 
     NumberAnimation {
         id: anim
@@ -356,11 +357,10 @@ ListView {
     }
 
     Keys.onDownPressed: {
-        _index = currentIndex;
-        navSound.play();
-        infoButton.focus = true;
-        homeSwitcher.currentIndex = -1;
-    }
+    _index = currentIndex;
+    navSound.play();
+    downPressed();
+}
 
     function gotoSoftware() {
         showSoftwareScreen();

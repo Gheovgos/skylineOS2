@@ -107,7 +107,6 @@ FocusScope {
     function fetchRaProgressIfNeeded() {
         if (!currentGame || raProgressFetchedForCurrentGame)
             return;
-        console.log("++++++++++++++++++++++", currentGame.extra.progress);
         if (currentGame.extra && currentGame.extra.progress)
             return;
 

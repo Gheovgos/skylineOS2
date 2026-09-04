@@ -187,6 +187,8 @@ FocusScope {
         root.state = "playgame";
 
         launchSfx.play();
+
+        if(currentGame) launchGame(currentGame)
     }
 
     function playSoftware() {

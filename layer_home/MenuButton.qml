@@ -17,24 +17,27 @@ Item {
     height: vpx(56)
 
     Rectangle {
-        id: highlight
-        anchors.centerIn: parent
-        width: parent.width + vpx(16)
-        height: parent.height - vpx(8)
-        radius: height / 2
-        color: theme.accent
-        opacity: selected ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+    id: highlight
+    anchors.centerIn: parent
+    width: parent.width + vpx(12)
+    height: parent.height + vpx(12)
+    radius: width / 2
+    color: theme.accent
+    opacity: selected ? 1 : 0
+    scale: selected ? 1.0 : 0.85
 
-        SequentialAnimation on opacity {
-            running: selected
-            loops: Animation.Infinite
-            NumberAnimation { to: 1.0; duration: 0 }
-            NumberAnimation { to: 0.85; duration: 400; easing { type: Easing.OutQuad } }
-            NumberAnimation { to: 1.0; duration: 500; easing { type: Easing.InQuad } }
-            PauseAnimation { duration: 200 }
-        }
+    Behavior on opacity { NumberAnimation { duration: 150 } }
+    Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+
+    SequentialAnimation on opacity {
+        running: selected
+        loops: Animation.Infinite
+        NumberAnimation { to: 1.0; duration: 0 }
+        NumberAnimation { to: 0.85; duration: 400; easing { type: Easing.OutQuad } }
+        NumberAnimation { to: 1.0; duration: 500; easing { type: Easing.InQuad } }
+        PauseAnimation { duration: 200 }
     }
+}
 
     Image {
         id: menuIcon

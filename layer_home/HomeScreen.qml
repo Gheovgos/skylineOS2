@@ -11,6 +11,29 @@ FocusScope {
     property var hiddenApps: []
     property bool expandedPanelOpen: homeSwitcher.anyExpanded
 
+    property var menuButtonOrder: [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton]
+
+function firstVisibleMenuButton() {
+    for (var i = 0; i < menuButtonOrder.length; i++) {
+        if (menuButtonOrder[i].visible)
+            return menuButtonOrder[i];
+    }
+    return null;
+}
+
+function visibleMenuButtonNeighbor(fromButton, direction) {
+    var idx = menuButtonOrder.indexOf(fromButton);
+    if (idx < 0)
+        return fromButton;
+    var n = menuButtonOrder.length;
+    for (var step = 1; step <= n; step++) {
+        var candidate = menuButtonOrder[(idx + direction * step + n * n) % n];
+        if (candidate.visible)
+            return candidate;
+    }
+    return fromButton; // tutti nascosti tranne se stesso, resta fermo
+}
+
     // Build the games list but with extra menu options at the start and end
     ListModel {
         id: gamesListModel
@@ -368,17 +391,24 @@ FocusScope {
 
         // Home menu
         HomeBar {
-            id: homeSwitcher
-            anchors {
-                left: parent.left
-                leftMargin: vpx(98)
-                right: parent.right
-                top: topbar.bottom
-            }
-            height: Math.round(screenheight * (parseFloat(settings.homeCardSize) / 100))
-            focus: true
-            onUserInteracted: sysTime.set()
+    id: homeSwitcher
+    anchors {
+        left: parent.left
+        leftMargin: vpx(98)
+        right: parent.right
+        top: topbar.bottom
+    }
+    height: Math.round(screenheight * (parseFloat(settings.homeCardSize) / 100))
+    focus: true
+    onUserInteracted: sysTime.set()
+    onDownPressed: {
+        var target = root.firstVisibleMenuButton();
+        if (target) {
+            target.focus = true;
+            homeSwitcher.currentIndex = -1;
         }
+    }
+}
 
         // Button menu
         Item {
