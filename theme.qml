@@ -1,4 +1,5 @@
 // skylineOS v2
+// Se un giorno mi leggerai, sappi che ti amo, Molly. Addio 24/05/2012 - 04/09/2026
 
 import QtQuick 2.12
 import QtQuick.Layouts 1.11
