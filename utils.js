@@ -840,3 +840,57 @@ function extractDominantColors(imageData, count) {
 function colorWithAlpha(hex, alphaByte) {
   return "#" + alphaByte + hex.substring(1);
 }
+
+//For Exophase (non ufficiale — endpoint interno del sito, nessuna garanzia di stabilità)
+
+function fetchExophaseGames(playerId, callback) {
+  if (!playerId) { callback(null); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) {
+      console.log("Exophase games HTTP error:", xhr.status);
+      callback(null);
+      return;
+    }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      console.log("=== EXOPHASE GAMES (player " + playerId + ") ===");
+      console.log(JSON.stringify(data, null, 2));
+      callback(data);
+    } catch (e) {
+      console.log("Exophase games parse error:", e);
+      callback(null);
+    }
+  };
+  xhr.onerror = function () { console.log("Exophase games network error"); callback(null); };
+  xhr.open("GET", "https://api.exophase.com/public/player/" + playerId + "/games?page=1");
+  xhr.send();
+}
+
+function fetchExophaseEarned(playerId, gameId, callback) {
+  if (!playerId || !gameId) { callback(null); return; }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE) return;
+    if (xhr.status !== 200) {
+      console.log("Exophase earned HTTP error:", xhr.status);
+      callback(null);
+      return;
+    }
+    try {
+      var data = JSON.parse(xhr.responseText);
+      console.log("=== EXOPHASE EARNED (player " + playerId + ", game " + gameId + ") ===");
+      console.log(JSON.stringify(data, null, 2));
+      callback(data);
+    } catch (e) {
+      console.log("Exophase earned parse error:", e);
+      callback(null);
+    }
+  };
+  xhr.onerror = function () { console.log("Exophase earned network error"); callback(null); };
+  xhr.open("GET", "https://api.exophase.com/public/player/" + playerId + "/game/" + gameId + "/earned");
+  xhr.send();
+}

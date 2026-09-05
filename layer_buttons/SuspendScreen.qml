@@ -12,6 +12,7 @@ Item {
     property int requiredPresses: 3
     property int tickCount: 32
     property real fillRatio: pressCount / requiredPresses
+    property real pulseDuration: 1800 - fillRatio * 900
 
     focus: true
 
@@ -65,6 +66,24 @@ Item {
         }
     }
 
+    RadialGradient {
+        anchors.fill: parent
+        gradient: Gradient {
+            GradientStop {
+                position: 0.0
+                color: "#00000000"
+            }
+            GradientStop {
+                position: 0.65
+                color: "#00000000"
+            }
+            GradientStop {
+                position: 1.0
+                color: "#40000000"
+            }
+        }
+    }
+
     // Pillola di stato: ora + batteria, stile "glass"
     Rectangle {
         id: statusPill
@@ -100,7 +119,7 @@ Item {
                 color: theme.text
                 font.family: titleFont.name
                 font.bold: true
-                font.pixelSize: vpx(20)
+                font.pixelSize: vpx(26)
                 anchors.verticalCenter: parent.verticalCenter
 
                 Timer {
@@ -114,7 +133,7 @@ Item {
 
             Rectangle {
                 width: vpx(3)
-                height: vpx(16)
+                height: vpx(18)
                 radius: width / 2
                 color: theme.icon
                 opacity: 0.25
@@ -123,7 +142,8 @@ Item {
             }
 
             BatteryIcon {
-                width: vpx(28)
+                id: suspendBatteryIcon
+                width: vpx(30)
                 height: width / 1.5
                 level: isNaN(api.device.batteryPercent) ? 0 : parseInt(api.device.batteryPercent * 100)
                 visible: !isNaN(api.device.batteryPercent)
@@ -132,6 +152,16 @@ Item {
                 layer.effect: ColorOverlay {
                     color: theme.icon
                 }
+            }
+
+            Text {
+                text: suspendBatteryIcon.level + "%"
+                color: theme.text
+                font.family: titleFont.name
+                font.bold: true
+                font.pixelSize: vpx(18)
+                anchors.verticalCenter: parent.verticalCenter
+                visible: !isNaN(api.device.batteryPercent)
             }
         }
     }
@@ -209,12 +239,12 @@ Item {
                     loops: Animation.Infinite
                     NumberAnimation {
                         to: 1.03
-                        duration: 1800
+                        duration: suspendRoot.pulseDuration
                         easing.type: Easing.InOutSine
                     }
                     NumberAnimation {
                         to: 1.0
-                        duration: 1800
+                        duration: suspendRoot.pulseDuration
                         easing.type: Easing.InOutSine
                     }
                 }
@@ -239,15 +269,6 @@ Item {
                     }
                 }
             }
-        }
-
-        Text {
-            text: suspendRoot.pressCount
-            color: theme.icon
-            opacity: 0.65
-            font.pixelSize: vpx(16)
-            font.family: titleFont.name
-            anchors.horizontalCenter: parent.horizontalCenter
         }
     }
 

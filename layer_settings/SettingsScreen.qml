@@ -274,6 +274,12 @@ FocusScope {
             setting: ""
             type: "input"
         }
+        ListElement {
+            settingName: "Exophase User ID"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
     }
 
     property var performancePage: {
