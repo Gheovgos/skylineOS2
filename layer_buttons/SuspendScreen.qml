@@ -38,13 +38,29 @@ Item {
 
             SequentialAnimation on y {
                 loops: Animation.Infinite
-                NumberAnimation { to: orb.baseY - orb.height / 2 - vpx(24); duration: 3200 + index * 600; easing.type: Easing.InOutSine }
-                NumberAnimation { to: orb.baseY - orb.height / 2 + vpx(24); duration: 3200 + index * 600; easing.type: Easing.InOutSine }
+                NumberAnimation {
+                    to: orb.baseY - orb.height / 2 - vpx(24)
+                    duration: 3200 + index * 600
+                    easing.type: Easing.InOutSine
+                }
+                NumberAnimation {
+                    to: orb.baseY - orb.height / 2 + vpx(24)
+                    duration: 3200 + index * 600
+                    easing.type: Easing.InOutSine
+                }
             }
             SequentialAnimation on opacity {
                 loops: Animation.Infinite
-                NumberAnimation { to: 0.11; duration: 2600 + index * 400; easing.type: Easing.InOutSine }
-                NumberAnimation { to: 0.05; duration: 2600 + index * 400; easing.type: Easing.InOutSine }
+                NumberAnimation {
+                    to: 0.11
+                    duration: 2600 + index * 400
+                    easing.type: Easing.InOutSine
+                }
+                NumberAnimation {
+                    to: 0.05
+                    duration: 2600 + index * 400
+                    easing.type: Easing.InOutSine
+                }
             }
         }
     }
@@ -113,7 +129,9 @@ Item {
                 visible: !isNaN(api.device.batteryPercent)
                 anchors.verticalCenter: parent.verticalCenter
                 layer.enabled: true
-                layer.effect: ColorOverlay { color: theme.icon }
+                layer.effect: ColorOverlay {
+                    color: theme.icon
+                }
             }
         }
     }
@@ -149,9 +167,22 @@ Item {
                     rotation: angle + 90
                     transformOrigin: Item.Center
 
-                    Behavior on color { ColorAnimation { duration: 180 } }
-                    Behavior on opacity { NumberAnimation { duration: 180 } }
-                    Behavior on scale { NumberAnimation { duration: 180; easing.type: Easing.OutBack } }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 180
+                        }
+                    }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                        }
+                    }
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 180
+                            easing.type: Easing.OutBack
+                        }
+                    }
                 }
             }
 
@@ -176,8 +207,16 @@ Item {
 
                 SequentialAnimation on scale {
                     loops: Animation.Infinite
-                    NumberAnimation { to: 1.03; duration: 1800; easing.type: Easing.InOutSine }
-                    NumberAnimation { to: 1.0; duration: 1800; easing.type: Easing.InOutSine }
+                    NumberAnimation {
+                        to: 1.03
+                        duration: 1800
+                        easing.type: Easing.InOutSine
+                    }
+                    NumberAnimation {
+                        to: 1.0
+                        duration: 1800
+                        easing.type: Easing.InOutSine
+                    }
                 }
 
                 Item {
@@ -199,7 +238,6 @@ Item {
                         y: -vpx(6)
                     }
                 }
-
             }
         }
 
@@ -215,18 +253,22 @@ Item {
 
     SequentialAnimation {
         id: pressFeedback
-        NumberAnimation { target: moonCore; property: "scale"; to: 0.92; duration: 80 }
-        NumberAnimation { target: moonCore; property: "scale"; to: 1.0; duration: 140; easing.type: Easing.OutBack }
+        NumberAnimation {
+            target: moonCore
+            property: "scale"
+            to: 0.92
+            duration: 80
+        }
+        NumberAnimation {
+            target: moonCore
+            property: "scale"
+            to: 1.0
+            duration: 140
+            easing.type: Easing.OutBack
+        }
     }
 
     Keys.onPressed: {
-        if (api.keys.isCancel(event)) {
-            event.accepted = true;
-            suspendRoot.pressCount = 0;
-            showHomeScreen();
-            return;
-        }
-
         event.accepted = true;
         suspendRoot.pressCount++;
         pressFeedback.start();

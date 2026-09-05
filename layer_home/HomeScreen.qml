@@ -13,26 +13,26 @@ FocusScope {
 
     property var menuButtonOrder: [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton]
 
-function firstVisibleMenuButton() {
-    for (var i = 0; i < menuButtonOrder.length; i++) {
-        if (menuButtonOrder[i].visible)
-            return menuButtonOrder[i];
+    function firstVisibleMenuButton() {
+        for (var i = 0; i < menuButtonOrder.length; i++) {
+            if (menuButtonOrder[i].visible)
+                return menuButtonOrder[i];
+        }
+        return null;
     }
-    return null;
-}
 
-function visibleMenuButtonNeighbor(fromButton, direction) {
-    var idx = menuButtonOrder.indexOf(fromButton);
-    if (idx < 0)
-        return fromButton;
-    var n = menuButtonOrder.length;
-    for (var step = 1; step <= n; step++) {
-        var candidate = menuButtonOrder[(idx + direction * step + n * n) % n];
-        if (candidate.visible)
-            return candidate;
+    function visibleMenuButtonNeighbor(fromButton, direction) {
+        var idx = menuButtonOrder.indexOf(fromButton);
+        if (idx < 0)
+            return fromButton;
+        var n = menuButtonOrder.length;
+        for (var step = 1; step <= n; step++) {
+            var candidate = menuButtonOrder[(idx + direction * step + n * n) % n];
+            if (candidate.visible)
+                return candidate;
+        }
+        return fromButton; // tutti nascosti tranne se stesso, resta fermo
     }
-    return fromButton; // tutti nascosti tranne se stesso, resta fermo
-}
 
     // Build the games list but with extra menu options at the start and end
     ListModel {
@@ -391,24 +391,24 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
 
         // Home menu
         HomeBar {
-    id: homeSwitcher
-    anchors {
-        left: parent.left
-        leftMargin: vpx(98)
-        right: parent.right
-        top: topbar.bottom
-    }
-    height: Math.round(screenheight * (parseFloat(settings.homeCardSize) / 100))
-    focus: true
-    onUserInteracted: sysTime.set()
-    onDownPressed: {
-        var target = root.firstVisibleMenuButton();
-        if (target) {
-            target.focus = true;
-            homeSwitcher.currentIndex = -1;
+            id: homeSwitcher
+            anchors {
+                left: parent.left
+                leftMargin: vpx(98)
+                right: parent.right
+                top: topbar.bottom
+            }
+            height: Math.round(screenheight * (parseFloat(settings.homeCardSize) / 100))
+            focus: true
+            onUserInteracted: sysTime.set()
+            onDownPressed: {
+                var target = root.firstVisibleMenuButton();
+                if (target) {
+                    target.focus = true;
+                    homeSwitcher.currentIndex = -1;
+                }
+            }
         }
-    }
-}
 
         // Button menu
         Item {
@@ -482,9 +482,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    /* KeyNavigation.right: {navSound.play(); storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton}
-                    KeyNavigation.left: {navSound.play(); suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton}
-                     */
+                    // infoButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(infoButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(infoButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -514,8 +520,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton
-                    KeyNavigation.left: infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton
+                    // storeButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(storeButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(storeButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -551,8 +564,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton
-                    KeyNavigation.left: storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton
+                    // browserButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(browserButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(browserButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -582,8 +602,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton
-                    KeyNavigation.left: browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton
+                    // galleryButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(galleryButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(galleryButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -619,8 +646,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: controllerButton.visible ? controllerButton : settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton
-                    KeyNavigation.left: galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton.visible ? settingsButton : controllerButton
+                    // backlogButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(backlogButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(backlogButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -650,8 +684,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: settingsButton.visible ? settingsButton : suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton
-                    KeyNavigation.left: backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton.visible ? suspendButton : settingsButton
+                    // controllerButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(controllerButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(controllerButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -686,8 +727,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: suspendButton.visible ? suspendButton : infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton
-                    KeyNavigation.left: controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton.visible ? infoButton : suspendButton
+                    // settingsButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(settingsButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(settingsButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
@@ -717,8 +765,15 @@ function visibleMenuButtonNeighbor(fromButton, direction) {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
                     }
-                    KeyNavigation.right: infoButton.visible ? infoButton : storeButton.visible ? storeButton : browserButton.visible ? browserButton : galleryButton.visible ? galleryButton : backlogButton.visible ? backlogButton : controllerButton.visible ? controllerButton : settingsButton
-                    KeyNavigation.left: settingsButton.visible ? settingsButton : controllerButton.visible ? controllerButton : backlogButton.visible ? backlogButton : galleryButton.visible ? galleryButton : browserButton.visible ? browserButton : storeButton.visible ? storeButton : infoButton
+                    // suspendButton
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(suspendButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(suspendButton, 1).focus = true;
+                    }
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;

@@ -977,7 +977,7 @@ FocusScope {
         }
         height: helpbarheight
 
-        opacity: (homeScreen.expandedPanelOpen || gameDetailOpen) ? 0 : 1
+        opacity: (homeScreen.expandedPanelOpen || gameDetailOpen || root.state === "suspendscreen") ? 0 : 1
         visible: opacity > 0
         Behavior on opacity {
             NumberAnimation {
