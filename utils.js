@@ -836,12 +836,83 @@ function extractDominantColors(imageData, count) {
   });
 }
 
-// Antepone un byte di alpha (2 caratteri hex) a un colore "#RRGGBB"
 function colorWithAlpha(hex, alphaByte) {
   return "#" + alphaByte + hex.substring(1);
 }
 
-//For Exophase (non ufficiale — endpoint interno del sito, nessuna garanzia di stabilità)
+//For Exophase
+
+var _exophaseGamesCache = null;
+var _exophaseGamesPending = false;
+var _exophaseGamesCallbacks = [];
+
+function _exophaseCleanTitle(title) {
+  return title.replace(/\s*[\(\[][^\)\]]*[\)\]]/g, "").trim().toLowerCase();
+}
+
+function fetchExophaseGamesList(playerId, callback) {
+  if (!playerId) { callback(null); return; }
+
+  if (_exophaseGamesCache !== null) {
+    callback(_exophaseGamesCache);
+    return;
+  }
+  if (_exophaseGamesPending) {
+    _exophaseGamesCallbacks.push(callback);
+    return;
+  }
+
+  _exophaseGamesPending = true;
+  _exophaseGamesCallbacks = [callback];
+
+  function resolveAll(result) {
+    _exophaseGamesPending = false;
+    _exophaseGamesCache = result;
+    var cbs = _exophaseGamesCallbacks;
+    _exophaseGamesCallbacks = [];
+    for (var i = 0; i < cbs.length; i++)
+      cbs[i](result);
+  }
+
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== XMLHttpRequest.DONE)
+        return;
+
+    console.log("Exophase HTTP status:", xhr.status);
+    console.log("Content-Type:", xhr.getResponseHeader("content-type"));
+    console.log("CF-Mitigated:", xhr.getResponseHeader("cf-mitigated"));
+
+    if (xhr.status !== 200) {
+    var mitigated = xhr.getResponseHeader("cf-mitigated");
+    var contentType = xhr.getResponseHeader("content-type");
+
+    console.log("HTTP:", xhr.status);
+    console.log("CF-Mitigated:", mitigated);
+    console.log("Content-Type:", contentType);
+
+    if (mitigated === "challenge") {
+        console.log("Cloudflare challenge ricevuta: non è una normale risposta API.");
+    }
+
+    resolveAll(null);
+    return;
+}
+
+
+    try {
+        resolveAll(data);
+    } catch (e) {
+        console.log("Exophase games parse error:", e);
+        resolveAll(null);
+    }
+};
+
+  xhr.onerror = function () { resolveAll(null); };
+  xhr.open("GET", "https://api.exophase.com/public/player/" + playerId + "/games?page=1");
+  xhr.setRequestHeader("Accept", "application/json");
+  xhr.send();
+}
 
 function fetchExophaseGames(playerId, callback) {
   if (!playerId) { callback(null); return; }
@@ -866,6 +937,9 @@ function fetchExophaseGames(playerId, callback) {
   };
   xhr.onerror = function () { console.log("Exophase games network error"); callback(null); };
   xhr.open("GET", "https://api.exophase.com/public/player/" + playerId + "/games?page=1");
+  xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+  xhr.setRequestHeader("Referer", "https://www.exophase.com/");
+  xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
   xhr.send();
 }
 
@@ -892,5 +966,66 @@ function fetchExophaseEarned(playerId, gameId, callback) {
   };
   xhr.onerror = function () { console.log("Exophase earned network error"); callback(null); };
   xhr.open("GET", "https://api.exophase.com/public/player/" + playerId + "/game/" + gameId + "/earned");
+  xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+  xhr.setRequestHeader("Referer", "https://www.exophase.com/");
+  xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
   xhr.send();
+}
+
+function fetchExophaseAchievements(title, playerId, callback) {
+  if (!title || !playerId) { callback(null); return; }
+
+  var cleanTitle = _exophaseCleanTitle(title);
+
+  fetchExophaseGamesList(playerId, function (gamesData) {
+    if (!gamesData || !gamesData.success || !gamesData.games) {
+      callback(null);
+      return;
+    }
+
+    var matches = gamesData.games.filter(function (g) {
+      return g.meta && _exophaseCleanTitle(g.meta.title || "") === cleanTitle;
+    });
+
+    if (matches.length === 0) {
+      console.log("Exophase: nessun match per '" + cleanTitle + "'");
+      callback(null);
+      return;
+    }
+
+    if (matches.length > 1) {
+      console.log("Exophase: " + matches.length + " match per '" + cleanTitle + "' su piattaforme diverse:",
+        matches.map(function (m) { return m.meta.environment_slug + " (master_id " + m.master_id + ")"; }).join(", "));
+    }
+
+    var match = matches[0];
+    console.log("Exophase: uso master_id=" + match.master_id + " master_playerid=" + match.master_playerid + " (" + match.meta.environment_slug + ")");
+
+    // Test: proviamo con master_playerid (id specifico per quella piattaforma/gioco).
+    // Se risponde 404/vuoto, il prossimo tentativo sarà con il playerId "ombrello" originale.
+    var earnedXhr = new XMLHttpRequest();
+    earnedXhr.onreadystatechange = function () {
+      if (earnedXhr.readyState !== XMLHttpRequest.DONE) return;
+      if (earnedXhr.status !== 200) {
+        console.log("Exophase earned HTTP error:", earnedXhr.status, "(provato con master_playerid=" + match.master_playerid + ")");
+        callback(null);
+        return;
+      }
+      try {
+        var earnedData = JSON.parse(earnedXhr.responseText);
+        console.log("=== EXOPHASE EARNED (master_playerid " + match.master_playerid + ", game " + match.master_id + ") ===");
+        console.log(JSON.stringify(earnedData, null, 2));
+        callback(earnedData); // per ora restituiamo il raw, il mapping verso il modello lo facciamo dopo aver visto la struttura
+      } catch (e) {
+        console.log("Exophase earned parse error:", e);
+        callback(null);
+      }
+    };
+    earnedXhr.onerror = function () { callback(null); };
+    earnedXhr.open("GET", "https://api.exophase.com/public/player/" + match.master_playerid + "/game/" + match.master_id + "/earned");
+    xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+    xhr.setRequestHeader("Referer", "https://www.exophase.com/");
+    xhr.setRequestHeader("Accept", "application/json, text/plain, */*");
+    earnedXhr.send();
+  });
 }

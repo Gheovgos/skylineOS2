@@ -270,8 +270,35 @@ FocusScope {
     function openAchievementsPanel() {
         showOptionsPanel = false;
         var raId = raDisplayId;
+        var exophaseFlag = currentGame && currentGame.extra ? currentGame.extra.exophase : "";
+        var useExophase = (exophaseFlag === "1" || exophaseFlag === 1);
 
-        if (!raId) {
+        if (raId && !useExophase) {
+            raAchievementsNotFound = false;
+            raAchievementsLoading = true;
+            showAchievements = true;
+            achievementsPanel.forceActiveFocus();
+            var requestedGame = currentGame;
+            Utils.loadGameAchievements(raId, raAchievementsModelDetail, function (success) {
+                if (currentGame !== requestedGame)
+                    return;
+                raAchievementsLoading = false;
+                if (success) {
+                    raAchievementsNotFound = false;
+                    return;
+                }
+                tryExophaseFallback();
+            });
+            return;
+        }
+
+        tryExophaseFallback();
+    }
+
+    function tryExophaseFallback() {
+        var exophasePlayerId = api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : "";
+
+        if (!exophasePlayerId || !currentGame) {
             raAchievementsNotFound = true;
             raAchievementsModelDetail.clear();
             showAchievements = true;
@@ -283,12 +310,13 @@ FocusScope {
         raAchievementsLoading = true;
         showAchievements = true;
         achievementsPanel.forceActiveFocus();
+
         var requestedGame = currentGame;
-        Utils.loadGameAchievements(raId, raAchievementsModelDetail, function (success) {
+        var test = Utils.fetchExophaseAchievements(currentGame.title, exophasePlayerId, function (result) {
             if (currentGame !== requestedGame)
                 return;
             raAchievementsLoading = false;
-            raAchievementsNotFound = !success;
+            raAchievementsNotFound = !result; // per ora sempre true, finché fetchExophaseAchievements è un placeholder
         });
     }
 
