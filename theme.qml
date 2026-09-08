@@ -198,6 +198,8 @@ FocusScope {
         root.state = "playsoftware";
 
         launchSfx.play();
+
+        if(currentGame) launchGame(currentGame)
     }
 
     function pushToStackTimer(game) {

@@ -324,10 +324,10 @@ FocusScope {
                 }
 
                 if (api.keys.isNextPage(event) && !event.isAutoRepeat) {
-    event.accepted = true;
-    requestHideApp(currentGame.title);
-    return;
-}
+                    event.accepted = true;
+                    requestHideApp(currentGame.title);
+                    return;
+                }
             }
 
             Keys.onUpPressed: {
@@ -512,6 +512,7 @@ FocusScope {
                         onClicked: {
                             if (selected) {
                                 anim.start();
+                                console.log(selected);
                                 playSoftware();
                             } else
                                 navSound.play();
