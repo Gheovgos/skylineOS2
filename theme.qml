@@ -15,6 +15,7 @@ import "layer_help"
 import "layer_buttons"
 import "layer_detail"
 import "Lists"
+import "layer_2ds"
 import "resources" as Resources
 
 FocusScope {
@@ -811,6 +812,10 @@ FocusScope {
         currentCollection = -1;
         api.memory.unset('Last Collection');
         homeSfx.play();
+    }
+
+    SecondScreenHome {
+        id: secondScreenHome
     }
 
     // Home screen
