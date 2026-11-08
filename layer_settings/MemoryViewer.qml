@@ -8,10 +8,11 @@ FocusScope {
     property bool editing: false
     property string editValue: ""
     signal closed
+    signal editRequested(string title, string initial, var apply)
 
     anchors.fill: parent
     visible: false
-    z: 110
+    z: 90
 
     function display(v) {
         return (typeof v === "object") ? JSON.stringify(v) : String(v);
@@ -69,17 +70,23 @@ FocusScope {
         closed();
     }
 
+    function focusList() {
+        memList.forceActiveFocus();
+    }
+
     function startEdit() {
         if (memList.currentIndex < 0)
             return;
-        editValue = memModel.get(memList.currentIndex).value;
-        editing = true;
-        Qt.inputMethod.show();
+        var idx = memList.currentIndex;
+        var item = memModel.get(idx);
+        editRequested(item.key, item.value, function (text) {
+            applyValue(idx, text);
+        });
     }
 
-    function commit() {
-        var item = memModel.get(memList.currentIndex);
-        var v = editValue;
+    function applyValue(idx, text) {
+        var item = memModel.get(idx);
+        var v = text;
         if (item.vtype === "object") {
             try {
                 v = JSON.parse(v);
@@ -94,9 +101,9 @@ FocusScope {
             v = (v === "true");
         }
         api.memory.set(item.key, v);
-        memModel.set(memList.currentIndex, { value: display(v) });
-        editing = false;
-        Qt.inputMethod.hide();
+        memModel.set(idx, {
+            value: display(v)
+        });
     }
 
     function removeCurrent() {
@@ -120,6 +127,7 @@ FocusScope {
         opacity: 0.6
         MouseArea {
             anchors.fill: parent
+            onClicked: memRoot.close()
         }
     }
 

@@ -409,7 +409,7 @@ FocusScope {
         hideConfirmPopup.visible = true;
         hideConfirmPopup.forceActiveFocus();
     }
-    
+
     // Launch the current game from HomeBar
     function launchGame(game) {
         pushToStackTimer(game);
@@ -875,7 +875,7 @@ FocusScope {
             left: parent.left
             right: parent.right
             top: parent.top
-            bottom: helpBar.top
+            bottom: parent.bottom
         }
     }
 
@@ -1045,13 +1045,14 @@ FocusScope {
         Rectangle {
 
             anchors.fill: parent
-            color: theme.main
+            color: "transparent"
         }
 
         Rectangle {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 1
+            opacity: 0.3
             color: theme.secondary
         }
 

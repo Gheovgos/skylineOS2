@@ -468,6 +468,7 @@ FocusScope {
                 top: homeSwitcher.bottom
                 bottom: parent.bottom
                 horizontalCenter: parent.horizontalCenter
+                bottomMargin: helpbarheight
             }
             width: buttonMenu.width + vpx(48)
             height: parent.bottom

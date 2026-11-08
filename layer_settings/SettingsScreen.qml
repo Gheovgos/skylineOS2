@@ -895,6 +895,8 @@ FocusScope {
         property string settingKey: ""
         property string settingDefault: ""
         property string inputValue: ""
+        property var applyCallback: null
+        property var returnItem: null
 
         TextInput {
             id: hiddenInput
@@ -909,13 +911,11 @@ FocusScope {
                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                     event.accepted = true;
                     api.memory.set(inputPanel.settingKey, inputPanel.inputValue);
-                    inputPanel.close();
-                    return;
+                    inputPanel.confirm();
                 }
                 if (event.key === Qt.Key_Escape) {
                     event.accepted = true;
-                    inputPanel.close();
-                    return;
+                    inputPanel.confirm();
                 }
             }
             onTextChanged: {
@@ -930,15 +930,42 @@ FocusScope {
             settingKey = key;
             settingDefault = defaultVal;
             inputValue = api.memory.get(key) || defaultVal;
+            applyCallback = null;
+            returnItem = null;
             visible = true;
             hiddenInput.focus = true;
             Qt.inputMethod.show();
         }
 
+        function openCustom(title, initial, apply, back) {
+            settingKey = title;
+            settingDefault = initial;
+            inputValue = initial;
+            applyCallback = apply;
+            returnItem = back;
+            visible = true;
+            hiddenInput.focus = true;
+            Qt.inputMethod.show();
+        }
+
+        function confirm() {
+            if (applyCallback)
+                applyCallback(inputValue);
+            else
+                api.memory.set(settingKey, inputValue);
+            close();
+        }
+
         function close() {
             Qt.inputMethod.hide();
             visible = false;
-            settingsList.focus = true;
+            applyCallback = null;
+            var back = returnItem;
+            returnItem = null;
+            if (back)
+                back.focusList();
+            else
+                settingsList.focus = true;
         }
 
         Column {
@@ -1022,8 +1049,7 @@ FocusScope {
                 return;
             }
             if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || api.keys.isAccept(event)) {
-                api.memory.set(settingKey, inputValue);
-                close();
+                confirm();
                 return;
             }
             if (event.key === Qt.Key_Escape || api.keys.isCancel(event)) {
@@ -1040,5 +1066,6 @@ FocusScope {
         id: memoryViewer
         models: [settingsModel, homeSettingsModel, menuButtonModel, raModel, perfSettingsModel]
         onClosed: settingsList.focus = true
+        onEditRequested: inputPanel.openCustom(title, initial, apply, memoryViewer)
     }
 }
