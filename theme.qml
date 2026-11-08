@@ -944,7 +944,7 @@ FocusScope {
             left: parent.left// leftMargin: screenmargin
             right: parent.right// rightMargin: screenmargin
             top: parent.top
-            bottom: helpBar.top
+            bottom: parent.bottom
         }
     }
 
@@ -1045,7 +1045,13 @@ FocusScope {
         Rectangle {
 
             anchors.fill: parent
-            color: "transparent"
+            color: theme.main
+            opacity: softwareScreen.focus ? 1 : 0
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                }
+            }
         }
 
         Rectangle {

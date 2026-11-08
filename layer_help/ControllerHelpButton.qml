@@ -13,7 +13,7 @@ FocusScope {
 
     width: buttonTxt.contentWidth + vpx(50)
     height: Math.round(screenheight*0.0611)
-    color: theme.main
+    color: "transparent"
 
     anchors {
         //top: parent.top;
@@ -62,8 +62,8 @@ FocusScope {
 
   SequentialAnimation {
     id: colorAmin
-    ColorAnimation { target: helpButton; property: "color"; from: helpButton.color; to: theme.press; duration: 100; easing.type: Easing.OutQuad }
-    ColorAnimation { target: helpButton; property: "color"; from: theme.press; to: helpButton.color; duration: 100; easing.type: Easing.InQuad }
+    ColorAnimation { target: helpButton; property: "color"; from: Qt.rgba(theme.press.r, theme.press.g, theme.press.b, 0); to: theme.press; duration: 100; easing.type: Easing.OutQuad }
+    ColorAnimation { target: helpButton; property: "color"; from: theme.press; to: Qt.rgba(theme.press.r, theme.press.g, theme.press.b, 0); duration: 100; easing.type: Easing.InQuad }
   }
 
   MouseArea {

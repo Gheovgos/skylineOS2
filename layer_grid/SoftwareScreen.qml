@@ -121,7 +121,7 @@ FocusScope {
             ColorAnimation {
                 target: sortButton
                 property: "color"
-                from: sortButton.color
+                from: Qt.rgba(theme.press.r, theme.press.g, theme.press.b, 0)
                 to: theme.press
                 duration: 100
                 easing.type: Easing.OutQuad
@@ -130,7 +130,7 @@ FocusScope {
                 target: sortButton
                 property: "color"
                 from: theme.press
-                to: sortButton.color
+                to: Qt.rgba(theme.press.r, theme.press.g, theme.press.b, 0)
                 duration: 200
                 easing.type: Easing.InQuad
             }
@@ -181,7 +181,7 @@ FocusScope {
 
                 width: sortTypeTxt.contentWidth + vpx(90)
                 height: Math.round(screenheight * 0.0611)
-                color: theme.main
+                color: "transparent"
 
                 anchors {
                     top: parent.top
@@ -361,7 +361,7 @@ FocusScope {
                 bottom: parent.bottom
             }
             topMargin: Math.round(screenheight * 0.12)
-            bottomMargin: Math.round(screenheight * 0.12)
+            bottomMargin: Math.round(screenheight * 0.12) + helpbarheight
 
             cellWidth: width / numcolumns
             cellHeight: cellWidth
