@@ -620,6 +620,7 @@ function sgdbGetHeroes(gameId, callback) {
 
 function fetchScrapedBackgroundList(title, callback) {
   if (!title) { callback([]); return; }
+  if (!api.memory.get("SteamGridDB API Key")) { callback(""); return; }
   sgdbSearchGame(title, function (gameId) {
     if (!gameId) { callback([]); return; }
     sgdbGetHeroes(gameId, function (urls) {

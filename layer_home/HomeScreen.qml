@@ -11,6 +11,57 @@ FocusScope {
     property var hiddenApps: []
     property bool expandedPanelOpen: homeSwitcher.anyExpanded
 
+    property string hiddenSnapshot: ""
+
+    function rebuildGamesList() {
+        var keep = homeSwitcher.currentIndex;
+        gamesListModel.clear();
+        gamesListModel.buildList();
+        if (keep >= 0)
+            homeSwitcher.currentIndex = Math.min(keep, gamesListModel.count - 1);
+    }
+
+    property string scrapedBackground: ""
+    property var watchedGame: currentGame
+
+    onWatchedGameChanged: {
+        scrapedBackground = "";
+        scrapeTimer.restart();
+    }
+
+    onVisibleChanged: {
+        if (visible)
+            scrapeTimer.restart();
+    }
+
+    Timer {
+        id: scrapeTimer
+        interval: 400
+        repeat: false
+        onTriggered: root.scrapeBackground()
+    }
+
+    function scrapeBackground() {
+        var game = currentGame;
+        if (api.memory.get("Game Background") !== "Yes" || !game || !game.assets)
+            return;
+        if (game.assets.background || game.assets.screenshots[0])
+            return;
+
+        var title = game.title;
+        var manualKey = "SGDB_ID::" + title;
+        var manualId = api.memory.has(manualKey) ? api.memory.get(manualKey) : "";
+        var apply = function (url) {
+            if (currentGame && currentGame.title === title)
+                scrapedBackground = url || "";
+        };
+
+        if (manualId)
+            Utils.sgdbGetHero(manualId, apply);
+        else
+            Utils.fetchScrapedBackground(title, apply);
+    }
+
     property var menuButtonOrder: [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton]
 
     function firstVisibleMenuButton() {
@@ -45,10 +96,7 @@ FocusScope {
             buildList();
         }
 
-        onActiveCollectionChanged: {
-            clear();
-            buildList();
-        }
+        onActiveCollectionChanged: root.rebuildGamesList()
 
         function buildList() {
             var showHidden = api.memory.get("Show Hidden Apps") === "Yes";
@@ -76,8 +124,11 @@ FocusScope {
     }
 
     onHiddenAppsChanged: {
-        gamesListModel.clear();
-        gamesListModel.buildList();
+        var snap = JSON.stringify(hiddenApps);
+        if (snap === hiddenSnapshot)
+            return;
+        hiddenSnapshot = snap;
+        rebuildGamesList();
     }
 
     function openRAPanel() {
@@ -96,7 +147,7 @@ FocusScope {
         Image {
             id: globalBackground
             anchors.fill: parent
-            source: currentGame ? (currentGame.assets.background || currentGame.assets.screenshots[0] || "") : ""
+            source: currentGame ? (currentGame.assets.background || currentGame.assets.screenshots[0] || scrapedBackground || "") : ""
             fillMode: Image.PreserveAspectCrop
             smooth: true
             asynchronous: true

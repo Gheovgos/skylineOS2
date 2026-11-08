@@ -10,7 +10,7 @@ FocusScope {
   property bool showFav: true
   property bool showDetails: false
   property var gameData: softwareList[sortByIndex].currentGame(currentScreenID)
-  property string collectionShortName: Utils.processPlatformName(currentGame.collections.get(0).shortName)
+  property string collectionShortName: (currentGame && currentGame.collections && currentGame.collections.count > 0) ? Utils.processPlatformName(currentGame.collections.get(0).shortName) : ""
 
   function processButtonArt(buttonModel) {
     var i;
