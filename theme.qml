@@ -252,6 +252,10 @@ FocusScope {
         }
         property string pendingTitle: ""
         property bool isReverse: false
+        property var confirmAction: null
+        property var returnFocusItem: null
+        property string customTitle: ""
+        property string customSubtitle: ""
 
         anchors.centerIn: parent
         z: 200
@@ -276,7 +280,9 @@ FocusScope {
             spacing: vpx(20)
 
             Text {
-                text: hideConfirmPopup.isReverse ? "Show \"" + hideConfirmPopup.pendingTitle + "\" again?" : "Hide \"" + hideConfirmPopup.pendingTitle + "\"?"
+                text: hideConfirmPopup.customTitle !== "" ? hideConfirmPopup.customTitle : (hideConfirmPopup.isReverse ? "Show \"" + hideConfirmPopup.pendingTitle + "\" again?" : "Hide \"" + hideConfirmPopup.pendingTitle + "\"?")
+                width: vpx(380)
+                wrapMode: Text.WordWrap
                 color: theme.text
                 font.family: titleFont.name
                 font.pixelSize: Math.round(screenheight * 0.028)
@@ -286,7 +292,9 @@ FocusScope {
             }
 
             Text {
-                text: hideConfirmPopup.isReverse ? "It will appear on the home screen again" : "It won't appear on the home screen anymore"
+                text: hideConfirmPopup.customSubtitle !== "" ? hideConfirmPopup.customSubtitle : (hideConfirmPopup.isReverse ? "It will appear on the home screen again" : "It won't appear on the home screen anymore")
+                width: vpx(380)
+                wrapMode: Text.WordWrap
                 color: theme.icon
                 font.family: titleFont.name
                 font.pixelSize: Math.round(screenheight * 0.020)
@@ -329,6 +337,33 @@ FocusScope {
         }
 
         Keys.onPressed: {
+            if (confirmAction) {
+                event.accepted = true;
+                if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                    var act = confirmAction;
+                    var target = returnFocusItem;
+                    confirmAction = null;
+                    returnFocusItem = null;
+                    customTitle = "";
+                    customSubtitle = "";
+                    hideConfirmPopup.visible = false;
+                    turnOffSfx.play();
+                    act();
+                    if (target)
+                        target.forceActiveFocus();
+                } else if (api.keys.isCancel(event) && !event.isAutoRepeat) {
+                    var back = returnFocusItem;
+                    confirmAction = null;
+                    returnFocusItem = null;
+                    customTitle = "";
+                    customSubtitle = "";
+                    backSfx.play();
+                    hideConfirmPopup.visible = false;
+                    if (back)
+                        back.forceActiveFocus();
+                }
+                return;
+            }
             if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                 event.accepted = true;
                 toggleHideApp(pendingTitle);
@@ -357,11 +392,24 @@ FocusScope {
     }
 
     function requestHideApp(title) {
+        hideConfirmPopup.confirmAction = null;
+        hideConfirmPopup.customTitle = "";
+        hideConfirmPopup.customSubtitle = "";
         hideConfirmPopup.pendingTitle = title;
         hideConfirmPopup.isReverse = isAppHidden(title) && api.memory.get("Show Hidden Apps") === "Yes";
         hideConfirmPopup.visible = true;
         hideConfirmPopup.forceActiveFocus();
     }
+
+    function requestConfirm(title, subtitle, action, focusItem) {
+        hideConfirmPopup.customTitle = title;
+        hideConfirmPopup.customSubtitle = subtitle;
+        hideConfirmPopup.confirmAction = action;
+        hideConfirmPopup.returnFocusItem = focusItem;
+        hideConfirmPopup.visible = true;
+        hideConfirmPopup.forceActiveFocus();
+    }
+    
     // Launch the current game from HomeBar
     function launchGame(game) {
         pushToStackTimer(game);

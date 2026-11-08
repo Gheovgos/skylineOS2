@@ -280,6 +280,18 @@ FocusScope {
             setting: ""
             type: "input"
         }
+        ListElement {
+            settingName: "Memory Viewer"
+            settingSubtitle: ""
+            setting: "Open"
+            type: "button"
+        }
+        ListElement {
+            settingName: "Clear cache"
+            settingSubtitle: "(Scraped backgrounds)"
+            setting: "Clear"
+            type: "button"
+        }
     }
 
     property var performancePage: {
@@ -652,6 +664,10 @@ FocusScope {
                                     api.memory.unset("RA_Username");
                                     raLoginStatus = "";
                                     selectSfx.play();
+                                } else if (settingName === "Memory Viewer") {
+                                    memoryViewer.open();
+                                } else if (settingName === "Clear cache") {
+                                    clearScrapedCache();
                                 }
                             }
                         } else {
@@ -673,7 +689,13 @@ FocusScope {
                     hoverEnabled: false //settings.MouseHover == "Yes"
                     onEntered: { /*navSound.play();*/ }
                     onClicked: {
-                        if (selected) {
+                        if (selected && type === "button" && (settingName === "Memory Viewer" || settingName === "Clear cache")) {
+                            selectSfx.play();
+                            if (settingName === "Memory Viewer")
+                                memoryViewer.open();
+                            else
+                                clearScrapedCache();
+                        } else if (selected) {
                             selectSfx.play();
                             nextSetting();
                             saveSetting();
@@ -819,6 +841,16 @@ FocusScope {
         api.memory.unset("Username");
         raLoginStatus = "";
         selectSfx.play();
+    }
+
+    function clearScrapedCache() {
+        requestConfirm("Clear cache?", "Scraped backgrounds will be fetched again", function () {
+            for (var i = 0; i < api.allGames.count; i++) {
+                var key = "SGDB_BG::" + api.allGames.get(i).title;
+                if (api.memory.has(key))
+                    api.memory.unset(key);
+            }
+        }, settingsList);
     }
 
     // INPUT
@@ -1002,5 +1034,11 @@ FocusScope {
             if (inputChar && inputChar.length === 1)
                 inputValue += inputChar;
         }
+    }
+
+    MemoryViewer {
+        id: memoryViewer
+        models: [settingsModel, homeSettingsModel, menuButtonModel, raModel, perfSettingsModel]
+        onClosed: settingsList.focus = true
     }
 }
