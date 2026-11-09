@@ -22,7 +22,15 @@ FocusScope {
     }
 
     property string scrapedBackground: ""
+    property bool usingScraped: !!(scrapedBackground !== "" && currentGame && currentGame.assets && !(currentGame.assets.background || currentGame.assets.screenshots[0]))
     property var watchedGame: currentGame
+
+    property real bgOverlayOpacity: {
+        var v = parseFloat(settings.bgTransparency);
+        if (isNaN(v))
+            v = 25;
+        return 1 - Math.max(0, Math.min(100, v)) / 100;
+    }
 
     onWatchedGameChanged: {
         scrapedBackground = "";
@@ -147,6 +155,7 @@ FocusScope {
         Image {
             id: globalBackground
             anchors.fill: parent
+            cache: !root.usingScraped
             source: currentGame ? (currentGame.assets.background || currentGame.assets.screenshots[0] || scrapedBackground || "") : ""
             fillMode: Image.PreserveAspectCrop
             smooth: true
@@ -179,7 +188,7 @@ FocusScope {
             Rectangle {
                 anchors.fill: parent
                 color: theme.main
-                opacity: 0.75
+                opacity: root.bgOverlayOpacity
             }
         }
 

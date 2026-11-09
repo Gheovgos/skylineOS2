@@ -41,6 +41,7 @@ FocusScope {
             showController: api.memory.has("Controller Button Show") ? api.memory.get("Controller Button Show") : "Yes",
             showSettings: api.memory.has("Settings Button Show") ? api.memory.get("Settings Button Show") : "Yes",
             showSuspend: api.memory.has("Suspend Button Show") ? api.memory.get("Suspend Button Show") : "Yes",
+            bgTransparency: api.memory.has("Background Transparency") ? api.memory.get("Background Transparency") : "25",
             steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
             RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : "",
             exophaseID: api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : ""
@@ -125,6 +126,7 @@ FocusScope {
             homeCardSize: api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
             steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
             RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : "",
+            bgTransparency: api.memory.has("Background Transparency") ? api.memory.get("Background Transparency") : "25",
             exophaseID: api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : ""
         };
     }

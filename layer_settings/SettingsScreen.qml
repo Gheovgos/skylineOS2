@@ -72,6 +72,12 @@ FocusScope {
             type: "input"
         }
         ListElement {
+            settingName: "Background Transparency"
+            settingSubtitle: "(%)"
+            setting: "25,30,40,50,60,70,80,90,100,0,10,20"
+            type: "toggle"
+        }
+        ListElement {
             settingName: "Time Format"
             settingSubtitle: ""
             setting: "12hr,24hr"
@@ -839,6 +845,8 @@ FocusScope {
         api.memory.unset("Enable DropShadows");
         api.memory.unset("Enable DropShadowsIndex");
         api.memory.unset("Username");
+        api.memory.unset("Background Transparency");
+        api.memory.unset("Background TransparencyIndex");
         raLoginStatus = "";
         selectSfx.play();
     }

@@ -12,6 +12,7 @@ FocusScope {
     property var currentGame
     property alias radius: bg.radius
     property string scrapedBackground: ""
+    readonly property bool usingScraped: !!(currentGame && currentGame.assets && scrapedBackground !== "" && !(currentGame.assets.background || currentGame.assets.screenshots[0]))
     property bool showDescription: false
     property string focusedButton: "play"   // "back" | "play" | "options" | "desc"
     property bool showOptionsPanel: false
@@ -340,6 +341,7 @@ FocusScope {
             id: bgImage
             anchors.fill: parent
             playing: true
+            cache: !root.usingScraped
             source: currentGame ? (currentGame.assets.background || currentGame.assets.screenshots[0] || scrapedBackground || "") : ""
             visible: source !== ""
             fillMode: Image.PreserveAspectCrop
