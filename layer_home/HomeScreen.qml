@@ -507,12 +507,10 @@ FocusScope {
                     radius: parent.height / 2
                     color: theme.button
                     visible: buttonBarBg.status !== Image.Ready
+                    layer.enabled: enableDropShadows
                 }
 
-                //radius: height / 2
-                //color: theme.button
-
-                layer.enabled: enableDropShadows
+                layer.enabled: enableDropShadows && buttonBarBg.status === Image.Ready
                 layer.effect: DropShadow {
                     transparentBorder: true
                     horizontalOffset: 0
@@ -525,7 +523,7 @@ FocusScope {
 
             RowLayout {
                 id: buttonMenu
-                spacing: vpx(8)
+                spacing: vpx(20)
                 anchors.centerIn: parent
 
                 MenuButton {
