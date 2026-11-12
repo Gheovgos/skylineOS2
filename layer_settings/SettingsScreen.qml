@@ -16,6 +16,13 @@ FocusScope {
         }
 
         ListElement {
+            settingName: "Multi User"
+            settingSubtitle: "(Ask profile on launch. Experimental)"
+            setting: "No,Yes"
+            type: "toggle"
+        }
+
+        ListElement {
             settingName: "Game Background"
             settingSubtitle: ""
             setting: "Yes,No"
@@ -847,6 +854,8 @@ FocusScope {
         api.memory.unset("Username");
         api.memory.unset("Background Transparency");
         api.memory.unset("Background TransparencyIndex");
+        api.memory.unset("Multi User");
+        api.memory.unset("Multi UserIndex");
         raLoginStatus = "";
         selectSfx.play();
     }

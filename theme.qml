@@ -44,6 +44,7 @@ FocusScope {
             bgTransparency: api.memory.has("Background Transparency") ? api.memory.get("Background Transparency") : "25",
             steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
             RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : "",
+            multiUser: api.memory.has("Multi User") ? api.memory.get("Multi User") : "No",
             exophaseID: api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : ""
         };
     }
@@ -92,6 +93,7 @@ FocusScope {
     property bool showPercent: (settings.batteryPercentSetting === "Yes") ? true : false
     property bool enableDropShadows: (settings.enableDropShadows === "Yes") ? true : false
     property bool playBGM: (settings.playBGM === "Yes") ? true : false
+    property bool multiUserEnabled: (settings.multiUser === "Yes") ? true : false
 
     onNextCollectionChanged: {
         changeCollection();
@@ -127,7 +129,8 @@ FocusScope {
             steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
             RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : "",
             bgTransparency: api.memory.has("Background Transparency") ? api.memory.get("Background Transparency") : "25",
-            exophaseID: api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : ""
+            exophaseID: api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : "",
+            multiUser: api.memory.has("Multi User") ? api.memory.get("Multi User") : "No"
         };
     }
 
