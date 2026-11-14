@@ -203,19 +203,21 @@ FocusScope {
     }
 
     function playGame() {
-        root.state = "playgame";
-
-        launchSfx.play();
-
-        if(currentGame) launchGame(currentGame)
+        requestProfile(function () {
+            root.state = "playgame";
+            launchSfx.play();
+            if (currentGame)
+                launchGame(currentGame);
+        });
     }
 
     function playSoftware() {
-        root.state = "playsoftware";
-
-        launchSfx.play();
-
-        if(currentGame) launchGame(currentGame)
+        requestProfile(function () {
+            root.state = "playsoftware";
+            launchSfx.play();
+            if (currentGame)
+                launchGame(currentGame);
+        });
     }
 
     function pushToStackTimer(game) {
@@ -426,7 +428,7 @@ FocusScope {
     }
 
     function registerLauncherUser() {
-        api.memory.set("Launcher User", currentUsername());
+        api.memory.set("Launcher User", pendingLauncherUser !== "" ? pendingLauncherUser : currentUsername());
     }
 
     function currentUsername() {
@@ -435,6 +437,28 @@ FocusScope {
         if (api.memory.has("Username") && api.memory.get("Username") !== "")
             return api.memory.get("Username");
         return "";
+    }
+
+    property string pendingLauncherUser: ""
+    property var profileGateAction: null
+
+    function requestProfile(action) {
+        pendingLauncherUser = "";
+        if (api.memory.get("Multi User") === "Yes" && api.memory.has("profile_1")) {
+            profileGateAction = action;
+            profilePicker.open();
+        } else {
+            action();
+        }
+    }
+
+    function restoreFocusAfterProfile() {
+        if (gameDetailOpen)
+            gameDetailScreen.forceActiveFocus();
+        else if (softwareScreen.visible)
+            softwareScreen.forceActiveFocus();
+        else
+            homeScreen.forceActiveFocus();
     }
 
     // Launch the current game from HomeBar
@@ -1058,6 +1082,22 @@ FocusScope {
     SatelliteProfileScreen {
         id: satelliteProfileScreen
         onConfirmRequested: requestConfirm(title, subtitle, action, focusItem)
+    }
+
+    ProfilePicker {
+        id: profilePicker
+        onChosen: {
+            pendingLauncherUser = name;
+            var act = profileGateAction;
+            profileGateAction = null;
+            restoreFocusAfterProfile();
+            if (act)
+                act();
+        }
+        onCancelled: {
+            profileGateAction = null;
+            restoreFocusAfterProfile();
+        }
     }
 
     // Help bar

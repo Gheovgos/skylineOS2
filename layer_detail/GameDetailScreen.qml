@@ -145,7 +145,9 @@ FocusScope {
             goBack();
         } else if (focusedButton === "play") {
             root.focusedButton = "play";
-            launchGame(currentGame);
+            requestProfile(function () {
+                launchGame(currentGame);
+            });
             anim.start();
             navSound.play();
         } else if (focusedButton === "options") {
@@ -835,7 +837,9 @@ FocusScope {
                         onClicked: {
                             root.focusedButton = "play";
                             launchSfx.play();
-                            launchGame(currentGame);
+                            requestProfile(function () {
+                                launchGame(currentGame);
+                            });
                             anim.start();
                         }
                     }
