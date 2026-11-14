@@ -406,17 +406,33 @@ FocusScope {
         hideConfirmPopup.forceActiveFocus();
     }
 
-    function requestConfirm(title, subtitle, action, focusItem) {
-        hideConfirmPopup.customTitle = title;
-        hideConfirmPopup.customSubtitle = subtitle;
-        hideConfirmPopup.confirmAction = action;
-        hideConfirmPopup.returnFocusItem = focusItem;
-        hideConfirmPopup.visible = true;
-        hideConfirmPopup.forceActiveFocus();
+    function registerLauncherUser() {
+        api.memory.set("Launcher User", currentUsername());
+    }
+
+    function currentUsername() {
+        if (api.memory.get("RA_LoggedIn") === "Yes")
+            return api.memory.get("RA_Username") || "";
+        if (api.memory.has("Username") && api.memory.get("Username") !== "")
+            return api.memory.get("Username");
+        return "";
+    }
+
+    function registerLauncherUser() {
+        var name = currentUsername();
+        api.memory.set("Launcher User", name);
+        try {
+            var xhr = new XMLHttpRequest();
+            xhr.open("PUT", Qt.resolvedUrl("launcher_user.txt"));
+            xhr.send(name);
+        } catch (e) {
+            console.log("launcher_user.txt non scrivibile:", e);
+        }
     }
 
     // Launch the current game from HomeBar
     function launchGame(game) {
+        registerLauncherUser();
         pushToStackTimer(game);
 
         api.memory.set('Last Collection', currentCollection);
@@ -428,6 +444,7 @@ FocusScope {
 
     // Launch current game from SoftwareScreen
     function launchSoftware() {
+        registerLauncherUser();
         api.memory.set('Last Collection', currentCollection);
         softwareList[sortByIndex].currentGame(currentGameIndex).launch();
         //currentGame.launch();
