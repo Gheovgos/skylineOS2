@@ -147,6 +147,11 @@ FocusScope {
         settingsSfx.play();
     }
 
+    function showNewProfileScreen() {
+        settingsSfx.play();
+        newProfileScreen.open();
+    }
+
     function showButtonScreen(menu) {
         switch (menu) {
         case "info":
@@ -416,18 +421,6 @@ FocusScope {
         if (api.memory.has("Username") && api.memory.get("Username") !== "")
             return api.memory.get("Username");
         return "";
-    }
-
-    function registerLauncherUser() {
-        var name = currentUsername();
-        api.memory.set("Launcher User", name);
-        try {
-            var xhr = new XMLHttpRequest();
-            xhr.open("PUT", Qt.resolvedUrl("launcher_user.txt"));
-            xhr.send(name);
-        } catch (e) {
-            console.log("launcher_user.txt non scrivibile:", e);
-        }
     }
 
     // Launch the current game from HomeBar
@@ -1042,6 +1035,10 @@ FocusScope {
                 duration: 220
             }
         }
+    }
+
+    NewProfileScreen {
+        id: newProfileScreen
     }
 
     // Help bar

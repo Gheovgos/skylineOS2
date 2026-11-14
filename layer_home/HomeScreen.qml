@@ -21,6 +21,31 @@ FocusScope {
             homeSwitcher.currentIndex = Math.min(keep, gamesListModel.count - 1);
     }
 
+    property bool profileRowActive: profileButton.focus || addProfileButton.focus
+
+    onProfileRowActiveChanged: {
+        if (profileRowActive)
+            refreshSatellites();
+    }
+
+    ListModel {
+        id: satellitesModel
+    }
+
+    function refreshSatellites() {
+        satellitesModel.clear();
+        var n = 1;
+        while (api.memory.has("profile_" + n)) {
+            satellitesModel.append({
+                profileName: String(api.memory.get("profile_" + n)),
+                profileImg: api.memory.has("profile_" + n + "_img") ? String(api.memory.get("profile_" + n + "_img")) : ""
+            });
+            n++;
+        }
+    }
+
+    Component.onCompleted: refreshSatellites()
+
     property string scrapedBackground: ""
     property bool usingScraped: !!(scrapedBackground !== "" && currentGame && currentGame.assets && !(currentGame.assets.background || currentGame.assets.screenshots[0]))
     property var watchedGame: currentGame
@@ -312,6 +337,11 @@ FocusScope {
                         homeSwitcher.focus = true;
                         homeSwitcher.currentIndex = 0;
                     }
+
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        addProfileButton.focus = true;
+                    }
                 }
 
                 Text {
@@ -333,6 +363,138 @@ FocusScope {
                     Behavior on color {
                         ColorAnimation {
                             duration: 150
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: satellitesModel
+
+                    Item {
+                        id: satelliteItem
+                        width: Math.round(screenheight * 0.0667)
+                        height: width
+                        anchors.verticalCenter: parent.verticalCenter
+                        opacity: root.profileRowActive ? 1 : 0
+                        scale: root.profileRowActive ? 1 : 0.5
+                        visible: opacity > 0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 180
+                            }
+                        }
+                        Behavior on scale {
+                            NumberAnimation {
+                                duration: 220
+                                easing.type: Easing.OutBack
+                            }
+                        }
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: theme.button
+                            border.width: vpx(2)
+                            border.color: theme.icon
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: profileName.trim() !== "" ? profileName.trim().charAt(0).toUpperCase() : "?"
+                                color: theme.icon
+                                font.family: titleFont.name
+                                font.pixelSize: Math.round(screenheight * 0.03)
+                                font.bold: true
+                            }
+                        }
+                    }
+                }
+
+                Item {
+                    id: addProfileButton
+                    width: Math.round(screenheight * 0.0833)
+                    height: width
+                    anchors.verticalCenter: parent.verticalCenter
+                    opacity: root.profileRowActive ? 1 : 0
+                    scale: root.profileRowActive ? 1 : 0.5
+                    visible: opacity > 0
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: 180
+                        }
+                    }
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 220
+                            easing.type: Easing.OutBack
+                        }
+                    }
+
+                    property bool selected: focus
+
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: parent.width + vpx(8)
+                        height: parent.height + vpx(8)
+                        radius: width / 2
+                        color: theme.accent
+                        z: -1
+                        opacity: addProfileButton.selected ? 1 : 0
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 150
+                            }
+                        }
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: width / 2
+                        color: theme.button
+
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: parent.width * 0.4
+                            height: vpx(4)
+                            radius: height / 2
+                            color: addProfileButton.selected ? theme.accent : theme.icon
+                        }
+                        Rectangle {
+                            anchors.centerIn: parent
+                            width: vpx(4)
+                            height: parent.height * 0.4
+                            radius: width / 2
+                            color: addProfileButton.selected ? theme.accent : theme.icon
+                        }
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        onClicked: {
+                            addProfileButton.focus = true;
+                            homeSwitcher.currentIndex = -1;
+                            navSound.play();
+                            showNewProfileScreen();
+                        }
+                    }
+
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        profileButton.focus = true;
+                    }
+
+                    Keys.onDownPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = 0;
+                    }
+
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            showNewProfileScreen();
                         }
                     }
                 }
