@@ -21,7 +21,8 @@ FocusScope {
             homeSwitcher.currentIndex = Math.min(keep, gamesListModel.count - 1);
     }
 
-    property bool profileRowActive: profileButton.focus || addProfileButton.focus
+    property int focusedSatIndex: -1
+    property bool profileRowActive: profileButton.focus || addProfileButton.focus || focusedSatIndex >= 0
 
     onProfileRowActiveChanged: {
         if (profileRowActive)
@@ -33,14 +34,48 @@ FocusScope {
     }
 
     function refreshSatellites() {
-        satellitesModel.clear();
+        var items = [];
         var n = 1;
         while (api.memory.has("profile_" + n)) {
-            satellitesModel.append({
+            items.push({
                 profileName: String(api.memory.get("profile_" + n)),
                 profileImg: api.memory.has("profile_" + n + "_img") ? String(api.memory.get("profile_" + n + "_img")) : ""
             });
             n++;
+        }
+        if (items.length !== satellitesModel.count) {
+            focusedSatIndex = -1;
+            satellitesModel.clear();
+            for (var i = 0; i < items.length; i++)
+                satellitesModel.append(items[i]);
+        } else {
+            for (var j = 0; j < items.length; j++) {
+                var cur = satellitesModel.get(j);
+                if (cur.profileName !== items[j].profileName || cur.profileImg !== items[j].profileImg)
+                    satellitesModel.set(j, items[j]);
+            }
+        }
+    }
+
+    function updateSatellite(i, name, img) {
+        if (i >= 0 && i < satellitesModel.count)
+            satellitesModel.set(i, {
+                profileName: name,
+                profileImg: img
+            });
+    }
+
+    function focusProfileSlot(slot) {
+        var count = satellitesModel.count;
+        slot = Math.max(0, Math.min(count + 1, slot));
+        if (slot === 0) {
+            profileButton.focus = true;
+        } else if (slot > count) {
+            addProfileButton.focus = true;
+        } else {
+            var item = satRepeater.itemAt(slot - 1);
+            if (item)
+                item.focus = true;
         }
     }
 
@@ -340,7 +375,7 @@ FocusScope {
 
                     Keys.onRightPressed: {
                         navSound.play();
-                        addProfileButton.focus = true;
+                        root.focusProfileSlot(1);
                     }
                 }
 
@@ -358,7 +393,7 @@ FocusScope {
                     font.pixelSize: Math.round(screenheight * 0.028)
                     font.bold: true
                     anchors.verticalCenter: parent.verticalCenter
-                    visible: text !== ""
+                    visible: text !== "" && (!root.profileRowActive || profileButton.focus)
 
                     Behavior on color {
                         ColorAnimation {
@@ -368,16 +403,25 @@ FocusScope {
                 }
 
                 Repeater {
+                    id: satRepeater
                     model: satellitesModel
 
-                    Item {
+                    Row {
                         id: satelliteItem
-                        width: Math.round(screenheight * 0.0667)
-                        height: width
+                        spacing: vpx(10)
                         anchors.verticalCenter: parent.verticalCenter
                         opacity: root.profileRowActive ? 1 : 0
                         scale: root.profileRowActive ? 1 : 0.5
                         visible: opacity > 0
+
+                        property bool selected: focus
+
+                        onFocusChanged: {
+                            if (focus)
+                                root.focusedSatIndex = index;
+                            else if (root.focusedSatIndex === index)
+                                root.focusedSatIndex = -1;
+                        }
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -391,45 +435,108 @@ FocusScope {
                             }
                         }
 
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: width / 2
-                            color: theme.button
-                            border.width: vpx(2)
-                            border.color: theme.icon
+                        Item {
+                            id: satAvatar
+                            width: Math.round(screenheight * 0.0667)
+                            height: width
+                            anchors.verticalCenter: parent.verticalCenter
 
-                            Text {
+                            Rectangle {
                                 anchors.centerIn: parent
-                                text: profileName.trim() !== "" ? profileName.trim().charAt(0).toUpperCase() : "?"
-                                color: theme.icon
-                                font.family: titleFont.name
-                                font.pixelSize: Math.round(screenheight * 0.03)
-                                font.bold: true
+                                width: parent.width + vpx(8)
+                                height: width
+                                radius: width / 2
+                                color: theme.accent
+                                z: -1
+                                opacity: satelliteItem.selected ? 1 : 0
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: 150
+                                    }
+                                }
+                            }
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: width / 2
+                                color: theme.button
+                                border.width: vpx(2)
+                                border.color: theme.icon
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: profileName.trim() !== "" ? profileName.trim().charAt(0).toUpperCase() : "?"
+                                    color: theme.icon
+                                    font.family: titleFont.name
+                                    font.pixelSize: Math.round(screenheight * 0.03)
+                                    font.bold: true
+                                }
+                            }
+
+                            Image {
+                                id: satImg
+                                anchors.fill: parent
+                                source: profileImg
+                                fillMode: Image.PreserveAspectCrop
+                                asynchronous: true
+                                sourceSize: Qt.size(128, 128)
+                                visible: false
+                            }
+
+                            Rectangle {
+                                id: satMask
+                                anchors.fill: parent
+                                radius: width / 2
+                                visible: false
+                            }
+
+                            OpacityMask {
+                                anchors.fill: parent
+                                source: satImg
+                                maskSource: satMask
+                                visible: satImg.status === Image.Ready
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                onClicked: {
+                                    satelliteItem.focus = true;
+                                    homeSwitcher.currentIndex = -1;
+                                    navSound.play();
+                                    showSatelliteProfileScreen(index + 1);
+                                }
                             }
                         }
 
-                        Image {
-                            id: satImg
-                            anchors.fill: parent
-                            source: profileImg
-                            fillMode: Image.PreserveAspectCrop
-                            asynchronous: true
-                            sourceSize: Qt.size(128, 128)
-                            visible: false
+                        Text {
+                            visible: satelliteItem.selected && profileName !== ""
+                            text: profileName
+                            color: theme.accent
+                            font.family: titleFont.name
+                            font.pixelSize: Math.round(screenheight * 0.028)
+                            font.bold: true
+                            anchors.verticalCenter: parent.verticalCenter
                         }
 
-                        Rectangle {
-                            id: satMask
-                            anchors.fill: parent
-                            radius: width / 2
-                            visible: false
+                        Keys.onLeftPressed: {
+                            navSound.play();
+                            root.focusProfileSlot(index);
                         }
-
-                        OpacityMask {
-                            anchors.fill: parent
-                            source: satImg
-                            maskSource: satMask
-                            visible: satImg.status === Image.Ready
+                        Keys.onRightPressed: {
+                            navSound.play();
+                            root.focusProfileSlot(index + 2);
+                        }
+                        Keys.onDownPressed: {
+                            navSound.play();
+                            homeSwitcher.focus = true;
+                            homeSwitcher.currentIndex = 0;
+                        }
+                        Keys.onPressed: {
+                            if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                                event.accepted = true;
+                                showSatelliteProfileScreen(index + 1);
+                            }
                         }
                     }
                 }
@@ -506,7 +613,7 @@ FocusScope {
 
                     Keys.onLeftPressed: {
                         navSound.play();
-                        profileButton.focus = true;
+                        root.focusProfileSlot(satellitesModel.count);
                     }
 
                     Keys.onDownPressed: {

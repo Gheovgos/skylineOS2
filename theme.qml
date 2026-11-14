@@ -147,6 +147,11 @@ FocusScope {
         settingsSfx.play();
     }
 
+    function showSatelliteProfileScreen(n) {
+        settingsSfx.play();
+        satelliteProfileScreen.open(n);
+    }
+
     function showNewProfileScreen() {
         settingsSfx.play();
         newProfileScreen.open();
@@ -399,6 +404,15 @@ FocusScope {
                     homeScreen.focus = true;
             }
         }
+    }
+
+    function requestConfirm(title, subtitle, action, focusItem) {
+        hideConfirmPopup.customTitle = title;
+        hideConfirmPopup.customSubtitle = subtitle;
+        hideConfirmPopup.confirmAction = action;
+        hideConfirmPopup.returnFocusItem = focusItem;
+        hideConfirmPopup.visible = true;
+        hideConfirmPopup.forceActiveFocus();
     }
 
     function requestHideApp(title) {
@@ -1039,6 +1053,11 @@ FocusScope {
 
     NewProfileScreen {
         id: newProfileScreen
+    }
+
+    SatelliteProfileScreen {
+        id: satelliteProfileScreen
+        onConfirmRequested: requestConfirm(title, subtitle, action, focusItem)
     }
 
     // Help bar
