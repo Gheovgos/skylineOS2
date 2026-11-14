@@ -407,6 +407,30 @@ FocusScope {
                                 font.bold: true
                             }
                         }
+
+                        Image {
+                            id: satImg
+                            anchors.fill: parent
+                            source: profileImg
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            sourceSize: Qt.size(128, 128)
+                            visible: false
+                        }
+
+                        Rectangle {
+                            id: satMask
+                            anchors.fill: parent
+                            radius: width / 2
+                            visible: false
+                        }
+
+                        OpacityMask {
+                            anchors.fill: parent
+                            source: satImg
+                            maskSource: satMask
+                            visible: satImg.status === Image.Ready
+                        }
                     }
                 }
 

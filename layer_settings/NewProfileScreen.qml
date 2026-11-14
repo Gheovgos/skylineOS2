@@ -7,6 +7,8 @@ FocusScope {
     visible: false
     z: 150
 
+    property string imageValue: ""
+
     property string usernameValue: ""
     property bool editing: false
     property int focusedRow: 0
@@ -18,6 +20,7 @@ FocusScope {
         focusedRow = 0;
         editing = false;
         visible = true;
+        imageValue = "";
         root.forceActiveFocus();
     }
 
@@ -25,6 +28,7 @@ FocusScope {
         Qt.inputMethod.hide();
         editing = false;
         hiddenInput.focus = false;
+        avatarPicker.visible = false;
         visible = false;
         homeScreen.forceActiveFocus();
     }
@@ -44,7 +48,7 @@ FocusScope {
         }
         var n = nextProfileIndex();
         api.memory.set("profile_" + n, name);
-        api.memory.set("profile_" + n + "_img", "");
+        api.memory.set("profile_" + n + "_img", root.imageValue);
         selectSfx.play();
         homeScreen.refreshSatellites();
         close();
@@ -77,7 +81,7 @@ FocusScope {
         id: panel
         anchors.centerIn: parent
         width: Math.max(vpx(420), Math.round(screenwidth * 0.4))
-        height: vpx(380)
+        height: vpx(450)
         radius: vpx(24)
         color: theme.button
 
@@ -136,24 +140,53 @@ FocusScope {
                 font.bold: true
             }
 
-            Rectangle {
+            Item {
                 width: vpx(96)
                 height: width
-                radius: width / 2
-                color: theme.main
                 anchors.horizontalCenter: parent.horizontalCenter
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: width / 2
+                    color: theme.main
+                }
 
                 Text {
                     anchors.centerIn: parent
+                    visible: previewImg.status !== Image.Ready
                     text: root.usernameValue.trim() !== "" ? root.usernameValue.trim().charAt(0).toUpperCase() : "?"
                     color: theme.icon
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.045)
                     font.bold: true
                 }
+
+                Image {
+                    id: previewImg
+                    anchors.fill: parent
+                    source: root.imageValue
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    sourceSize: Qt.size(192, 192)
+                    visible: false
+                }
+
+                Rectangle {
+                    id: previewMask
+                    anchors.fill: parent
+                    radius: width / 2
+                    visible: false
+                }
+
+                OpacityMask {
+                    anchors.fill: parent
+                    source: previewImg
+                    maskSource: previewMask
+                    visible: previewImg.status === Image.Ready
+                }
             }
 
-            Rectangle {
+                        Rectangle {
                 width: parent.width
                 height: vpx(52)
                 radius: vpx(12)
@@ -210,11 +243,38 @@ FocusScope {
 
             Rectangle {
                 width: vpx(180)
+                height: vpx(44)
+                radius: height / 2
+                color: theme.main
+                anchors.horizontalCenter: parent.horizontalCenter
+                border.width: root.focusedRow === 1 ? vpx(3) : 0
+                border.color: theme.accent
+
+                Text {
+                    anchors.centerIn: parent
+                    text: root.imageValue !== "" ? "Change image" : "Choose image"
+                    color: theme.text
+                    font.family: titleFont.name
+                    font.pixelSize: Math.round(screenheight * 0.022)
+                    font.bold: true
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: {
+                        root.focusedRow = 1;
+                        avatarPicker.open();
+                    }
+                }
+            }
+
+            Rectangle {
+                width: vpx(180)
                 height: vpx(48)
                 radius: height / 2
                 color: theme.accent
                 anchors.horizontalCenter: parent.horizontalCenter
-                border.width: root.focusedRow === 1 ? vpx(3) : 0
+                border.width: root.focusedRow === 2 ? vpx(3) : 0
                 border.color: theme.text
 
                 Text {
@@ -229,7 +289,7 @@ FocusScope {
                 MouseArea {
                     anchors.fill: parent
                     onClicked: {
-                        root.focusedRow = 1;
+                        root.focusedRow = 2;
                         root.createProfile();
                     }
                 }
@@ -248,7 +308,7 @@ FocusScope {
     }
 
     Keys.onPressed: {
-        if (event.isAutoRepeat)
+        if (avatarPicker.visible || event.isAutoRepeat)
             return;
         if (api.keys.isCancel(event)) {
             event.accepted = true;
@@ -260,17 +320,29 @@ FocusScope {
             event.accepted = true;
             if (focusedRow === 0)
                 startEditing();
+            else if (focusedRow === 1)
+                avatarPicker.open();
             else
                 createProfile();
             return;
         }
     }
     Keys.onUpPressed: {
+        if (avatarPicker.visible)
+            return;
         navSound.play();
-        focusedRow = 0;
+        focusedRow = Math.max(0, focusedRow - 1);
     }
     Keys.onDownPressed: {
+        if (avatarPicker.visible)
+            return;
         navSound.play();
-        focusedRow = 1;
+        focusedRow = Math.min(2, focusedRow + 1);
+    }
+
+    AvatarPicker {
+        id: avatarPicker
+        onPicked: root.imageValue = url
+        onClosed: root.forceActiveFocus()
     }
 }
