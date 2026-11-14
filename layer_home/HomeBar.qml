@@ -18,8 +18,8 @@ ListView {
     displayMarginEnd: vpx(107)
 
     preferredHighlightBegin: vpx(0)
-    preferredHighlightEnd: vpx(1077)
-    highlightRangeMode: ListView.StrictlyEnforceRange // Highlight never moves outside the range
+    preferredHighlightEnd: preferredHighlightBegin + homeLayout.height * homeLayout.cardScale
+    highlightRangeMode: ListView.StrictlyEnforceRange
     snapMode: ListView.SnapToItem
     highlightMoveDuration: 100
     highlightMoveVelocity: -1
