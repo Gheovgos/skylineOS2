@@ -34,6 +34,17 @@ FocusScope {
         property bool searchEditing: false
         property string searchBackup: ""
 
+        property bool tabsFocused: false
+        property int tabIndex: 0
+        readonly property bool gridActive: barIndex < 0 && !tabsFocused
+
+        onTabIndexChanged: tabList.positionViewAtIndex(tabIndex, ListView.Contain)
+
+        function focusGrid() {
+            barIndex = -1;
+            tabsFocused = false;
+        }
+
         onExpandedVisibleChanged: {
             if (!expandedVisible)
                 gameGrid.focus = true;
@@ -63,10 +74,31 @@ FocusScope {
 
         function activateBar() {
             selectSfx.play();
-            if (barIndex === 0)
+            if (barIndex === 0) {
+                focusGrid();
+                showHomeScreen();
+            } else if (barIndex === 1) {
                 startSearch();
-            else if (barIndex === 1)
+            } else if (barIndex === 2) {
                 cycleSort();
+            }
+        }
+
+        function setCollection(i) {
+            currentCollection = i;
+            nextCollection = i;
+            tabIndex = i + 1;
+            gameGrid.currentIndex = 0;
+        }
+
+        function cycleCollection(step) {
+            var total = api.collections.count + 1;
+            var pos = (currentCollection + 1 + step + total) % total;
+            if (step > 0)
+                turnOnSfx.play();
+            else
+                turnOffSfx.play();
+            setCollection(pos - 1);
         }
 
         anchors {
@@ -130,7 +162,7 @@ FocusScope {
 
             if (api.keys.isDetails(event)) {
                 event.accepted = true;
-                if (barIndex < 0 && gameGrid.count > 0) {
+                if (gridActive && gameGrid.count > 0) {
                     if (currentGame.favorite)
                         turnOffSfx.play();
                     else
@@ -141,7 +173,7 @@ FocusScope {
             }
             if (api.keys.isFilters(event)) {
                 event.accepted = true;
-                if (barIndex < 0 && gameGrid.count > 0)
+                if (gridActive && gameGrid.count > 0)
                     expandedVisible = !expandedVisible;
                 return;
             }
@@ -157,19 +189,13 @@ FocusScope {
             }
             if (api.keys.isNextPage(event)) {
                 event.accepted = true;
-                turnOnSfx.play();
-                if (currentCollection < api.collections.count - 1)
-                    nextCollection++;
-                else
-                    nextCollection = -1;
+                cycleCollection(1);
+                return;
             }
             if (api.keys.isPrevPage(event)) {
                 event.accepted = true;
-                turnOffSfx.play();
-                if (currentCollection == -1)
-                    nextCollection = api.collections.count - 1;
-                else
-                    nextCollection--;
+                cycleCollection(-1);
+                return;
             }
         }
 
@@ -198,7 +224,7 @@ FocusScope {
 
                 Text {
                     id: collectionTitle
-                    text: currentCollection == -1 ? "All Software" : api.collections.get(currentCollection).name
+                    text: "All Software"
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.0277)
@@ -218,13 +244,21 @@ FocusScope {
                 cached: true
             }
 
+            MouseArea {
+                x: headerIcon.x
+                y: headerIcon.y
+                width: headerIcon.width + collectionTitle.width + vpx(12)
+                height: headerIcon.height
+                onClicked: showHomeScreen()
+            }
+
             Rectangle {
                 id: sortButton
                 height: Math.round(screenheight * 0.0611)
                 width: sortTypeTxt.contentWidth + sortArrow.width + vpx(66)
                 radius: height / 2
                 color: theme.button
-                border.width: softwareScreenContainer.barIndex === 1 ? vpx(3) : 0
+                border.width: softwareScreenContainer.barIndex === 2 ? vpx(3) : 0
                 border.color: theme.accent
                 scale: sortMouse.pressed ? 0.95 : 1
 
@@ -279,10 +313,59 @@ FocusScope {
                     id: sortMouse
                     anchors.fill: parent
                     onClicked: {
-                        softwareScreenContainer.barIndex = -1;
+                        softwareScreenContainer.focusGrid();
                         cycleSort();
                     }
                 }
+
+            }
+
+            Rectangle {
+                id: backButton
+                width: Math.round(screenheight * 0.0611)
+                height: width
+                radius: width / 2
+                color: theme.button
+                border.width: softwareScreenContainer.barIndex === 0 ? vpx(3) : 0
+                border.color: theme.accent
+                scale: backMouse.pressed ? 0.95 : 1
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 100
+                    }
+                }
+
+                anchors {
+                    top: parent.top
+                    topMargin: Math.round(screenheight * 0.0416)
+                    right: searchButton.left
+                    rightMargin: vpx(12)
+                }
+
+                Image {
+                    anchors.centerIn: parent
+                    width: vpx(22)
+                    height: width
+                    fillMode: Image.PreserveAspectFit
+                    source: "../assets/images/navigation/back.svg"
+                    sourceSize.width: 64
+                    sourceSize.height: 64
+                    layer.enabled: true
+                    layer.effect: ColorOverlay {
+                        color: theme.text
+                    }
+                }
+
+                MouseArea {
+                    id: backMouse
+                    anchors.fill: parent
+                    onClicked: {
+                        softwareScreenContainer.focusGrid();
+                        showHomeScreen();
+                    }
+                }
+
             }
 
             Rectangle {
@@ -291,7 +374,7 @@ FocusScope {
                 width: searchRow.width + vpx(44)
                 radius: height / 2
                 color: theme.button
-                border.width: (softwareScreenContainer.barIndex === 0 || softwareScreenContainer.searchEditing) ? vpx(3) : 0
+                border.width: (softwareScreenContainer.barIndex === 1 || softwareScreenContainer.searchEditing) ? vpx(3) : 0
                 border.color: theme.accent
                 scale: searchMouse.pressed ? 0.95 : 1
 
@@ -382,8 +465,140 @@ FocusScope {
                     id: searchMouse
                     anchors.fill: parent
                     onClicked: {
-                        softwareScreenContainer.barIndex = 0;
+                        softwareScreenContainer.tabsFocused = false;
+                        softwareScreenContainer.barIndex = 1;
                         softwareScreenContainer.startSearch();
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: tabBar
+            property real pillH: Math.round(screenheight * 0.05)
+
+            anchors {
+                top: topBar.bottom
+                left: parent.left
+                right: parent.right
+                leftMargin: vpx(38)
+                rightMargin: vpx(38)
+            }
+            height: Math.round(screenheight * 0.075)
+            z: 5
+
+            Rectangle {
+                id: prevHint
+                width: Math.round(tabBar.pillH * 1.2)
+                height: tabBar.pillH
+                radius: height / 2
+                color: theme.button
+                scale: prevMouse.pressed ? 0.92 : 1
+                anchors {
+                    left: parent.left
+                    verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "L"
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.bold: true
+                    font.pixelSize: Math.round(screenheight * 0.022)
+                }
+
+                MouseArea {
+                    id: prevMouse
+                    anchors.fill: parent
+                    onClicked: softwareScreenContainer.cycleCollection(-1)
+                }
+            }
+
+            Rectangle {
+                id: nextHint
+                width: Math.round(tabBar.pillH * 1.2)
+                height: tabBar.pillH
+                radius: height / 2
+                color: theme.button
+                scale: nextMouse.pressed ? 0.92 : 1
+                anchors {
+                    right: parent.right
+                    verticalCenter: parent.verticalCenter
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "R"
+                    color: theme.icon
+                    font.family: titleFont.name
+                    font.bold: true
+                    font.pixelSize: Math.round(screenheight * 0.022)
+                }
+
+                MouseArea {
+                    id: nextMouse
+                    anchors.fill: parent
+                    onClicked: softwareScreenContainer.cycleCollection(1)
+                }
+            }
+
+            ListView {
+                id: tabList
+                anchors {
+                    left: prevHint.right
+                    right: nextHint.left
+                    leftMargin: vpx(12)
+                    rightMargin: vpx(12)
+                    verticalCenter: parent.verticalCenter
+                }
+                height: tabBar.pillH
+                orientation: ListView.Horizontal
+                spacing: vpx(10)
+                clip: true
+                interactive: false
+                model: api.collections.count + 1
+                currentIndex: currentCollection + 1
+                highlightRangeMode: ListView.ApplyRange
+                preferredHighlightBegin: width * 0.25
+                preferredHighlightEnd: width * 0.75
+                highlightMoveDuration: 200
+
+                delegate: Rectangle {
+                    property bool active: index === tabList.currentIndex
+                    property bool focusedTab: softwareScreenContainer.tabsFocused && index === softwareScreenContainer.tabIndex
+                    height: tabBar.pillH
+                    width: tabLabel.implicitWidth + vpx(40)
+                    radius: height / 2
+                    color: active ? theme.accent : theme.button
+                    border.width: focusedTab ? vpx(3) : 0
+                    border.color: active ? theme.text : theme.accent
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: 150
+                        }
+                    }
+
+                    Text {
+                        id: tabLabel
+                        anchors.centerIn: parent
+                        text: index === 0 ? "All" : api.collections.get(index - 1).name
+                        color: parent.active ? "white" : theme.icon
+                        font.family: titleFont.name
+                        font.bold: true
+                        font.pixelSize: Math.round(screenheight * 0.02)
+                    }
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: {
+                            softwareScreenContainer.focusGrid();
+                            if (!parent.active) {
+                                navSound.play();
+                                softwareScreenContainer.setCollection(index - 1);
+                            }
+                        }
                     }
                 }
             }
@@ -396,7 +611,7 @@ FocusScope {
                 right: parent.right
             }
             color: theme.main
-            height: topBar.height
+            height: topBar.height + tabBar.height
             z: 4
         }
 
@@ -415,6 +630,23 @@ FocusScope {
             focus: true
 
             Keys.onPressed: {
+                if (softwareScreenContainer.tabsFocused) {
+                    if (event.isAutoRepeat)
+                        return;
+                    if (api.keys.isAccept(event)) {
+                        event.accepted = true;
+                        selectSfx.play();
+                        softwareScreenContainer.setCollection(softwareScreenContainer.tabIndex - 1);
+                    } else if (api.keys.isCancel(event)) {
+                        event.accepted = true;
+                        backSfx.play();
+                        softwareScreenContainer.tabsFocused = false;
+                    } else if (api.keys.isDetails(event) || api.keys.isFilters(event) || api.keys.isPageDown(event)) {
+                        event.accepted = true;
+                    }
+                    return;
+                }
+
                 if (softwareScreenContainer.barIndex >= 0) {
                     if (event.isAutoRepeat)
                         return;
@@ -427,7 +659,7 @@ FocusScope {
                         softwareScreenContainer.barIndex = -1;
                     } else if (api.keys.isDetails(event)) {
                         event.accepted = true;
-                        if (softwareScreenContainer.barIndex === 0 && softwareSearch !== "") {
+                        if (softwareScreenContainer.barIndex === 1 && softwareSearch !== "") {
                             turnOffSfx.play();
                             softwareScreenContainer.applySearch("");
                         }
@@ -443,20 +675,24 @@ FocusScope {
                         playSoftware();
                 }
 
-                if (api.keys.isNextPage(event) && !event.isAutoRepeat) {
+                if (api.keys.isPageDown(event) && !event.isAutoRepeat) {
                     event.accepted = true;
                     if (count > 0)
                         requestHideApp(currentGame.title);
                     return;
                 }
             }
-
             Keys.onUpPressed: {
                 if (softwareScreenContainer.barIndex >= 0)
                     return;
-                if (currentIndex < numcolumns) {
+                if (softwareScreenContainer.tabsFocused) {
                     borderSfx.play();
-                    softwareScreenContainer.barIndex = 0;
+                    softwareScreenContainer.tabsFocused = false;
+                    softwareScreenContainer.barIndex = 1;
+                } else if (currentIndex < numcolumns) {
+                    borderSfx.play();
+                    softwareScreenContainer.tabIndex = currentCollection + 1;
+                    softwareScreenContainer.tabsFocused = true;
                 } else {
                     navSound.play();
                     moveCurrentIndexUp();
@@ -464,10 +700,15 @@ FocusScope {
             }
             Keys.onDownPressed: {
                 navSound.play();
-                if (softwareScreenContainer.barIndex >= 0)
+                if (softwareScreenContainer.barIndex >= 0) {
                     softwareScreenContainer.barIndex = -1;
-                else
+                    softwareScreenContainer.tabIndex = currentCollection + 1;
+                    softwareScreenContainer.tabsFocused = true;
+                } else if (softwareScreenContainer.tabsFocused) {
+                    softwareScreenContainer.tabsFocused = false;
+                } else {
                     moveCurrentIndexDown();
+                }
             }
             Keys.onLeftPressed: {
                 if (softwareScreenContainer.barIndex >= 0) {
@@ -477,14 +718,28 @@ FocusScope {
                     }
                     return;
                 }
+                if (softwareScreenContainer.tabsFocused) {
+                    if (softwareScreenContainer.tabIndex > 0) {
+                        navSound.play();
+                        softwareScreenContainer.tabIndex--;
+                    }
+                    return;
+                }
                 navSound.play();
                 moveCurrentIndexLeft();
             }
             Keys.onRightPressed: {
                 if (softwareScreenContainer.barIndex >= 0) {
-                    if (softwareScreenContainer.barIndex < 1) {
+                    if (softwareScreenContainer.barIndex < 2) {
                         navSound.play();
                         softwareScreenContainer.barIndex++;
+                    }
+                    return;
+                }
+                if (softwareScreenContainer.tabsFocused) {
+                    if (softwareScreenContainer.tabIndex < api.collections.count) {
+                        navSound.play();
+                        softwareScreenContainer.tabIndex++;
                     }
                     return;
                 }
@@ -499,13 +754,13 @@ FocusScope {
             anchors {
                 left: parent.left
                 leftMargin: vpx(63)
-                top: topBar.bottom
+                top: tabBar.bottom
                 right: parent.right
                 rightMargin: vpx(63)
                 bottom: parent.bottom
             }
-            topMargin: Math.round(screenheight * 0.12)
-            bottomMargin: Math.round(screenheight * 0.12) + helpbarheight
+            topMargin: Math.round(screenheight * 0.08)
+            bottomMargin: Math.round(screenheight * 0.12)
 
             cellWidth: width / numcolumns
             cellHeight: cellWidth
@@ -523,7 +778,7 @@ FocusScope {
 
                 Item {
                     id: delegateContainer
-                    property bool selected: delegateContainer.GridView.isCurrentItem && softwareScreenContainer.barIndex < 0
+                    property bool selected: delegateContainer.GridView.isCurrentItem && softwareScreenContainer.gridActive
                     property var gameBG: modelData ? (modelData.assets.boxFront || modelData.assets.tile || "") : ""
 
                     function updateData() {
@@ -684,7 +939,7 @@ FocusScope {
                         MouseArea {
                             anchors.fill: parent
                             onClicked: {
-                                softwareScreenContainer.barIndex = -1;
+                                softwareScreenContainer.focusGrid();
                                 if (gameGrid.currentIndex === index) {
                                     playSoftware();
                                 } else {
@@ -697,8 +952,10 @@ FocusScope {
 
                     Rectangle {
                         id: titleBubble
+                        property string platformShort: (modelData && modelData.collections && modelData.collections.count > 0) ? Utils.processPlatformName(modelData.collections.get(0).shortName) : ""
+                        property bool hasPlatform: platformIcon.status === Image.Ready
                         height: Math.round(screenheight * 0.0611)
-                        width: Math.min(gameTitle.implicitWidth + vpx(44), delegateContainer.width * 2)
+                        width: Math.min(gameTitle.implicitWidth + (hasPlatform ? platformIcon.width + vpx(10) : 0) + vpx(44), delegateContainer.width * 2)
                         radius: height / 2
                         color: theme.button
                         opacity: delegateContainer.selected ? 0.97 : 0
@@ -726,17 +983,37 @@ FocusScope {
                             color: "#40000000"
                         }
 
-                        Text {
-                            id: gameTitle
+                        Row {
                             anchors.centerIn: parent
-                            width: parent.width - vpx(44)
-                            horizontalAlignment: Text.AlignHCenter
-                            elide: Text.ElideRight
-                            text: sortByIndex == 3 ? modelData.publisher + " / " + modelData.title : modelData.title
-                            color: theme.accent
-                            font.pixelSize: Math.round(screenheight * 0.0222)
-                            font.bold: true
-                            font.family: titleFont.name
+                            spacing: vpx(10)
+
+                            Image {
+                                id: platformIcon
+                                width: vpx(26)
+                                height: width
+                                anchors.verticalCenter: parent.verticalCenter
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.width: 64
+                                sourceSize.height: 64
+                                source: (delegateContainer.selected && titleBubble.platformShort !== "") ? "../assets/images/platforms/" + titleBubble.platformShort + ".svg" : ""
+                                visible: titleBubble.hasPlatform
+                                layer.enabled: true
+                                layer.effect: ColorOverlay {
+                                    color: theme.accent
+                                }
+                            }
+
+                            Text {
+                                id: gameTitle
+                                anchors.verticalCenter: parent.verticalCenter
+                                width: Math.min(implicitWidth, titleBubble.width - vpx(44) - (titleBubble.hasPlatform ? platformIcon.width + vpx(10) : 0))
+                                elide: Text.ElideRight
+                                text: sortByIndex == 3 ? modelData.publisher + " / " + modelData.title : modelData.title
+                                color: theme.accent
+                                font.pixelSize: Math.round(screenheight * 0.0222)
+                                font.bold: true
+                                font.family: titleFont.name
+                            }
                         }
                     }
                 }
