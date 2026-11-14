@@ -89,6 +89,7 @@ FocusScope {
     property var softwareList: [listByLastPlayed, listByMostPlayed, listByTitle, listByPublisher, listFavorites]
     property int sortByIndex: api.memory.has('sortIndex') ? api.memory.get('sortIndex') : 0
     property string searchtext
+    property string softwareSearch: ""
     property bool wordWrap: (settings.wordWrap === "Yes") ? true : false
     property bool showPercent: (settings.batteryPercentSetting === "Yes") ? true : false
     property bool enableDropShadows: (settings.enableDropShadows === "Yes") ? true : false
@@ -197,6 +198,7 @@ FocusScope {
 
     function showHomeScreen() {
         refreshSettings();
+        softwareSearch = "";
         homeScreen.focus = true;
         currentCollection = -1;
         homeSfx.play();
@@ -477,8 +479,10 @@ FocusScope {
     function launchSoftware() {
         registerLauncherUser();
         api.memory.set('Last Collection', currentCollection);
-        softwareList[sortByIndex].currentGame(currentGameIndex).launch();
-        //currentGame.launch();
+        if (softwareSearch !== "" && currentGame)
+            currentGame.launch();
+        else
+            softwareList[sortByIndex].currentGame(currentGameIndex).launch();
     }
 
     // Theme settings
