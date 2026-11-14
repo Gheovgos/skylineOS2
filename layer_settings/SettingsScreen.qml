@@ -49,6 +49,13 @@ FocusScope {
             setting: "Yes,No"
             type: "toggle"
         }
+
+        ListElement {
+            settingName: "Repository"
+            settingSubtitle: ""
+            setting: "Open"
+            type: "button"
+        }
     }
 
     property var generalPage: {
@@ -177,6 +184,20 @@ FocusScope {
 
         ListElement {
             settingName: "Gallery URI"
+            settingSubtitle: ""
+            setting: ""
+            type: "input"
+        }
+
+        ListElement {
+            settingName: "Cloud Button Show"
+            settingSubtitle: ""
+            setting: "Yes,No"
+            type: "toggle"
+        }
+
+        ListElement {
+            settingName: "Cloud URI"
             settingSubtitle: ""
             setting: ""
             type: "input"
@@ -317,6 +338,8 @@ FocusScope {
     property var settingsArr: [generalPage, homePage, buttonModelPage, raPage, performancePage]
 
     property real itemheight: vpx(50)
+
+    property string repoUrl: "https://github.com/Gheovgos/skylineOS2"
 
     // Top bar
     Item {
@@ -681,6 +704,8 @@ FocusScope {
                                     memoryViewer.open();
                                 } else if (settingName === "Clear cache") {
                                     clearScrapedCache();
+                                } else if (settingName === "Repository") {
+                                    Qt.openUrlExternally(root.repoUrl);
                                 }
                             }
                         } else {
@@ -702,10 +727,12 @@ FocusScope {
                     hoverEnabled: false //settings.MouseHover == "Yes"
                     onEntered: { /*navSound.play();*/ }
                     onClicked: {
-                        if (selected && type === "button" && (settingName === "Memory Viewer" || settingName === "Clear cache")) {
+                        if (selected && type === "button" && (settingName === "Memory Viewer" || settingName === "Clear cache" || settingName === "Repository")) {
                             selectSfx.play();
                             if (settingName === "Memory Viewer")
                                 memoryViewer.open();
+                            else if (settingName === "Repository")
+                                Qt.openUrlExternally(root.repoUrl);
                             else
                                 clearScrapedCache();
                         } else if (selected) {
@@ -725,6 +752,8 @@ FocusScope {
                             selectSfx.play();
                             if (settingName === "Login") {
                                 tryRALogin();
+                            } else if (settingName === "Repository") {
+                                Qt.openUrlExternally(root.repoUrl);
                             }
                         } else {
                             selectSfx.play();

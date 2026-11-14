@@ -130,7 +130,7 @@ FocusScope {
             Utils.fetchScrapedBackground(title, apply);
     }
 
-    property var menuButtonOrder: [infoButton, storeButton, browserButton, galleryButton, backlogButton, controllerButton, settingsButton, suspendButton]
+    property var menuButtonOrder: [infoButton, storeButton, browserButton, galleryButton, cloudButton, backlogButton, controllerButton, settingsButton, suspendButton]
 
     function firstVisibleMenuButton() {
         for (var i = 0; i < menuButtonOrder.length; i++) {
@@ -980,6 +980,49 @@ FocusScope {
                             Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "android-app://com.google.android.apps.photos");
                         else
                             Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "");
+                    }
+                }
+
+                MenuButton {
+                    id: cloudButton
+                    width: vpx(56)
+                    height: vpx(56)
+                    label: "Cloud Drive"
+                    icon: "../assets/images/navigation/cloud.svg"
+                    visible: (api.memory.get("Cloud Button Show") === "Yes")
+                    onFocusChanged: if (focus)
+                        root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
+
+                    Keys.onUpPressed: {
+                        navSound.play();
+                        homeSwitcher.focus = true;
+                        homeSwitcher.currentIndex = (root.lastHomeSwitcherIndex >= 0) ? root.lastHomeSwitcherIndex : 0;
+                    }
+                    Keys.onLeftPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(cloudButton, -1).focus = true;
+                    }
+                    Keys.onRightPressed: {
+                        navSound.play();
+                        root.visibleMenuButtonNeighbor(cloudButton, 1).focus = true;
+                    }
+                    Keys.onPressed: {
+                        if (api.keys.isAccept(event) && !event.isAutoRepeat) {
+                            event.accepted = true;
+                            if (Qt.platform.os === "android")
+                                Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
+                            else
+                                Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
+                        }
+                    }
+                    onClicked: {
+                        cloudButton.focus = true;
+                        homeSwitcher.currentIndex = -1;
+                        navSound.play();
+                        if (Qt.platform.os === "android")
+                            Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
+                        else
+                            Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
                     }
                 }
 
