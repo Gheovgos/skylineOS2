@@ -8,6 +8,7 @@ import QtMultimedia 5.9
 import QtGraphicalEffects 1.12
 import "qrc:/qmlutils" as PegasusUtils
 import "utils.js" as Utils
+import "translations.js" as Tr
 import "layer_home"
 import "layer_grid"
 import "layer_settings"
@@ -96,6 +97,12 @@ FocusScope {
     property bool playBGM: (settings.playBGM === "Yes") ? true : false
     property bool multiUserEnabled: (settings.multiUser === "Yes") ? true : false
 
+    property string language: api.memory.has("Language") ? api.memory.get("Language") : "en"
+
+    function tr(text, arg) {
+        return Tr.translate(language, text, arg);
+    }
+
     onNextCollectionChanged: {
         changeCollection();
     }
@@ -118,6 +125,7 @@ FocusScope {
     property bool darkThemeActive
 
     function refreshSettings() {
+        language = api.memory.has("Language") ? api.memory.get("Language") : "en";
         settings = {
             gameBackground: api.memory.has("Game Background") ? api.memory.get("Game Background") : "Screenshot",
             timeFormat: api.memory.has("Time Format") ? api.memory.get("Time Format") : "12hr",
@@ -131,7 +139,7 @@ FocusScope {
             RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : "",
             bgTransparency: api.memory.has("Background Transparency") ? api.memory.get("Background Transparency") : "25",
             exophaseID: api.memory.has("Exophase User ID") ? api.memory.get("Exophase User ID") : "",
-            multiUser: api.memory.has("Multi User") ? api.memory.get("Multi User") : "No"
+            multiUser: api.memory.has("Multi User") ? api.memory.get("Multi User") : "No",
         };
     }
 
@@ -299,7 +307,7 @@ FocusScope {
             spacing: vpx(20)
 
             Text {
-                text: hideConfirmPopup.customTitle !== "" ? hideConfirmPopup.customTitle : (hideConfirmPopup.isReverse ? "Show \"" + hideConfirmPopup.pendingTitle + "\" again?" : "Hide \"" + hideConfirmPopup.pendingTitle + "\"?")
+                text: hideConfirmPopup.customTitle !== "" ? hideConfirmPopup.customTitle : (hideConfirmPopup.isReverse ? tr("Show \"%1\" again?", hideConfirmPopup.pendingTitle) : tr("Hide \"%1\"?", hideConfirmPopup.pendingTitle))
                 width: vpx(380)
                 wrapMode: Text.WordWrap
                 color: theme.text

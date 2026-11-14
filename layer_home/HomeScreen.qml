@@ -645,98 +645,129 @@ FocusScope {
                 }
             }
 
-            RowLayout {
-                spacing: vpx(5)
+            Item {
+                id: statusArea
+                width: statusPill.width
+                height: Math.round(screenheight * 0.0833)
                 anchors {
-                    verticalCenter: profileButton.verticalCenter
+                    top: parent.top
                     right: parent.right
                     rightMargin: vpx(15)
                 }
 
-                Text {
-                    id: sysTime
-                    property var timeSetting: (settings.timeFormat === "12hr") ? "h:mmap  " : "hh:mm  "
-                    function set() {
-                        sysTime.text = Qt.formatTime(new Date(), timeSetting);
-                    }
-                    Timer {
-                        interval: 60000
-                        repeat: true
-                        running: true
-                        triggeredOnStart: true
-                        onTriggered: sysTime.set()
-                    }
-                    onTimeSettingChanged: sysTime.set()
-                    color: theme.text
-                    font.family: titleFont.name
-                    font.weight: Font.Bold
-                    font.letterSpacing: 4
-                    font.pixelSize: Math.round(screenheight * 0.0277)
-                    horizontalAlignment: Text.Right
-                    font.capitalization: Font.SmallCaps
-                }
+                Item {
+                    id: statusPill
+                    height: Math.round(screenheight * 0.0611)
+                    width: statusRow.width + vpx(44)
+                    anchors.verticalCenter: parent.verticalCenter
 
-                Text {
-                    id: batteryPercentage
-                    text: homeScreenContainer.batteryStatus + "%"
-                    color: theme.text
-                    font.family: titleFont.name
-                    font.weight: Font.Bold
-                    font.letterSpacing: 1
-                    font.pixelSize: Math.round(screenheight * 0.0277)
-                    Component.onCompleted: font.capitalization = Font.SmallCaps
-                    anchors.verticalCenter: sysTime.verticalCenter
-                    visible: isNaN(api.device.batteryPercent) ? false : showPercent
-                }
-
-                BatteryIcon {
-                    id: batteryIcon
-                    width: Math.round(screenheight * 0.0433)
-                    height: width / 1.5
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
-                        color: theme.text
-                        antialiasing: true
-                        cached: true
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: height / 2
+                        color: theme.button
+                        opacity: 0.88
+                        layer.enabled: enableDropShadows
+                        layer.effect: DropShadow {
+                            transparentBorder: true
+                            horizontalOffset: 0
+                            verticalOffset: vpx(3)
+                            radius: 10
+                            samples: 20
+                            color: "#40000000"
+                        }
                     }
-                    level: homeScreenContainer.batteryStatus
-                    anchors.verticalCenter: sysTime.verticalCenter
-                    visible: !isNaN(api.device.batteryPercent)
-                }
 
-                Image {
-                    id: chargingIcon
-                    width: Math.round(screenheight * 0.0433)
-                    height: width
-                    fillMode: Image.PreserveAspectFit
-                    source: "../assets/images/charging.svg"
-                    sourceSize.width: vpx(10)
-                    sourceSize.height: vpx(15)
-                    smooth: true
-                    horizontalAlignment: Image.AlignLeft
-                    anchors.verticalCenter: sysTime.verticalCenter
-                    visible: api.device.batteryCharging && batteryIcon.level < 99
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
-                        color: theme.text
-                        antialiasing: true
-                        cached: true
-                    }
-                }
+                    Row {
+                        id: statusRow
+                        anchors.centerIn: parent
+                        spacing: vpx(14)
 
-                Image {
-                    id: wifiIcon
-                    sourceSize.width: vpx(26)
-                    sourceSize.height: vpx(26)
-                    fillMode: Image.PreserveAspectFit
-                    source: "../assets/images/navigation/wifi.svg"
-                    anchors.verticalCenter: sysTime.verticalCenter
-                    visible: (settings.showWifi === "Yes")
-                    layer.enabled: true
-                    layer.effect: ColorOverlay {
-                        color: theme.text
-                        antialiasing: true
-                        cached: true
+                        Text {
+                            id: sysTime
+                            property var timeSetting: (settings.timeFormat === "12hr") ? "h:mmap" : "hh:mm"
+                            function set() {
+                                sysTime.text = Qt.formatTime(new Date(), timeSetting);
+                            }
+                            Timer {
+                                interval: 60000
+                                repeat: true
+                                running: true
+                                triggeredOnStart: true
+                                onTriggered: sysTime.set()
+                            }
+                            onTimeSettingChanged: sysTime.set()
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.weight: Font.Bold
+                            font.letterSpacing: 1
+                            font.pixelSize: Math.round(screenheight * 0.026)
+                            font.capitalization: Font.SmallCaps
+                        }
+
+                        Text {
+                            id: batteryPercentage
+                            text: homeScreenContainer.batteryStatus + "%"
+                            anchors.verticalCenter: parent.verticalCenter
+                            color: theme.text
+                            font.family: titleFont.name
+                            font.weight: Font.Bold
+                            font.pixelSize: Math.round(screenheight * 0.026)
+                            font.capitalization: Font.SmallCaps
+                            visible: isNaN(api.device.batteryPercent) ? false : showPercent
+                        }
+
+                        BatteryIcon {
+                            id: batteryIcon
+                            width: Math.round(screenheight * 0.0433)
+                            height: width / 1.5
+                            anchors.verticalCenter: parent.verticalCenter
+                            level: homeScreenContainer.batteryStatus
+                            visible: !isNaN(api.device.batteryPercent)
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: (batteryIcon.level <= 20 && !api.device.batteryCharging) ? "#EF4444" : theme.text
+                                antialiasing: true
+                                cached: true
+                            }
+                        }
+
+                        Image {
+                            id: chargingIcon
+                            height: Math.round(screenheight * 0.034)
+                            width: height * 0.7
+                            anchors.verticalCenter: parent.verticalCenter
+                            fillMode: Image.PreserveAspectFit
+                            source: "../assets/images/charging.svg"
+                            sourceSize.width: 64
+                            sourceSize.height: 64
+                            smooth: true
+                            visible: api.device.batteryCharging && batteryIcon.level < 99
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: theme.text
+                                antialiasing: true
+                                cached: true
+                            }
+                        }
+
+                        Image {
+                            id: wifiIcon
+                            width: Math.round(screenheight * 0.038)
+                            height: width
+                            anchors.verticalCenter: parent.verticalCenter
+                            fillMode: Image.PreserveAspectFit
+                            source: "../assets/images/navigation/wifi.svg"
+                            sourceSize.width: 64
+                            sourceSize.height: 64
+                            visible: (settings.showWifi === "Yes")
+                            layer.enabled: true
+                            layer.effect: ColorOverlay {
+                                color: theme.text
+                                antialiasing: true
+                                cached: true
+                            }
+                        }
                     }
                 }
             }

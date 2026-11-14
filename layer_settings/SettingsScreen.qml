@@ -9,6 +9,13 @@ FocusScope {
         id: settingsModel
 
         ListElement {
+            settingName: "Language"
+            settingSubtitle: ""
+            setting: "en,it"
+            type: "toggle"
+        }
+
+        ListElement {
             settingName: "Username"
             settingSubtitle: ""
             setting: ""
@@ -536,6 +543,8 @@ FocusScope {
                     } else {
                         api.memory.set(settingName + 'Index', savedIndex);
                         api.memory.set(settingName, settingList[savedIndex]);
+                        if (settingName === "Language")
+                            refreshSettings();
                     }
                 }
 

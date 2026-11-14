@@ -224,7 +224,7 @@ FocusScope {
 
                 Text {
                     id: collectionTitle
-                    text: "All Software"
+                    text: tr("All Software")
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.0277)
@@ -434,7 +434,7 @@ FocusScope {
                         anchors.verticalCenter: parent.verticalCenter
                         width: Math.min(implicitWidth, Math.round(screenwidth * 0.28))
                         elide: softwareScreenContainer.searchEditing ? Text.ElideLeft : Text.ElideRight
-                        text: softwareSearch !== "" ? softwareSearch : (softwareScreenContainer.searchEditing ? "" : "Search")
+                        text: softwareSearch !== "" ? softwareSearch : (softwareScreenContainer.searchEditing ? "" : tr("Search"))
                         color: softwareSearch !== "" ? theme.accent : theme.text
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.02)
@@ -583,7 +583,7 @@ FocusScope {
                     Text {
                         id: tabLabel
                         anchors.centerIn: parent
-                        text: index === 0 ? "All" : api.collections.get(index - 1).name
+                        text: index === 0 ? tr("All") : api.collections.get(index - 1).name
                         color: parent.active ? "white" : theme.icon
                         font.family: titleFont.name
                         font.bold: true
@@ -618,7 +618,7 @@ FocusScope {
         Text {
             anchors.centerIn: parent
             visible: gameGrid.count === 0
-            text: softwareSearch !== "" ? "No results for \"" + softwareSearch + "\"" : "No software"
+            text: softwareSearch !== "" ? tr("No results for \"%1\"", softwareSearch) : tr("No software")
             color: theme.icon
             font.family: titleFont.name
             font.pixelSize: Math.round(screenheight * 0.026)
@@ -1223,7 +1223,7 @@ FocusScope {
                 }
 
                 Text {
-                    text: "Description"
+                    text: tr("Description")
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.022)
@@ -1234,7 +1234,7 @@ FocusScope {
 
                 Text {
                     width: parent.width
-                    text: currentGame ? (currentGame.description || "No description available.") : ""
+                    text: currentGame ? (currentGame.description || tr("No description available.")) : ""
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.023)
