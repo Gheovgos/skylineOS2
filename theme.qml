@@ -491,7 +491,7 @@ FocusScope {
         return {
             main: "#EBEBEB",
             secondary: "#2D2D2D",
-            accent: api.memory.has("Accent Light Mode") ? api.memory.get("Accent Light Mode") :  "#10AEBE",
+            accent: api.memory.has("Accent Light Mode") ? api.memory.get("Accent Light Mode") : "#10AEBE",
             highlight: "white",
             text: "#2C2C2C",
             button: "white",
@@ -504,7 +504,7 @@ FocusScope {
         return {
             main: "#2D2D2D",
             secondary: "#EBEBEB",
-            accent: api.memory.has("Accent Dark Mode") ? api.memory.get("Accent Dark Mode") :  "#1d9bf3",
+            accent: api.memory.has("Accent Dark Mode") ? api.memory.get("Accent Dark Mode") : "#1d9bf3",
             highlight: "black",
             text: "white",
             button: "#515151",
@@ -1136,8 +1136,13 @@ FocusScope {
             anchors.left: parent.left
             anchors.right: parent.right
             height: 1
-            opacity: 0.3
+            opacity: homeScreen.focus ? 0 : 0.3
             color: theme.secondary
+            Behavior on opacity {
+                NumberAnimation {
+                    duration: 200
+                }
+            }
         }
 
         ControllerHelp {
