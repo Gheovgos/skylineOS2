@@ -186,7 +186,7 @@ FocusScope {
                 name: listRecent.games.get(i).title,
                 idx: i,
                 icon: listRecent.games.get(i).assets.logo,
-                background: listRecent.games.get(i).assets.screenshots[0]
+                background: listRecent.games.get(i).assets.screenshots[0] || ""
             };
         }
     }
@@ -804,7 +804,6 @@ FocusScope {
                 bottomMargin: helpbarheight
             }
             width: buttonMenu.width + vpx(48)
-            height: parent.bottom
 
             Item {
                 id: buttonBar

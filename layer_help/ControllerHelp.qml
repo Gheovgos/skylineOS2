@@ -4,142 +4,145 @@ import QtGraphicalEffects 1.0
 import "../utils.js" as Utils
 
 FocusScope {
-  id: root
-  property bool showBack: true
-  property bool showCollControls: false
-  property bool showFav: true
-  property bool showDetails: false
-  property var gameData: softwareList[sortByIndex].currentGame(currentScreenID)
-  property string collectionShortName: (currentGame && currentGame.collections && currentGame.collections.count > 0) ? Utils.processPlatformName(currentGame.collections.get(0).shortName) : ""
+    id: root
+    property bool showBack: true
+    property bool showCollControls: false
+    property bool showFav: true
+    property bool showDetails: false
+    property var gameData: softwareList[sortByIndex].currentGame(currentScreenID)
+    property string collectionShortName: (currentGame && currentGame.collections && currentGame.collections.count > 0) ? Utils.processPlatformName(currentGame.collections.get(0).shortName) : ""
 
-  function processButtonArt(buttonModel) {
-    var i;
-    for (i = 0; buttonModel.length; i++) {
-      if (buttonModel[i].name().includes("Gamepad")) {
-        var buttonValue = buttonModel[i].key.toString(16)
-        return buttonValue.substring(buttonValue.length-1, buttonValue.length);
-      }
-    }
-  }
-
-  Item {
-    id: background
-
-    width: parent.width
-    height: parent.height
-
-    Behavior on opacity { NumberAnimation { duration: 200 }}
-
-    Image {
-      id: controllerIcon
-      width: vpx(35)
-      height: vpx(35)
-      horizontalAlignment: Image.AlignLeft
-      fillMode: Image.PreserveAspectFit
-      source: "../assets/images/platforms/" + collectionShortName + ".svg"
-      visible: false
-
-      anchors {
-        verticalCenter: parent.verticalCenter
-        left: parent.left
-        leftMargin: vpx(25)
-      }
+    function processButtonArt(buttonModel) {
+        var i;
+        for (i = 0; buttonModel.length; i++) {
+            if (buttonModel[i].name().includes("Gamepad")) {
+                var buttonValue = buttonModel[i].key.toString(16);
+                return buttonValue.substring(buttonValue.length - 1, buttonValue.length);
+            }
+        }
     }
 
-    ColorOverlay {
-      anchors.fill: controllerIcon
-      source: controllerIcon
-      color: theme.text
-      smooth: true
-      cached: true
-    }
+    Item {
+        id: background
 
-    RowLayout {
-      anchors {
-        verticalCenter: parent.verticalCenter
-        right: parent.right
-      }
-      spacing: vpx(25)
-      layoutDirection: Qt.RightToLeft
+        width: parent.width
+        height: parent.height
 
-      ControllerHelpButton {
-        id: buttonOK
-        button: processButtonArt(api.keys.accept)
-        label: tr("OK")
-        Layout.fillWidth: true
-        Layout.minimumWidth: vpx(50)
-        Layout.preferredWidth: vpx(60)
-
-        onClicked: {}
-
-      }
-
-      ControllerHelpButton {
-        id: buttonBack
-        button: processButtonArt(api.keys.cancel)
-        label: tr("Back")
-        Layout.fillWidth: true
-        Layout.minimumWidth: vpx(50)
-        Layout.preferredWidth: vpx(75)
-
-        onClicked: { showHomeScreen(); }
-
-        visible: showBack
-      }
-
-      ControllerHelpButton {
-    id: buttonFavorite
-    button: processButtonArt(showDetails ? api.keys.filters : api.keys.details)
-    label: showDetails ? tr("Details") : tr("Fav")
-    Layout.fillWidth: true
-    Layout.minimumWidth: vpx(50)
-    Layout.preferredWidth: vpx(50)
-    onClicked: {}
-    visible: showFav
-}
-
-      ControllerHelpButton {
-        id: buttonNext
-        button: processButtonArt(api.keys.nextPage)
-        label: tr("Next Collection")
-        Layout.fillWidth: true
-        Layout.minimumWidth: vpx(175)
-        Layout.preferredWidth: widescreen ? vpx(175) : vpx(212)
-
-        onClicked: {
-          turnOnSfx.play();
-          if (currentCollection < api.collections.count-1) {
-              nextCollection++;
-          } else {
-              nextCollection = -1;
-          }
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 200
+            }
         }
 
-        visible: showCollControls
-      }
+        Image {
+            id: controllerIcon
+            width: vpx(35)
+            height: vpx(35)
+            horizontalAlignment: Image.AlignLeft
+            fillMode: Image.PreserveAspectFit
+            source: collectionShortName !== "" ? "../assets/images/platforms/" + collectionShortName + ".svg" : ""
+            visible: false
 
-      //Previous Collection Button
-      ControllerHelpButton {
-        id: buttonPrev
-        button: processButtonArt(api.keys.prevPage)
-        label: tr("Prev Collection")
-        Layout.fillWidth: true
-        Layout.minimumWidth: vpx(130)
-        Layout.preferredWidth: vpx(175)
-
-        onClicked: {
-          turnOffSfx.play();
-          if (currentCollection == -1) {
-            nextCollection = api.collections.count-1;
-          } else{ 
-            nextCollection--;
-          }
+            anchors {
+                verticalCenter: parent.verticalCenter
+                left: parent.left
+                leftMargin: vpx(25)
+            }
         }
 
-        visible: showCollControls
-      }
+        ColorOverlay {
+            anchors.fill: controllerIcon
+            source: controllerIcon
+            color: theme.text
+            smooth: true
+            cached: true
+        }
 
-    }
+        RowLayout {
+            anchors {
+                verticalCenter: parent.verticalCenter
+                right: parent.right
+            }
+            spacing: vpx(25)
+            layoutDirection: Qt.RightToLeft
 
-  }//background
+            ControllerHelpButton {
+                id: buttonOK
+                button: processButtonArt(api.keys.accept)
+                label: tr("OK")
+                Layout.fillWidth: true
+                Layout.minimumWidth: vpx(50)
+                Layout.preferredWidth: vpx(60)
+
+                onClicked: {}
+            }
+
+            ControllerHelpButton {
+                id: buttonBack
+                button: processButtonArt(api.keys.cancel)
+                label: tr("Back")
+                Layout.fillWidth: true
+                Layout.minimumWidth: vpx(50)
+                Layout.preferredWidth: vpx(75)
+
+                onClicked: {
+                    showHomeScreen();
+                }
+
+                visible: showBack
+            }
+
+            ControllerHelpButton {
+                id: buttonFavorite
+                button: processButtonArt(showDetails ? api.keys.filters : api.keys.details)
+                label: showDetails ? tr("Details") : tr("Fav")
+                Layout.fillWidth: true
+                Layout.minimumWidth: vpx(50)
+                Layout.preferredWidth: vpx(50)
+                onClicked: {}
+                visible: showFav
+            }
+
+            ControllerHelpButton {
+                id: buttonNext
+                button: processButtonArt(api.keys.nextPage)
+                label: tr("Next Collection")
+                Layout.fillWidth: true
+                Layout.minimumWidth: vpx(175)
+                Layout.preferredWidth: widescreen ? vpx(175) : vpx(212)
+
+                onClicked: {
+                    turnOnSfx.play();
+                    if (currentCollection < api.collections.count - 1) {
+                        nextCollection++;
+                    } else {
+                        nextCollection = -1;
+                    }
+                }
+
+                visible: showCollControls
+            }
+
+            //Previous Collection Button
+            ControllerHelpButton {
+                id: buttonPrev
+                button: processButtonArt(api.keys.prevPage)
+                label: tr("Prev Collection")
+                Layout.fillWidth: true
+                Layout.minimumWidth: vpx(130)
+                Layout.preferredWidth: vpx(175)
+
+                onClicked: {
+                    turnOffSfx.play();
+                    if (currentCollection == -1) {
+                        nextCollection = api.collections.count - 1;
+                    } else {
+                        nextCollection--;
+                    }
+                }
+
+                visible: showCollControls
+            }
+        }
+    }//background
 }//root

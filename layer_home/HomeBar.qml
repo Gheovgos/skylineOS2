@@ -233,8 +233,7 @@ ListView {
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
                 smooth: true
-                visible: gameData.assets.logo && gameBG != gameData.assets.boxFront ? true : false
-                // z: 10
+                visible: !gameData ? true : !!(gameData.assets.logo && gameBG != gameData.assets.boxFront)
             }
 
             ColorOverlay {

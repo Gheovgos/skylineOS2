@@ -37,8 +37,7 @@ FocusScope {
     property int raProgress: 0
     property bool raProgressLoading: false
     property bool raProgressFetchedForCurrentGame: false
-    readonly property int displayProgress: (currentGame.extra.progress) ? currentGame.extra.progress[0] : raProgress
-
+    readonly property int displayProgress: (currentGame && currentGame.extra && currentGame.extra.progress) ? currentGame.extra.progress[0] : raProgress
     property bool showAchievements: false
     property bool raAchievementsLoading: false
     property bool raAchievementsNotFound: false
@@ -52,7 +51,7 @@ FocusScope {
     property bool hltbLoading: false
     property var hltbData: null
     property bool hltbFetchedForCurrentGame: false
-    readonly property bool hasRatingOrPeriod: currentGame && ((currentGame.rating > 0) || (currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)))
+    readonly property bool hasRatingOrPeriod: !!(currentGame && ((currentGame.rating > 0) || (currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate))))    
     readonly property string displayDeveloper: (currentGame && currentGame.developer !== "") ? currentGame.developer : (hltbData && hltbData.developers && hltbData.developers.length > 0 ? hltbData.developers.join(", ") : "")
 
     readonly property var displayGenreList: (currentGame && currentGame.genreList && currentGame.genreList.length > 0) ? currentGame.genreList : (hltbData && hltbData.genres ? hltbData.genres : [])
@@ -657,7 +656,7 @@ FocusScope {
                     color: theme.button
                     border.width: vpx(2)
                     border.color: theme.main
-                    visible: currentGame && currentGame.collections && currentGame.collections.count > 0
+                    visible: !!(currentGame && currentGame.collections && currentGame.collections.count > 0)
                     anchors {
                         left: coverFrame.right
                         bottom: coverFrame.bottom
@@ -1011,6 +1010,8 @@ FocusScope {
                     radius: height / 2
                     color: "#33000000"
                     visible: {
+                        if (!currentGame)
+                            return false;
                         var pt = currentGame ? currentGame.playTime : 0;
                         var manual = currentGame.extra.playtime ? currentGame.extra.playtime : 0;
                         var stackTime = parseInt(api.memory.get(currentGame.title) || "0");
@@ -1033,6 +1034,8 @@ FocusScope {
                         }
                         Text {
                             text: {
+                                if (!currentGame)
+                                    return "00:00";
                                 var totalSeconds = 0;
 
                                 if (currentGame.extra.playtime) {
@@ -1067,8 +1070,7 @@ FocusScope {
                     width: playersRow.width + vpx(20)
                     radius: height / 2
                     color: "#33000000"
-                    visible: currentGame && currentGame.players > 0
-
+                    visible: !!(currentGame && currentGame.players > 0)
                     Row {
                         id: playersRow
                         anchors.centerIn: parent
@@ -1108,7 +1110,6 @@ FocusScope {
             height: vpx(56)
             clip: true
 
-            // ===== Riga di default: rating + periodo di gioco + pulsante toggle =====
             Row {
                 id: defaultStatsRow
                 spacing: vpx(14)
@@ -1127,7 +1128,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     radius: vpx(14)
-                    visible: currentGame && currentGame.rating > 0
+                    visible: !!(currentGame && currentGame.rating > 0)
                     color: {
                         if (!currentGame)
                             return "#33000000";
@@ -1170,7 +1171,7 @@ FocusScope {
                     width: playPeriodColumn.width + vpx(28)
                     radius: vpx(14)
                     color: "#33000000"
-                    visible: currentGame && currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate)
+                    visible: !!(currentGame && currentGame.extra && (currentGame.extra.startdate || currentGame.extra.enddate))
 
                     Column {
                         id: playPeriodColumn
@@ -1528,7 +1529,7 @@ FocusScope {
                     Text {
                         id: descText
                         width: parent.width
-                        text: currentGame.description ? currentGame.description : ""
+                        text: (currentGame && currentGame.description) ? currentGame.description : ""
                         color: "white"
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.019)
@@ -1540,7 +1541,7 @@ FocusScope {
                     Column {
                         width: parent.width
                         spacing: vpx(8)
-                        visible: currentGame && currentGame.tagList && currentGame.tagList.length > 0
+                        visible: !!(currentGame && currentGame.tagList && currentGame.tagList.length > 0)
 
                         Text {
                             text: tr("TAGS")

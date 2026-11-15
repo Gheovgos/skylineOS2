@@ -5,6 +5,8 @@ With this theme, I don’t just want to replicate the Switch’s new style exact
 
 ![skylineOS Pegasus theme](assets/images/screenshot_bar_start.png)
 
+![skylineOS Pegasus theme](assets/images/screenshot_settings.png)
+
 ![skylineOS Pegasus theme](assets/images/screenshot_bar_end.png)
 
 ![skylineOS Pegasus theme](assets/images/screenshot_allsoft.png)
@@ -40,26 +42,6 @@ Buttons:
 - To customize the background of the button bar, place inside assets/images/, a file called menuButtonBackground.png. It will be loaded in the home screen
 - To hide an application, press R1\D on Home Screen. To unhide, set to Yes on Show Hidden Apps, and press again R1\D on hidden games\apps
 - RAWG Support! Use your API KEY to fetch data from RAWG databases
-
-## Planned features
-
-In order of priority
-
-- Exophase support
-- More and better visual effects
-- Redesign of All games list
-
-No ETA! I work on it on my free time
-
-## Latest Releases
-
-### v0.2
-
-- Added functional button bar and customizazion
-
-### v0.1
-
-- First public release! We have a lot to do!
 
 See [RELEASES.md](RELEASES.md) for full version history.
 ___

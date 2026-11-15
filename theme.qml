@@ -135,6 +135,7 @@ FocusScope {
             playBGM: api.memory.has("Background Music") ? api.memory.get("Background Music") : "No",
             showWifi: api.memory.has("Display Wifi Icon") ? api.memory.get("Display Wifi Icon") : "No",
             homeCardSize: api.memory.has("Home Card Size") ? api.memory.get("Home Card Size") : "35",
+            softCount: api.memory.has("Max games on Home Screen") ? parseInt(api.memory.get("Max games on Home Screen")) : 12,
             steamGridDBAPIKey: api.memory.has("SteamGridDB API Key") ? api.memory.get("SteamGridDB API Key") : "",
             RAWGKey: api.memory.has("RAWG API Key") ? api.memory.get("RAWG API Key") : "",
             bgTransparency: api.memory.has("Background Transparency") ? api.memory.get("Background Transparency") : "25",
