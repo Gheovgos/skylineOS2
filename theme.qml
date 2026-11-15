@@ -339,7 +339,7 @@ FocusScope {
                     radius: height / 2
                     color: theme.main
                     Text {
-                        text: "Cancel  B"
+                        text: tr("Cancel  B")
                         color: theme.text
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.022)
@@ -353,7 +353,7 @@ FocusScope {
                     radius: height / 2
                     color: theme.accent
                     Text {
-                        text: "A  Confirm"
+                        text: tr("A  Confirm")
                         color: "white"
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.022)

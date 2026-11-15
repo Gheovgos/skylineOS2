@@ -179,7 +179,7 @@ FocusScope {
             spacing: vpx(14)
 
             Text {
-                text: "Edit profile"
+                text: tr("Edit profile")
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 color: theme.text
@@ -248,13 +248,13 @@ FocusScope {
             Repeater {
                 model: [
                     {
-                        label: "Change image"
+                        label: tr("Change image")
                     },
                     {
-                        label: "Change username"
+                        label: tr("Change username")
                     },
                     {
-                        label: "Delete profile"
+                        label: tr("Delete profile")
                     }
                 ]
 

@@ -26,7 +26,7 @@ FocusScope {
         },
         {
             id: "trophy",
-            label: "Trophy"
+            label: tr("Trophy")
         }
     ]
 
@@ -710,7 +710,6 @@ FocusScope {
                 }
             }
 
-            // Titolo grande
             Text {
                 text: currentGame ? currentGame.title : ""
                 color: "white"
@@ -823,7 +822,7 @@ FocusScope {
                             }
                         }
                         Text {
-                            text: "Play"
+                            text: tr("Play")
                             color: "black"
                             font.family: titleFont.name
                             font.bold: true
@@ -943,7 +942,7 @@ FocusScope {
 
                                 Text {
                                     visible: modelData.id === "sgdb"
-                                    text: root.sgdbDisplayId !== "" ? ("ID: " + root.sgdbDisplayId) : "Not set — tap to add"
+                                    text: root.sgdbDisplayId !== "" ? ("ID: " + root.sgdbDisplayId) : tr("Not set — tap to add")
                                     color: "white"
                                     opacity: 0.5
                                     font.family: titleFont.name
@@ -1154,7 +1153,7 @@ FocusScope {
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "RATING"
+                            text: tr("RATING")
                             color: "white"
                             opacity: 0.85
                             font.family: titleFont.name
@@ -1180,7 +1179,7 @@ FocusScope {
 
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: (currentGame && currentGame.extra && currentGame.extra.enddate) ? "PLAY PERIOD" : "STARTED"
+                            text: (currentGame && currentGame.extra && currentGame.extra.enddate) ? tr("PLAY PERIOD") : tr("STARTED")
                             color: "white"
                             opacity: 0.5
                             font.family: titleFont.name
@@ -1304,7 +1303,7 @@ FocusScope {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Loading..."
+                        text: tr("Loading...")
                         color: "white"
                         opacity: 0.7
                         font.family: titleFont.name
@@ -1321,7 +1320,7 @@ FocusScope {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "No playtime data"
+                        text: tr("No playtime data")
                         color: "white"
                         opacity: 0.6
                         font.family: titleFont.name
@@ -1349,7 +1348,7 @@ FocusScope {
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "AVG PLAYTIME"
+                            text: tr("AVG PLAYTIME")
                             color: "white"
                             opacity: 0.7
                             font.family: titleFont.name
@@ -1380,7 +1379,7 @@ FocusScope {
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "PLAYERS"
+                            text: tr("PLAYERS")
                             color: "white"
                             opacity: 0.7
                             font.family: titleFont.name
@@ -1411,7 +1410,7 @@ FocusScope {
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
-                            text: "TROPHIES"
+                            text: tr("TROPHIES")
                             color: "white"
                             opacity: 0.7
                             font.family: titleFont.name
@@ -1544,7 +1543,7 @@ FocusScope {
                         visible: currentGame && currentGame.tagList && currentGame.tagList.length > 0
 
                         Text {
-                            text: "TAGS"
+                            text: tr("TAGS")
                             color: "white"
                             opacity: 0.5
                             font.family: titleFont.name
@@ -1607,7 +1606,7 @@ FocusScope {
                                 visible: root.displayDeveloper !== ""
 
                                 Text {
-                                    text: "Developer"
+                                    text: tr("Developer")
                                     color: "white"
                                     opacity: 0.5
                                     font.family: titleFont.name
@@ -1631,7 +1630,7 @@ FocusScope {
                                 visible: root.displayGenreList.length > 0
 
                                 Text {
-                                    text: "Genre"
+                                    text: tr("Genre")
                                     color: "white"
                                     opacity: 0.5
                                     font.family: titleFont.name
@@ -1649,14 +1648,13 @@ FocusScope {
                                 }
                             }
 
-                            // Data di rilascio — nuova riga, stesso schema etichetta/valore
                             Row {
                                 width: parent.width
                                 spacing: vpx(8)
                                 visible: root.displayRelease && new Date(root.displayRelease).getFullYear() > 1950
 
                                 Text {
-                                    text: "Released"
+                                    text: tr("Released")
                                     color: "white"
                                     opacity: 0.5
                                     font.family: titleFont.name
@@ -1735,7 +1733,7 @@ FocusScope {
                 spacing: vpx(16)
 
                 Text {
-                    text: "SteamGridDB ID"
+                    text: tr("SteamGridDB ID")
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.022)
@@ -1788,7 +1786,7 @@ FocusScope {
                 }
 
                 Text {
-                    text: "Enter to confirm • Esc to undo"
+                    text: tr("Enter to confirm • Esc to undo")
                     color: theme.icon
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.016)
@@ -1851,7 +1849,7 @@ FocusScope {
                         top: parent.top
                         left: parent.left
                     }
-                    text: "Trophies"
+                    text: tr("Trophies")
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.026)
@@ -1865,7 +1863,7 @@ FocusScope {
                         verticalCenter: achTitle.verticalCenter
                     }
                     visible: root.raAchievementsLoading
-                    text: "Loading..."
+                    text: tr("Loading...")
                     color: theme.icon
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.017)
@@ -1879,7 +1877,7 @@ FocusScope {
 
                     Text {
                         width: parent.width
-                        text: root.raDisplayId === "" ? "No RetroAchievements ID set for this game" : "No achievements found for this ID"
+                        text: root.raDisplayId === "" ? tr("No RetroAchievements ID set for this game") : tr("No achievements found for this ID")
                         color: theme.icon
                         opacity: 0.6
                         font.family: titleFont.name
@@ -1898,7 +1896,7 @@ FocusScope {
                         Text {
                             id: setIdText
                             anchors.centerIn: parent
-                            text: root.raDisplayId === "" ? "Set ID" : "Change ID"
+                            text: root.raDisplayId === "" ? tr("Set ID" ): tr("Change ID")
                             color: "white"
                             font.family: titleFont.name
                             font.bold: true
@@ -2002,7 +2000,7 @@ FocusScope {
                             }
                             Text {
                                 visible: earned && dateEarned !== ""
-                                text: "Unlocked: " + dateEarned
+                                text: tr("Unlocked: ") + dateEarned
                                 color: theme.accent
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.013)
@@ -2103,7 +2101,7 @@ FocusScope {
                 spacing: vpx(16)
 
                 Text {
-                    text: "RetroAchievements ID"
+                    text: tr("RetroAchievements ID")
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.022)
@@ -2156,7 +2154,7 @@ FocusScope {
                 }
 
                 Text {
-                    text: "Enter to confirm • Esc to undo"
+                    text: tr("Enter to confirm • Esc to undo")
                     color: theme.icon
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.016)

@@ -128,7 +128,7 @@ FocusScope {
         // ── HEADER ──
         Text {
             id: headerTitle
-            text: "Live News Feed"
+            text: tr("Live News Feed")
             color: theme.text
             font.family: titleFont.name
             font.pixelSize: vpx(34)
@@ -140,8 +140,8 @@ FocusScope {
             anchors.top: headerTitle.bottom
             anchors.topMargin: vpx(6)
             text: infoScreenRoot.isLoading
-                ? "Loading feed…"
-                : "Source: " + infoScreenRoot.activeFeedUrl
+                ? tr("Loading feed…")
+                : tr("Source: " )+ infoScreenRoot.activeFeedUrl
             color: theme.icon
             font.pixelSize: vpx(14)
             elide: Text.ElideRight
@@ -171,7 +171,7 @@ FocusScope {
                         text: {
                             var url = infoScreenRoot.feedsArray[index];
                             var m = url.match(/https?:\/\/(?:www\.)?([^\/]+)/);
-                            return m ? m[1] : "Feed " + (index + 1);
+                            return m ? m[1] : tr("Feed ") + (index + 1);
                         }
                         color: parent.active ? "white" : theme.text
                         font.pixelSize: vpx(11)
@@ -237,7 +237,7 @@ FocusScope {
                     radius: vpx(4)
                     Text {
                         id: liveBadge
-                        text: "LIVE NEWS"
+                        text: tr("LIVE NEWS")
                         color: "white"
                         font.bold: true
                         font.pixelSize: vpx(10)

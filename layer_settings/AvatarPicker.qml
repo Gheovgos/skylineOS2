@@ -151,7 +151,7 @@ FocusScope {
                 left: parent.left
                 margins: vpx(24)
             }
-            text: "Choose an image"
+            text: tr("Choose an image")
             color: theme.text
             font.family: titleFont.name
             font.pixelSize: Math.round(screenheight * 0.028)
@@ -280,7 +280,7 @@ FocusScope {
                     Text {
                         anchors.centerIn: parent
                         visible: custom
-                        text: "Path"
+                        text: tr("Path")
                         color: theme.icon
                         font.family: titleFont.name
                         font.pixelSize: Math.round(screenheight * 0.022)
@@ -334,7 +334,7 @@ FocusScope {
                 left: parent.left
                 margins: vpx(24)
             }
-            text: picker.editing ? "Enter: confirm  •  Esc: undo" : "A: select  •  B: close"
+            text: picker.editing ? tr("Enter: confirm  •  Esc: undo") : tr("A: select  •  B: close")
             color: theme.icon
             font.family: titleFont.name
             font.pixelSize: Math.round(screenheight * 0.016)

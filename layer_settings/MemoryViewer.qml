@@ -155,7 +155,7 @@ FocusScope {
                 left: parent.left
                 margins: vpx(24)
             }
-            text: "Memory (" + memModel.count + ")"
+            text: tr("Memory: ") + memModel.count
             color: theme.text
             font.family: titleFont.name
             font.pixelSize: Math.round(screenheight * 0.026)
@@ -276,7 +276,7 @@ FocusScope {
                 left: parent.left
                 margins: vpx(24)
             }
-            text: memRoot.editing ? "Enter: save  •  Esc: undo" : "A: edit  •  X: remove  •  B: close"
+            text: memRoot.editing ? tr("Enter: save  •  Esc: undo") : tr("A: edit  •  X: remove  •  B: close")
             color: theme.icon
             font.family: titleFont.name
             font.pixelSize: Math.round(screenheight * 0.016)

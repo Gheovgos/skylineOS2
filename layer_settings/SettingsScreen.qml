@@ -851,9 +851,9 @@ FocusScope {
             if (raLoginStatus === "ok")
                 return "Login OK";
             if (raLoginStatus === "error")
-                return "Invalid credentials";
+                return tr("Invalid credentials");
             if (raLoginStatus === "loading")
-                return "Loading...";
+                return tr("Loading...");
             return "";
         }
         color: {
@@ -1086,7 +1086,7 @@ FocusScope {
 
             // Hint
             Text {
-                text: "Enter to confirm • Esc to undo"
+                text: tr("Enter to confirm • Esc to undo")
                 color: theme.icon
                 font.family: titleFont.name
                 font.pixelSize: Math.round(screenheight * 0.016)

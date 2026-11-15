@@ -108,7 +108,7 @@ FocusScope {
                 topMargin: vpx(32)
                 leftMargin: vpx(48)
             }
-            text: "Who's using the software?"
+            text: tr("Who's using the software?")
             color: theme.text
             font.family: titleFont.name
             font.pixelSize: Math.round(screenheight * 0.026)
@@ -235,13 +235,13 @@ FocusScope {
             spacing: vpx(28)
 
             Text {
-                text: "B  Back"
+                text: tr("B  Back")
                 color: theme.text
                 font.family: titleFont.name
                 font.pixelSize: Math.round(screenheight * 0.022)
             }
             Text {
-                text: "A  OK"
+                text: tr("A  OK")
                 color: theme.text
                 font.family: titleFont.name
                 font.pixelSize: Math.round(screenheight * 0.022)

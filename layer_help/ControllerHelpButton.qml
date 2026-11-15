@@ -4,7 +4,7 @@ import QtGraphicalEffects 1.0
 
 FocusScope {
   id: root
-  property string label: "Default"
+  property string label: tr("Default")
   property string button: "1"
   signal clicked
 

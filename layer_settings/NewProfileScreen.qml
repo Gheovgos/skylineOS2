@@ -131,7 +131,7 @@ FocusScope {
             spacing: vpx(20)
 
             Text {
-                text: "New profile"
+                text: tr("New profile")
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 color: theme.text
@@ -252,7 +252,7 @@ FocusScope {
 
                 Text {
                     anchors.centerIn: parent
-                    text: root.imageValue !== "" ? "Change image" : "Choose image"
+                    text: root.imageValue !== "" ? tr("Change image") : tr("Choose image")
                     color: theme.text
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.022)
@@ -279,7 +279,7 @@ FocusScope {
 
                 Text {
                     anchors.centerIn: parent
-                    text: "Create"
+                    text: tr("Create")
                     color: "white"
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.024)

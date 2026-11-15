@@ -65,7 +65,7 @@ FocusScope {
       ControllerHelpButton {
         id: buttonOK
         button: processButtonArt(api.keys.accept)
-        label: 'OK'
+        label: tr("OK")
         Layout.fillWidth: true
         Layout.minimumWidth: vpx(50)
         Layout.preferredWidth: vpx(60)
@@ -77,7 +77,7 @@ FocusScope {
       ControllerHelpButton {
         id: buttonBack
         button: processButtonArt(api.keys.cancel)
-        label: 'Back'
+        label: tr("Back")
         Layout.fillWidth: true
         Layout.minimumWidth: vpx(50)
         Layout.preferredWidth: vpx(75)
@@ -90,7 +90,7 @@ FocusScope {
       ControllerHelpButton {
     id: buttonFavorite
     button: processButtonArt(showDetails ? api.keys.filters : api.keys.details)
-    label: showDetails ? "Details" : "Fav"
+    label: showDetails ? tr("Details") : tr("Fav")
     Layout.fillWidth: true
     Layout.minimumWidth: vpx(50)
     Layout.preferredWidth: vpx(50)
@@ -101,7 +101,7 @@ FocusScope {
       ControllerHelpButton {
         id: buttonNext
         button: processButtonArt(api.keys.nextPage)
-        label: 'Next Collection'
+        label: tr("Next Collection")
         Layout.fillWidth: true
         Layout.minimumWidth: vpx(175)
         Layout.preferredWidth: widescreen ? vpx(175) : vpx(212)
@@ -122,7 +122,7 @@ FocusScope {
       ControllerHelpButton {
         id: buttonPrev
         button: processButtonArt(api.keys.prevPage)
-        label: 'Prev Collection'
+        label: tr("Prev Collection")
         Layout.fillWidth: true
         Layout.minimumWidth: vpx(130)
         Layout.preferredWidth: vpx(175)

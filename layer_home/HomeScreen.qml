@@ -854,7 +854,7 @@ FocusScope {
                     id: infoButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Feed"
+                    label: tr("Feed")
                     visible: (api.memory.get("Feed Button Show") === "Yes")
                     icon: "../assets/images/navigation/info.svg"
                     onFocusChanged: if (focus)
@@ -892,7 +892,7 @@ FocusScope {
                     id: storeButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Store"
+                    label: tr("Store")
                     icon: "../assets/images/navigation/Store.svg"
                     visible: (api.memory.get("Store Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -936,7 +936,7 @@ FocusScope {
                     id: browserButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Browser"
+                    label: tr("Browser")
                     icon: "../assets/images/navigation/browser.svg"
                     visible: (api.memory.get("Browser Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -974,7 +974,7 @@ FocusScope {
                     id: galleryButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Gallery"
+                    label: tr("Gallery")
                     icon: "../assets/images/navigation/Gallery.svg"
                     visible: (api.memory.get("Gallery Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1018,7 +1018,7 @@ FocusScope {
                     id: cloudButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Cloud Drive"
+                    label: tr("Cloud Drive")
                     icon: "../assets/images/navigation/cloud.svg"
                     visible: (api.memory.get("Cloud Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1061,7 +1061,7 @@ FocusScope {
                     id: backlogButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Backlog"
+                    label: tr("Backlog")
                     icon: "../assets/images/navigation/backlog.svg"
                     visible: (api.memory.get("Backlog Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1099,7 +1099,7 @@ FocusScope {
                     id: controllerButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Files"
+                    label: tr("Files")
                     icon: "../assets/images/navigation/Controller.svg"
                     visible: (api.memory.get("Files Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1143,7 +1143,7 @@ FocusScope {
                     id: settingsButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Theme Settings"
+                    label: tr("Theme Settings")
                     icon: "../assets/images/navigation/Settings.png"
                     onFocusChanged: if (focus)
                         root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
@@ -1180,7 +1180,7 @@ FocusScope {
                     id: suspendButton
                     width: vpx(56)
                     height: vpx(56)
-                    label: "Suspend"
+                    label: tr("Suspend")
                     icon: "../assets/images/navigation/Suspend.svg"
                     visible: (api.memory.get("Suspend Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1375,7 +1375,7 @@ FocusScope {
                             spacing: vpx(16)
                             Text {
                                 id: raPointsText
-                                text: "— pts"
+                                text: tr("— pts")
                                 color: theme.accent
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.020)
@@ -1383,14 +1383,14 @@ FocusScope {
                             }
                             Text {
                                 id: raRankText
-                                text: "Rank —"
+                                text: tr("Rank —")
                                 color: theme.icon
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.020)
                             }
                             Text {
                                 id: raRatioText
-                                text: "Ratio —"
+                                text: tr("Ratio —")
                                 color: theme.icon
                                 font.family: titleFont.name
                                 font.pixelSize: Math.round(screenheight * 0.020)
@@ -1427,7 +1427,7 @@ FocusScope {
                         topMargin: vpx(16)
                         left: parent.left
                     }
-                    text: "RECENTLY PLAYED"
+                    text: tr("RECENTLY PLAYED")
                     color: theme.icon
                     font.family: titleFont.name
                     font.pixelSize: Math.round(screenheight * 0.015)
@@ -1864,7 +1864,7 @@ FocusScope {
                                 }
                                 Text {
                                     visible: earned && dateEarned !== ""
-                                    text: "Unlocked: " + dateEarned
+                                    text: tr("Unlocked: ") + dateEarned
                                     color: theme.accent
                                     font.family: titleFont.name
                                     font.pixelSize: Math.round(screenheight * 0.013)
@@ -1921,7 +1921,7 @@ FocusScope {
                             }
                         }
                         Text {
-                            text: "Back"
+                            text: tr("Back")
                             color: theme.icon
                             font.family: titleFont.name
                             font.pixelSize: Math.round(screenheight * 0.020)
@@ -1951,7 +1951,7 @@ FocusScope {
                             }
                         }
                         Text {
-                            text: "Back"
+                            text: tr("Back")
                             color: theme.icon
                             font.family: titleFont.name
                             font.pixelSize: Math.round(screenheight * 0.020)

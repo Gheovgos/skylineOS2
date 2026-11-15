@@ -29,7 +29,7 @@ Item {
         }
 
         Text {
-            text: "Backlog"
+            text: tr("Backlog")
             color: theme.text
             font.pixelSize: 28
             font.bold: true
@@ -71,7 +71,7 @@ Item {
                 }
 
                 Text {
-                    text: "Random Game"
+                    text: tr("Random Game")
                     color: backlogList.count === 0 ? "#888888" : theme.text
                     font.pixelSize: 16
                     font.bold: true
@@ -112,7 +112,7 @@ Item {
         width: parent.width * 0.6
 
         Text {
-            text: "Your backlog is empty!"
+            text: tr("Your backlog is empty!")
             color: theme.text
             font.pixelSize: 24
             font.bold: true
@@ -160,7 +160,7 @@ Item {
             height: 50 
 
             Text {
-                text: (index + 1) + ". " + (modelData.title || "Unknown Title")
+                text: (index + 1) + ". " + (modelData.title || tr("Unknown Title"))
                 color: theme.text
                 font.pixelSize: 20
                 font.bold: true
