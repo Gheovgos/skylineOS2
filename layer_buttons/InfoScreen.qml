@@ -21,7 +21,7 @@ FocusScope {
         infoScreenRoot.selectedDate   = date;
         infoScreenRoot.selectedDescription = (desc && desc.length > 0)
             ? desc
-            : "No description available for this article.";
+            : tr("No description available for this article.");
         infoScreenRoot.selectedImageUrl = img;
         articleContentPopup.visible = true;
         popupFlickable.contentY = 0; 
@@ -59,7 +59,7 @@ FocusScope {
                 parseXMLText(xhr.responseText);
             } else {
                 articlesModel.append({
-                    articleTitle: "Connection error",
+                    articleTitle: tr("Connection error"),
                     articleDate:  "HTTP Status: " + xhr.status,
                     articleImageUrl: "",
                     articleDescription: "Could not reach: " + infoScreenRoot.activeFeedUrl
@@ -95,8 +95,7 @@ FocusScope {
             var img     = imgM   ? imgM[1].trim()  : "";
             var desc    = cleanText(descM ? (descM[1] || descM[2] || "") : "");
 
-            // Se la descrizione è troppo corta (feed che mettono solo il titolo), segnalalo
-            if (desc.length < 10) desc = "No extended description in this feed.";
+            if (desc.length < 10) desc = tr("No extended description in this feed.");
 
             articlesModel.append({
                 articleTitle:       title,
@@ -109,10 +108,10 @@ FocusScope {
 
         if (articlesModel.count === 0) {
             articlesModel.append({
-                articleTitle: "No articles found",
-                articleDate:  "Check the RSS URL",
+                articleTitle: tr("No articles found"),
+                articleDate:  tr("Check the RSS URL"),
                 articleImageUrl: "",
-                articleDescription: "The parser did not find <item> or <entry> blocks."
+                articleDescription: tr("The parser did not find <item> or <entry> blocks.")
             });
         }
         infoScreenRoot.isLoading = false;
@@ -221,9 +220,10 @@ FocusScope {
 
                 Image {
                     anchors.fill: parent
-                    source: (articlesModel.count > 0)
-                        ? articlesModel.get(feedsListView.currentIndex).articleImageUrl
-                        : ""
+                    source: {
+                        if (articlesModel.count > 0) return (articlesModel.get(feedsListView.currentIndex).articleImageUrl != "undefined") ? articlesModel.get(feedsListView.currentIndex).articleImageUrl : ""
+                        else return ""
+                    }
                     fillMode: Image.PreserveAspectCrop
                 }
 
@@ -266,7 +266,7 @@ FocusScope {
                     id: articleRow
                     width: feedsListView.width
                     height: vpx(72)
-                    color: "transparent"      // il highlight si vede sotto
+                    color: "transparent"
                     border.color: ListView.isCurrentItem ? "transparent" : theme.secondary
                     border.width: vpx(1)
                     radius: vpx(6)
@@ -403,7 +403,7 @@ FocusScope {
             }
             Text {
                 id: closeHint
-                text: "B  ·  close     ↕  scroll"
+                text: tr("B  ·  close     ↕  scroll")
                 color: theme.icon
                 font.pixelSize: vpx(11)
                 anchors.bottom:  parent.bottom

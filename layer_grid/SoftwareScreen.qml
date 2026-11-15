@@ -13,15 +13,15 @@ FocusScope {
     property var sortTitle: {
         switch (sortByIndex) {
         case 0:
-            return "By Time Last Played";
+            return tr("By Time Last Played");
         case 1:
-            return "By Total Play Time";
+            return tr("By Total Play Time");
         case 2:
-            return "By Title";
+            return tr("By Title");
         case 3:
-            return "By Publisher";
+            return tr("By Publisher");
         case 4:
-            return "Favorites";
+            return tr("Favorites");
         default:
             return "";
         }

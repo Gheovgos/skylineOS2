@@ -13,6 +13,26 @@ Item {
     property string customColor: "transparent"
     signal clicked
 
+    property string clickAnim: "pop"
+
+    function animate() {
+        popAnim.stop();
+        spinAnim.stop();
+        wiggleAnim.stop();
+        bounceAnim.stop();
+        iconHolder.scale = 1;
+        iconHolder.rotation = 0;
+        iconShift.y = 0;
+        if (clickAnim === "spin")
+            spinAnim.start();
+        else if (clickAnim === "wiggle")
+            wiggleAnim.start();
+        else if (clickAnim === "bounce")
+            bounceAnim.start();
+        else
+            popAnim.start();
+    }
+
     width: vpx(56)
     height: vpx(56)
 
@@ -88,36 +108,121 @@ Item {
             }
         }
 
-        Image {
-            id: menuIcon
+        Item {
+            id: iconHolder
             anchors.centerIn: parent
             width: vpx(28)
             height: vpx(28)
-            source: icon
-            sourceSize: Qt.size(width, height)
-            fillMode: Image.PreserveAspectFit
-            asynchronous: true
-            smooth: true
+            transform: Translate {
+                id: iconShift
+            }
+
+            Image {
+                id: menuIcon
+                anchors.fill: parent
+                source: icon
+                sourceSize: Qt.size(width, height)
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+                smooth: true
+            }
+
+            ColorOverlay {
+                anchors.fill: menuIcon
+                source: menuIcon
+                color: selected ? theme.accent : (autoColor ? theme.icon : customColor)
+                antialiasing: true
+                smooth: true
+                cached: true
+                Behavior on color {
+                    ColorAnimation {
+                        duration: 150
+                    }
+                }
+            }
         }
 
-        ColorOverlay {
-            anchors.fill: menuIcon
-            source: menuIcon
-            color: selected ? theme.accent : (autoColor ? theme.icon : customColor)
-            antialiasing: true
-            smooth: true
-            cached: true
-            Behavior on color {
-                ColorAnimation {
-                    duration: 150
-                }
+        SequentialAnimation {
+            id: popAnim
+            NumberAnimation {
+                target: iconHolder
+                property: "scale"
+                to: 1.35
+                duration: 90
+                easing.type: Easing.OutQuad
+            }
+            NumberAnimation {
+                target: iconHolder
+                property: "scale"
+                to: 1.0
+                duration: 220
+                easing.type: Easing.OutBack
+            }
+        }
+
+        NumberAnimation {
+            id: spinAnim
+            target: iconHolder
+            property: "rotation"
+            from: 0
+            to: 360
+            duration: 500
+            easing.type: Easing.OutCubic
+        }
+
+        SequentialAnimation {
+            id: wiggleAnim
+            NumberAnimation {
+                target: iconHolder
+                property: "rotation"
+                to: -14
+                duration: 70
+            }
+            NumberAnimation {
+                target: iconHolder
+                property: "rotation"
+                to: 14
+                duration: 110
+            }
+            NumberAnimation {
+                target: iconHolder
+                property: "rotation"
+                to: -8
+                duration: 90
+            }
+            NumberAnimation {
+                target: iconHolder
+                property: "rotation"
+                to: 0
+                duration: 80
+            }
+        }
+
+        SequentialAnimation {
+            id: bounceAnim
+            NumberAnimation {
+                target: iconShift
+                property: "y"
+                to: -vpx(10)
+                duration: 110
+                easing.type: Easing.OutQuad
+            }
+            NumberAnimation {
+                target: iconShift
+                property: "y"
+                to: 0
+                duration: 260
+                easing.type: Easing.OutBounce
             }
         }
     }
 
     MouseArea {
         anchors.fill: parent
-        onClicked: root.clicked()
+        onClicked: {
+            root.animate();
+            root.clicked();
+        }
         hoverEnabled: true
     }
 

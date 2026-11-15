@@ -87,7 +87,7 @@ Item {
                 onClicked: {
                     var randomIndex = Math.floor(Math.random() * backlogContainer.rawData.length);
                     var pickedGame = backlogContainer.rawData[randomIndex].title;
-                    diceResultText.text = "Game: " + pickedGame;
+                    diceResultText.text = tr("Game: ") + pickedGame;
                 }
             }
         }
@@ -121,7 +121,7 @@ Item {
         }
 
         Text {
-            text: "Populate your backlog.json file to see your titles here."
+            text: tr("Populate your backlog.json file to see your titles here.")
             color: theme.icon
             font.pixelSize: 16
             font.family: titleFont.name

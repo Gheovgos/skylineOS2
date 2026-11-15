@@ -854,6 +854,7 @@ FocusScope {
                     id: infoButton
                     width: vpx(56)
                     height: vpx(56)
+                    clickAnim: "wiggle"
                     label: tr("Feed")
                     visible: (api.memory.get("Feed Button Show") === "Yes")
                     icon: "../assets/images/navigation/info.svg"
@@ -877,6 +878,7 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            infoButton.animate();
                             showButtonScreen("info");
                         }
                     }
@@ -893,6 +895,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Store")
+                    clickAnim: "bounce"
                     icon: "../assets/images/navigation/Store.svg"
                     visible: (api.memory.get("Store Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -924,6 +927,7 @@ FocusScope {
                     onClicked: {
                         storeButton.focus = true;
                         homeSwitcher.currentIndex = -1;
+                        storeButton.animate();
                         navSound.play();
                         if (Qt.platform.os === "android")
                             Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "https://play.google.com/store");
@@ -1019,6 +1023,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Cloud Drive")
+                    clickAnim: "wiggle"
                     icon: "../assets/images/navigation/cloud.svg"
                     visible: (api.memory.get("Cloud Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1049,6 +1054,7 @@ FocusScope {
                     onClicked: {
                         cloudButton.focus = true;
                         homeSwitcher.currentIndex = -1;
+                        cloudButton.animate()
                         navSound.play();
                         if (Qt.platform.os === "android")
                             Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
