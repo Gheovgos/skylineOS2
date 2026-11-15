@@ -148,7 +148,7 @@ FocusScope {
         softwareScreen.visible = true;*/
         refreshSettings();
         softwareScreen.focus = true;
-        toSoftware.play();
+        allSoftSfx.play();
     }
 
     function showSettingsScreen() {
@@ -162,7 +162,7 @@ FocusScope {
     }
 
     function showNewProfileScreen() {
-        settingsSfx.play();
+        newUserSfx.play();
         newProfileScreen.open();
     }
 
@@ -170,17 +170,19 @@ FocusScope {
         switch (menu) {
         case "info":
             infoScreen.focus = true;
+            feedSfx.play();
             break;
         case "backlog":
             backlogScreen.focus = true;
+            backlogSfx.play();
             break;
         case "suspend":
             suspendScreen.focus = true;
+            standbySfx.play();
             break;
         default:
             break;
         }
-        settingsSfx.play();
     }
 
     function openGameDetail(originItem, game) {
@@ -195,7 +197,7 @@ FocusScope {
         gameDetailOpen = true;
         gameDetailScreen.forceActiveFocus();
         gameDetailScreen.currentGame = currentGame;
-        selectSfx.play();
+        detailSfx.play();
     }
 
     function closeGameDetail() {
@@ -1257,5 +1259,81 @@ FocusScope {
         id: borderSfx
         source: "assets/audio/Border.wav"
         volume: 0.25
+    }
+
+    SoundEffect {
+        id: storeSfx
+        source: "assets/audio/store.wav"
+        volume: 1.0
+        onStatusChanged: console.log("SFX store status:", status, source)
+        onPlayingChanged: console.log("SFX store playing:", playing)
+    }
+
+    SoundEffect {
+        id: detailSfx
+        source: "assets/audio/detail.wav"
+        volume: 1.0
+        onStatusChanged: console.log("SFX detail status:", status, source)
+        onPlayingChanged: console.log("SFX detail playing:", playing)
+    }
+
+    SoundEffect {
+        id: feedSfx
+        source: "assets/audio/Dada 3.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: browserSfx
+        source: "assets/audio/Browser.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: backlogSfx
+        source: "assets/audio/Backlog.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: cloudSfx
+        source: "assets/audio/Jig 0.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: albumSfx
+        source: "assets/audio/Album.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: filesSfx
+        source: "assets/audio/File.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: standbySfx
+        source: "assets/audio/Standby.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: allSoftSfx
+        source: "assets/audio/Allsf.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: userSfx
+        source: "assets/audio/User.wav"
+        volume: 1.0
+    }
+
+    SoundEffect {
+        id: newUserSfx
+        source: "assets/audio/NewUser.wav"
+        volume: 1.0
     }
 }

@@ -20,8 +20,12 @@ Item {
         spinAnim.stop();
         wiggleAnim.stop();
         bounceAnim.stop();
+        shakeAnim.stop();
+        pulseAnim.stop();
         iconHolder.scale = 1;
         iconHolder.rotation = 0;
+        iconHolder.opacity = 1;
+        iconShift.x = 0;
         iconShift.y = 0;
         if (clickAnim === "spin")
             spinAnim.start();
@@ -29,6 +33,10 @@ Item {
             wiggleAnim.start();
         else if (clickAnim === "bounce")
             bounceAnim.start();
+        else if (clickAnim === "shake")
+            shakeAnim.start();
+        else if (clickAnim === "pulse")
+            pulseAnim.start();
         else
             popAnim.start();
     }
@@ -213,6 +221,68 @@ Item {
                 to: 0
                 duration: 260
                 easing.type: Easing.OutBounce
+            }
+        }
+
+                SequentialAnimation {
+            id: shakeAnim
+            NumberAnimation {
+                target: iconShift
+                property: "x"
+                to: -vpx(6)
+                duration: 50
+            }
+            NumberAnimation {
+                target: iconShift
+                property: "x"
+                to: vpx(6)
+                duration: 90
+            }
+            NumberAnimation {
+                target: iconShift
+                property: "x"
+                to: -vpx(3)
+                duration: 70
+            }
+            NumberAnimation {
+                target: iconShift
+                property: "x"
+                to: 0
+                duration: 60
+            }
+        }
+
+        ParallelAnimation {
+            id: pulseAnim
+            SequentialAnimation {
+                NumberAnimation {
+                    target: iconHolder
+                    property: "scale"
+                    to: 1.5
+                    duration: 140
+                    easing.type: Easing.OutQuad
+                }
+                NumberAnimation {
+                    target: iconHolder
+                    property: "scale"
+                    to: 1.0
+                    duration: 200
+                    easing.type: Easing.InOutQuad
+                }
+            }
+            SequentialAnimation {
+                NumberAnimation {
+                    target: iconHolder
+                    property: "opacity"
+                    to: 0.4
+                    duration: 140
+                }
+                NumberAnimation {
+                    target: iconHolder
+                    property: "opacity"
+                    to: 1.0
+                    duration: 200
+                }
             }
         }
     }

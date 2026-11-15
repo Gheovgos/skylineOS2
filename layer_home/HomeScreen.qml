@@ -200,6 +200,7 @@ FocusScope {
     }
 
     function openRAPanel() {
+        userSfx.play();
         raProfileVisible = true;
         raPanel.open();
         raPanel.forceActiveFocus();
@@ -606,7 +607,6 @@ FocusScope {
                         onClicked: {
                             addProfileButton.focus = true;
                             homeSwitcher.currentIndex = -1;
-                            navSound.play();
                             showNewProfileScreen();
                         }
                     }
@@ -854,8 +854,8 @@ FocusScope {
                     id: infoButton
                     width: vpx(56)
                     height: vpx(56)
-                    clickAnim: "wiggle"
                     label: tr("Feed")
+                    clickAnim: "wiggle"
                     visible: (api.memory.get("Feed Button Show") === "Yes")
                     icon: "../assets/images/navigation/info.svg"
                     onFocusChanged: if (focus)
@@ -885,7 +885,6 @@ FocusScope {
                     onClicked: {
                         infoButton.focus = true;
                         homeSwitcher.currentIndex = -1;
-                        navSound.play();
                         showButtonScreen("info");
                     }
                 }
@@ -918,6 +917,8 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            storeButton.animate();
+                            storeSfx.play();
                             if (Qt.platform.os === "android")
                                 Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "https://play.google.com/store");
                             else
@@ -928,7 +929,7 @@ FocusScope {
                         storeButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         storeButton.animate();
-                        navSound.play();
+                        storeSfx.play();
                         if (Qt.platform.os === "android")
                             Qt.openUrlExternally((typeof (api.memory.get("Store URI")) != "undefined") ? api.memory.get("Store URI") : "https://play.google.com/store");
                         else
@@ -941,6 +942,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Browser")
+                    clickAnim: "spin"
                     icon: "../assets/images/navigation/browser.svg"
                     visible: (api.memory.get("Browser Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -963,13 +965,15 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            browserButton.animate();
+                            browserSfx.play();
                             Qt.openUrlExternally((typeof (api.memory.get("Browser default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
                         }
                     }
                     onClicked: {
                         browserButton.focus = true;
                         homeSwitcher.currentIndex = -1;
-                        navSound.play();
+                        browserSfx.play();
                         Qt.openUrlExternally((typeof (api.memory.get("Browser default link")) != "undefined") ? api.memory.get("Browser default link") : "https://");
                     }
                 }
@@ -979,6 +983,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Gallery")
+                    clickAnim: "pulse"
                     icon: "../assets/images/navigation/Gallery.svg"
                     visible: (api.memory.get("Gallery Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1001,6 +1006,8 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            galleryButton.animate();
+                            albumSfx.play();
                             if (Qt.platform.os === "android")
                                 Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "android-app://com.google.android.apps.photos");
                             else
@@ -1010,7 +1017,7 @@ FocusScope {
                     onClicked: {
                         galleryButton.focus = true;
                         homeSwitcher.currentIndex = -1;
-                        navSound.play();
+                        albumSfx.play();
                         if (Qt.platform.os === "android")
                             Qt.openUrlExternally((typeof (api.memory.get("Gallery URI")) != "undefined") ? api.memory.get("Gallery URI") : "android-app://com.google.android.apps.photos");
                         else
@@ -1023,7 +1030,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Cloud Drive")
-                    clickAnim: "wiggle"
+                    clickAnim: "bounce"
                     icon: "../assets/images/navigation/cloud.svg"
                     visible: (api.memory.get("Cloud Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1045,6 +1052,8 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            cloudButton.animate();
+                            cloudSfx.play();
                             if (Qt.platform.os === "android")
                                 Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
                             else
@@ -1055,7 +1064,7 @@ FocusScope {
                         cloudButton.focus = true;
                         homeSwitcher.currentIndex = -1;
                         cloudButton.animate()
-                        navSound.play();
+                        cloudSfx.play();
                         if (Qt.platform.os === "android")
                             Qt.openUrlExternally((typeof (api.memory.get("Cloud URI")) != "undefined") ? api.memory.get("Cloud URI") : "");
                         else
@@ -1068,6 +1077,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Backlog")
+                    clickAnim: "shake"
                     icon: "../assets/images/navigation/backlog.svg"
                     visible: (api.memory.get("Backlog Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1090,22 +1100,24 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            backlogButton.animate();
                             showButtonScreen("backlog");
                         }
                     }
                     onClicked: {
                         backlogButton.focus = true;
                         homeSwitcher.currentIndex = -1;
-                        navSound.play();
                         showButtonScreen("backlog");
                     }
                 }
 
+                // This is for files, need to be refactorized
                 MenuButton {
                     id: controllerButton
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Files")
+                    clickAnim: "wiggle"
                     icon: "../assets/images/navigation/Controller.svg"
                     visible: (api.memory.get("Files Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1128,6 +1140,8 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            controllerButton.animate();
+                            filesSfx.play();
                             if (Qt.platform.os === "android")
                                 Qt.openUrlExternally((typeof (api.memory.get("Files URI")) != "undefined") ? api.memory.get("Files URI") : "content://com.android.externalstorage.documents/root/primary");
                             else
@@ -1137,7 +1151,7 @@ FocusScope {
                     onClicked: {
                         controllerButton.focus = true;
                         homeSwitcher.currentIndex = -1;
-                        navSound.play();
+                        filesSfx.play();
                         if (Qt.platform.os === "android")
                             Qt.openUrlExternally((typeof (api.memory.get("Files URI")) != "undefined") ? api.memory.get("Files URI") : "content://com.android.externalstorage.documents/root/primary");
                         else
@@ -1150,6 +1164,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Theme Settings")
+                    clickAnim: "spin"
                     icon: "../assets/images/navigation/Settings.png"
                     onFocusChanged: if (focus)
                         root.lastHomeSwitcherIndex = homeSwitcher.currentIndex
@@ -1171,6 +1186,7 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            settingsButton.animate();
                             showSettingsScreen();
                         }
                     }
@@ -1187,6 +1203,7 @@ FocusScope {
                     width: vpx(56)
                     height: vpx(56)
                     label: tr("Suspend")
+                    clickAnim: "pulse"
                     icon: "../assets/images/navigation/Suspend.svg"
                     visible: (api.memory.get("Suspend Button Show") === "Yes")
                     onFocusChanged: if (focus)
@@ -1209,13 +1226,13 @@ FocusScope {
                     Keys.onPressed: {
                         if (api.keys.isAccept(event) && !event.isAutoRepeat) {
                             event.accepted = true;
+                            suspendButton.animate();
                             showButtonScreen("suspend");
                         }
                     }
                     onClicked: {
                         suspendButton.focus = true;
                         homeSwitcher.currentIndex = -1;
-                        navSound.play();
                         showButtonScreen("suspend");
                     }
                 }
